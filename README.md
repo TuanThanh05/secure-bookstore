@@ -173,4 +173,4 @@ Các nội dung có thể tiếp tục được bổ sung, thay đổi hoặc đ
 
 ## Ghi chú
 
-Phạm vi dự án tập trung vào một website bán sách có nghiệp vụ cơ bản, đồng thời thể hiện việc áp dụng các biện pháp bảo vệ ứng dụng web và cơ sở dữ liệu ở mức độ cơ bản.
+Phạm vi dự án tập trung vào một website bán sách có nghiệp vụ cơ bản, đồng thời thể hiện việc áp dụng các biện pháp bảo vệ ứng dụng web và cơ sở dữ liệu ở mức độ cơ bản
