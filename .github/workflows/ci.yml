@@ -1,0 +1,95 @@
+# Chạy tự động trên mỗi Pull Request và mỗi lần main thay đổi.
+# Dựng một MySQL 8.4 tạm, rồi chạy đúng các lệnh mọi người chạy trên máy mình:
+# db_setup → migrate → db_apply → check → test, và quét lỗi bảo mật trong code.
+# PR nào làm hỏng một bước là thấy dấu X đỏ ngay, trước khi merge vào main.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Quyền tối thiểu: workflow chỉ được đọc code
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          # Container tạm, tự xóa khi job xong: đây KHÔNG phải mật khẩu thật nào
+          MYSQL_ROOT_PASSWORD: ci-root-Not-A-Secret-1
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost --silent"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=30
+
+    env:
+      DJANGO_ALLOWED_HOSTS: localhost
+      DB_HOST: 127.0.0.1
+      DB_PORT: "3306"
+      MYSQL_ROOT_PASSWORD: ci-root-Not-A-Secret-1
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: Thư viện C cho mysqlclient
+        run: sudo apt-get update && sudo apt-get install -y pkg-config libmysqlclient-dev
+
+      - name: Cài thư viện
+        run: pip install -r requirements.txt bandit==1.9.4
+
+      - name: Sinh SECRET_KEY và mật khẩu ngẫu nhiên cho lần chạy này
+        run: |
+          python - >> "$GITHUB_ENV" <<'PY'
+          import secrets
+          strong = lambda: secrets.token_urlsafe(24) + "-Aa9"
+          print(f"DJANGO_SECRET_KEY={secrets.token_urlsafe(50)}")
+          for name in ("DB_CUSTOMER_PASSWORD", "DB_STAFF_PASSWORD", "DB_MIGRATE_PASSWORD"):
+              print(f"{name}={strong()}")
+          PY
+
+      - name: db_setup (CSDL, role, tài khoản)
+        working-directory: backend
+        run: python manage.py db_setup
+
+      - name: migrate (bằng tài khoản migrate)
+        working-directory: backend
+        run: python manage.py migrate --settings=bookstore.settings.migrate
+
+      - name: db_apply (trigger, phân quyền)
+        working-directory: backend
+        run: python manage.py db_apply
+
+      - name: Django check (kết nối bằng app_customer)
+        working-directory: backend
+        run: python manage.py check
+
+      - name: Django check --deploy (cấu hình prod)
+        working-directory: backend
+        run: python manage.py check --deploy --settings=bookstore.settings.prod --fail-level WARNING
+
+      - name: Không quên makemigrations
+        working-directory: backend
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Chạy test
+        working-directory: backend
+        run: python manage.py test --settings=bookstore.settings.migrate
+
+      - name: Quét lỗi bảo mật trong code (bandit)
+        run: bandit -r backend -q

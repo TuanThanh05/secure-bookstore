@@ -1,0 +1,26 @@
+# =====================================================================
+# Ai phải duyệt PR khi PR đụng tới file nào (GitHub tự gắn người duyệt).
+# Dòng sau ghi đè dòng trước. Chỉ ghi tài khoản có quyền ghi vào repo.
+# Thêm tài khoản GitHub của các bạn khác vào đây khi đã mời vào repo,
+# ví dụ: /frontend/templates/shop/  @TuanThanh05 @ten-ban-fe1
+# =====================================================================
+
+# Khung chung: cấu hình, bảo mật, phân quyền CSDL, quy trình
+/backend/bookstore/                 @TuanThanh05
+/backend/core/                      @TuanThanh05
+/requirements.txt                   @TuanThanh05
+/compose.yaml                       @TuanThanh05
+/database/config/                   @TuanThanh05
+/database/grants/                   @TuanThanh05
+/database/schema/                   @TuanThanh05
+/.github/                           @TuanThanh05
+/.gitignore                         @TuanThanh05
+/.env.example                       @TuanThanh05
+
+# Khung giao diện: base, layout, component dùng chung
+/frontend/templates/base.html       @TuanThanh05
+/frontend/templates/layouts/        @TuanThanh05
+/frontend/templates/components/     @TuanThanh05
+/frontend/templates/errors/         @TuanThanh05
+/frontend/static/css/base.css       @TuanThanh05
+/frontend/static/js/base.js         @TuanThanh05

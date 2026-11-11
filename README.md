@@ -1,9 +1,11 @@
 # secure-bookstore
 
+[![CI](https://github.com/TuanThanh05/secure-bookstore/actions/workflows/ci.yml/badge.svg)](https://github.com/TuanThanh05/secure-bookstore/actions/workflows/ci.yml)
+
 Đồ án môn **An toàn ứng dụng Web và Cơ sở dữ liệu** (PTIT TP.HCM): xây dựng trang web bán sách **đảm bảo an toàn bảo mật**.
 Trọng tâm là bảo mật; bán sách chỉ là bối cảnh.
 
-> Trạng thái: **đang dựng bộ khung trên `main`** (bước 5/6). Chưa nhận PR tính năng.
+> Trạng thái: **bộ khung đã xong**, bắt đầu làm chức năng. Quy trình làm việc: [`CONTRIBUTING.md`](CONTRIBUTING.md).
 > Đọc [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md) trước khi làm bất cứ việc gì: quyết định đã chốt, checklist bảo mật, phân công.
 
 ## Công nghệ
@@ -41,4 +43,4 @@ Sau đó dựng MySQL 8.4 (Docker hoặc cài thường) và chạy 4 lệnh the
 
 - Không commit `.env`, mật khẩu, khóa bí mật.
 - Không `raw()`/`cursor.execute` nối chuỗi; không `|safe`/`mark_safe` với dữ liệu người dùng; không `@csrf_exempt`; không đổi dữ liệu bằng GET.
-- Làm trên nhánh tính năng, mở Pull Request vào `main`; không push thẳng lên `main`.
+- Làm trên nhánh tính năng, mở Pull Request vào `main`; không push thẳng lên `main` (chi tiết: [`CONTRIBUTING.md`](CONTRIBUTING.md)).

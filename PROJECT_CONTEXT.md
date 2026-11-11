@@ -11,7 +11,7 @@
 - **Đề tài:** Xây dựng trang web bán sách đảm bảo an toàn bảo mật. **Trọng tâm là bảo mật**, bán sách chỉ là bối cảnh.
 - **Đối tượng:** (1) Khách hàng, (2) Quản trị viên kiêm quản lý sách.
 - **Nhóm 5 người:** 2 backend, 2 frontend, 1 kiểm thử. Làm việc qua GitHub.
-- **Repo:** https://github.com/TuanThanh05/secure-bookstore (nhánh `main`; tạo trên GitHub kèm commit "Initial commit" chỉ có README 1 dòng). Đẩy khung bước 1–4 lên trước khi làm bước 5 (2026-11-10) để cả nhóm theo dõi.
+- **Repo:** https://github.com/TuanThanh05/secure-bookstore (nhánh `main`; tạo trên GitHub kèm commit "Initial commit" chỉ có README 1 dòng). Lịch sử đã được viết lại 2026-11-11 để mọi commit dùng email `...@users.noreply.github.com` (không lộ email cá nhân); repo public.
 
 ### Yêu cầu chấm điểm của đề
 
@@ -43,7 +43,7 @@
 - **Ngôn ngữ / framework:** Python 3.14 + **Django 6.1** (`Django~=6.1.0`, chốt 2026-11-10; có sẵn CSP nên không cần `django-csp`). Nếu thư viện phụ (`django-axes`, `django-otp`, `mysqlclient`) không tương thích thì lùi về Django 5.2 LTS. Môi trường ảo `.venv/` đặt ở thư mục gốc repo; `requirements.txt` ở thư mục gốc.
 - **CSDL:** MySQL **8.4 LTS** (Django 6.1 từ chối 8.0 và MariaDB/XAMPP). Driver `mysqlclient==2.3.0` (Arch: build với `mariadb-libs`; Windows: có wheel sẵn).
   - **Cách dựng đa nền tảng (chốt 2026-11-11):** Docker là tùy chọn. Nhóm trưởng (Arch) dùng `compose.yaml` (image `mysql:8.4`, bật/tắt theo nhu cầu bằng `up`/`down`, không tự khởi động lại, dữ liệu trong volume `mysql_data`). Các bạn Windows cài MySQL 8.4 bằng MySQL Installer. Mọi máy chạy cùng 4 lệnh: `db_setup` → `migrate --settings=bookstore.settings.migrate` → `db_apply` → `runserver` (hướng dẫn: `database/README.md`).
-  - `python manage.py db_setup` (root): tạo CSDL, cài `validate_password` (MEDIUM, ≥ 12, lưu bằng `SET PERSIST`), role `r_customer`/`r_staff`, tài khoản `app_customer`, `app_staff`, `bookstore_migrate` theo **host mà MySQL thấy máy này** (tự dò bằng `USER()`: Docker `172.28.0.1`, cài thường `127.0.0.1`/`localhost`), `bookstore_definer@localhost` khóa đăng nhập. Chạy lại để đồng bộ mật khẩu.
+  - `python manage.py db_setup` (root): tạo CSDL, cài `validate_password` (MEDIUM, ≥ 12, lưu bằng `SET PERSIST`), role `r_customer`/`r_staff`, tài khoản `app_customer`, `app_staff`, `bookstore_migrate` theo **host mà MySQL thấy máy này** (tự dò bằng `USER()`: Docker `172.28.0.1` – đã xác nhận trên máy nhóm trưởng 2026-11-11; cài thường `127.0.0.1`/`localhost`), `bookstore_definer@localhost` khóa đăng nhập. Chạy lại để đồng bộ mật khẩu.
   - `python manage.py db_apply` (root): chạy `database/objects/*.sql` rồi `database/grants/*.sql` (hiểu `DELIMITER`).
   - Docker: cổng chỉ mở trên `127.0.0.1`; mạng cố định `172.28.0.0/24` (gateway `172.28.0.1` không đổi sau down/up); `MYSQL_ROOT_HOST=172.28.0.%` (root chỉ vào được từ chính máy này).
   - Bắt buộc TLS giữa Django và MySQL (`OPTIONS["ssl_mode"] = "REQUIRED"`; máy demo thêm `require_secure_transport = ON` trong `my.cnf`).
@@ -137,17 +137,19 @@ Các file CSDL còn lại (chưa viết; quy ước đặt tên xem `database/RE
 
 ## 3. Cấu trúc thư mục
 
-### Hiện trạng trên máy nhóm trưởng (cập nhật 2026-11-10, sau bước 4; bước 5 đang áp dụng)
+### Hiện trạng (cập nhật 2026-11-11, sau bước 5; trên GitHub giống hệt máy nhóm trưởng)
 
 ```
-secure-bookstore/                 # repo Git (git init -b main), chưa commit
+secure-bookstore/                 # repo Git, nhánh main, 4 commit
 ├── backend/
 │   ├── bookstore/                # __init__.py, urls.py, wsgi.py, asgi.py
-│   │   └── settings/             # __init__.py, base.py, dev.py, prod.py
-│   ├── core/ accounts/ catalog/ orders/ payments/ dashboard/   # bước 3
+│   │   └── settings/             # __init__.py, base.py, dev.py, prod.py, migrate.py
+│   ├── core/                     # views (trang lỗi), db_routers.py, dbadmin.py,
+│   │                             # management/commands/db_setup.py, db_apply.py, migrations/0001_business_schema.py
+│   ├── accounts/ catalog/ orders/ payments/ dashboard/
 │   └── manage.py
-├── database/scripts-secure-bookstore.sql   # = lược đồ v1 (bước 5 thay bằng database/schema/)
-├── deploy/  docs/  security-tests/          # rỗng
+├── database/                     # README.md, .env.db.example, config/, schema/, objects/, grants/
+├── deploy/  docs/  security-tests/          # bước 6 thêm .gitkeep, docs/contract.md, security-tests/README.md
 ├── frontend/
 │   ├── README.md                            # quy tắc cho frontend (bước 4)
 │   ├── static/css/base.css js/base.js img/favicon.svg
@@ -155,11 +157,10 @@ secure-bookstore/                 # repo Git (git init -b main), chưa commit
 │                 components/{navbar,footer,messages,admin_sidebar}.html,
 │                 errors/{400,403,403_csrf,404,500}.html, shop/home.html,
 │                 account/ dashboard/ (rỗng)
-├── .env  (không commit)  .env.example  .gitignore
+├── compose.yaml  README.md  PROJECT_CONTEXT.md
+├── .env, database/.env.db (không commit)  .env.example  .gitignore
 └── requirements.txt
 ```
-
-Còn thiếu: `README.md`, `PROJECT_CONTEXT.md` ở gốc (bước 6).
 
 ### Cấu trúc đích
 
@@ -270,9 +271,9 @@ NhomXX_ATUDW-CSDL_WebBanSachAnToan/
 | 1 | Bỏ `assets/`, tạo `.venv` (Python 3.14.9), cài Django 6.1.3, `.gitignore`, `git init -b main` ở thư mục gốc | Xong |
 | 2 | `manage.py` (mặc định dev), `bookstore/urls.py`, `wsgi.py`/`asgi.py` (mặc định prod), `settings/base.py`/`dev.py`/`prod.py`, `.env.example`, `requirements.txt`; `check` và `check --deploy` sạch; `DATABASES = {}` tạm thời | Xong |
 | 3 | 6 app (`core`, `accounts`, `catalog`, `orders`, `payments`, `dashboard`) đăng ký trong `LOCAL_APPS`; Custom User `accounts.User` + `AUTH_USER_MODEL`; mỗi app có `apps.py`, `urls.py` (`app_name`), `views.py`, `models.py`, `admin.py` (chỉ ghi chú), `tests/`; `services.py` ở catalog/orders/payments/dashboard | Xong (`check` sạch, đã sinh `accounts/migrations/0001_initial.py`); chưa chạy `migrate` |
-| 4 | Khung frontend: `base.html`, 3 layout (`customer`/`auth`/`admin`), components (`navbar`, `footer`, `messages`, `admin_sidebar`), trang lỗi 400/403/403_csrf/404/500, `base.css`, `base.js` (`Bookstore.postForm` gửi CSRF), favicon, `frontend/README.md`; trang chủ tạm `catalog:home`; `include("catalog.urls")`; `handler400/403/404/500` và `CSRF_FAILURE_VIEW` trỏ về `core.views` | Xong trên máy; lần đẩy đầu lên GitHub (commit `bff7e92`) thiếu một phần (`urls.py` gốc rỗng, chưa có view `catalog:home`, 2 thẻ `<title>`, thiếu `favicon.svg`, `frontend/README.md`, `tests/__init__.py`, `accounts/app.py` sai tên) → gói `sua-buoc4.zip` |
-| 5 | `compose.yaml` (MySQL 8.4, tùy chọn), `database/` (config, schema, objects, grants, README), lệnh `db_setup`/`db_apply`, `DATABASES` 2 kết nối + TLS, router, `settings/migrate.py`, migration `core/0001_business_schema`, `mysqlclient`; `db_setup` + `migrate` + `db_apply` + `createsuperuser` | Gói `buoc5-mysql.zip` bản 1 (chỉ Docker, init script) bị thay; bản 2 `buoc5-mysql-v2.zip` (đa nền tảng: `db_setup`/`db_apply`, Docker tùy chọn) đã gửi 2026-11-11, thử đủ trên MySQL 8.0 trong sandbox; chờ áp dụng |
-| 6 | README, CODEOWNERS, mẫu PR/issue, commit đầu tiên, đẩy lên GitHub, bật branch protection | |
+| 4 | Khung frontend: `base.html`, 3 layout (`customer`/`auth`/`admin`), components (`navbar`, `footer`, `messages`, `admin_sidebar`), trang lỗi 400/403/403_csrf/404/500, `base.css`, `base.js` (`Bookstore.postForm` gửi CSRF), favicon, `frontend/README.md`; trang chủ tạm `catalog:home`; `include("catalog.urls")`; `handler400/403/404/500` và `CSRF_FAILURE_VIEW` trỏ về `core.views` | Xong (lần đẩy đầu thiếu một phần, đã sửa bằng gói `sua-buoc4.zip`, commit `07ff42a`) |
+| 5 | `compose.yaml` (MySQL 8.4, tùy chọn), `database/` (config, schema, objects, grants, README), lệnh `db_setup`/`db_apply`, `DATABASES` 2 kết nối + TLS, router, `settings/migrate.py`, migration `core/0001_business_schema`, `mysqlclient`; `db_setup` + `migrate` + `db_apply` + `createsuperuser` | Xong (commit `b7e2a36`, 2026-11-11): nhóm trưởng chạy được trên Arch + Docker; bản trên GitHub đã clone về chạy lại đủ 5 lệnh và các phép thử tấn công trong sandbox. Docker trên Arch cần `sudo docker compose ...` (cố ý không thêm user vào nhóm `docker` vì nhóm đó ngang quyền root) |
+| 6 | `.github/` (CODEOWNERS, mẫu PR, mẫu issue Chức năng/Lỗi, `dependabot.yml`, CI `workflows/ci.yml`: MySQL 8.4 service → `db_setup` → `migrate` → `db_apply` → `check` → `check --deploy` → `makemigrations --check` → `test` → `bandit`), `CONTRIBUTING.md` (quy trình nhánh/PR/commit), `docs/contract.md` (mẫu hợp đồng FE–BE), `security-tests/README.md`, `.gitkeep` cho thư mục rỗng; cài đặt trên GitHub: ruleset bảo vệ `main`, Dependabot, secret scanning + push protection, mời collaborator | Đã gửi gói `buoc6-github.zip` 2026-11-11 (CI mô phỏng đủ các bước trong sandbox), chờ áp dụng và bật cài đặt trên GitHub |
 
 Lưu ý kỹ thuật đã gặp:
 - `python manage.py startapp <tên>` báo lỗi "conflicts with the name of an existing Python module" nếu thư mục app rỗng đã tồn tại; phải `rmdir` trước rồi mới `startapp`.
@@ -284,6 +285,8 @@ Lưu ý kỹ thuật đã gặp:
 - Custom User: username theo regex `^[A-Za-z0-9._-]{3,50}$` (`max_length=50`, chốt 2026-11-11, đổi từ 150; migration `0001_initial` đã sinh theo 50), email bắt buộc và unique, có `phone_encrypted`, `email_verified`, 2 CHECK constraint giống lược đồ.
 - File cấu hình app phải tên `apps.py` (đặt nhầm `app.py` thì Django lặng lẽ dùng AppConfig mặc định, mất `verbose_name`, không báo lỗi).
 - `.gitignore` có `.env.*` + `!.env.example` sẽ bỏ qua luôn `database/.env.db.example` → bước 5 thêm dòng `!database/.env.db.example`.
+- Với MySQL, ngay cả `manage.py check` cũng cần kết nối CSDL (Django đọc phiên bản server khi kiểm tra field) → MySQL phải đang chạy và `db_setup` đã chạy; CI vì vậy có MySQL service.
+- Docker trên Arch: dùng `sudo docker compose ...`; không thêm user vào nhóm `docker` (ngang quyền root).
 - Django 6.1 từ chối MySQL < 8.4 (`NotSupportedError: MySQL 8.4 or later is required`).
 - Khi binlog bật, `CREATE TRIGGER`/`PROCEDURE` cần SUPER (lỗi 1419) → trigger/thủ tục do root tạo qua `db_apply`, không qua migration.
 - Trigger chạy bằng quyền của DEFINER: definer cần `TRIGGER` và `SELECT` trên bảng (thiếu `SELECT` thì lỗi 1143 khi đọc `NEW.cột`). Trong trigger, `USER()` là tài khoản gọi, `CURRENT_USER()` là definer.
