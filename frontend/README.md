@@ -70,6 +70,45 @@ Site bật **Content Security Policy**: trình duyệt sẽ **chặn** mọi th�
 9. **Comment nhiều dòng phải dùng `{% comment %}...{% endcomment %}`.** Cú pháp `{# ... #}` chỉ dùng cho **một dòng**; viết nhiều dòng thì nội dung bị in ra HTML, ai xem mã nguồn trang cũng đọc được.
 10. **Ẩn nút trên giao diện không phải là phân quyền.** Kiểm tra quyền luôn làm ở view phía backend.
 
+## Giao diện: màu, chữ, component
+
+**Màu và khoảng cách** khai báo một lần bằng biến CSS ở đầu `static/css/base.css` (`--color-primary`, `--space-md`, `--radius-lg`…). Viết CSS mới thì dùng biến, không gõ mã màu trực tiếp.
+
+| Biến | Giá trị | Dùng cho |
+| --- | --- | --- |
+| `--color-bg` | `#fbf9f6` | Nền trang (màu giấy) |
+| `--color-text` | `#1b1c1a` | Chữ chính |
+| `--color-primary` | `#8b1e2f` | Đỏ đô: nút, giá, link nhấn |
+| `--color-gold` | `#c29800` | Sao đánh giá |
+| `--color-border` | `#e8e3dc` | Viền thẻ, đường kẻ |
+
+**Font** tự host trong `static/fonts/` (không dùng Google Fonts vì CSP chặn): *Playfair Display* cho tiêu đề, *Plus Jakarta Sans* cho chữ thường. Cả hai có bộ ký tự tiếng Việt, giấy phép OFL (file `OFL-*.txt` đi kèm).
+
+**Icon** là sprite SVG `static/img/icons.svg` (Material Symbols, Apache 2.0). Không chèn `<svg>` tay, dùng component:
+
+```html
+{% include "components/icon.html" with name="search" %}
+{% include "components/icon.html" with name="star" size="sm" %}
+```
+
+Icon có sẵn: `search`, `shopping-bag`, `star`, `star-half`, `star-empty`, `arrow-forward`, `logo`, `person`, `login`, `logout`, `close`, `info`, `chevron-left`, `chevron-right`, `book`. Cần icon mới thì báo nhóm trưởng thêm vào sprite.
+
+**Component** nằm trong `templates/components/`, gọi bằng `{% include ... with ... %}`, dữ liệu truyền vào qua tham số:
+
+| Component | Tham số | Ví dụ |
+| --- | --- | --- |
+| `book_card.html` | `book`, `cart_add_url` | `{% include "components/book_card.html" with book=book cart_add_url=cart_add_url %}` |
+| `search_bar.html` | `action`, `q`, `category` | `{% include "components/search_bar.html" with action=home_url q=q category=current_category %}` |
+| `category_filter.html` | `categories`, `current`, `q` | `{% include "components/category_filter.html" with categories=categories current=current_category q=q %}` |
+| `icon.html` | `name`, `size` (`sm`/`lg`, không bắt buộc) | như trên |
+| `navbar.html`, `footer.html`, `messages.html` | – | layout tự gọi, trang con không gọi |
+
+**Filter** riêng của dự án nằm trong `backend/core/templatetags/bookstore.py`, cần `{% load bookstore %}`:
+
+- `{{ book.price|vnd }}` → `420.000 ₫`
+- `{% for s in book.rating|stars %}` → 5 phần tử `star` / `star-half` / `star-empty`
+- `{{ book.id|tone }}` → số 0–3 để chọn màu bìa tạm
+
 ## Dữ liệu từ backend
 
 Tên biến mỗi trang nhận được ghi trong `docs/contract.md`. Khi backend chưa xong, dựng giao diện với dữ liệu giả theo đúng tên biến trong file đó.

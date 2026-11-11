@@ -1,20 +1,18 @@
 {% load static %}<!DOCTYPE html>
-{% comment %} =====================================================================
-   base.html – KHUNG CHUNG (nhóm trưởng giữ, sửa phải qua review)
-   Các block được phép điền ở tầng dưới:
-     title      – tiêu đề tab trình duyệt
-     extra_css  – thêm <link rel="stylesheet"> riêng của trang
-     body       – CHỈ layouts/*.html điền block này
-     extra_js   – thêm <script src="..." defer> riêng của trang
-   Quy tắc CSP: không <script> inline, không thuộc tính style="...", không onclick="...".
-   ===================================================================== {% endcomment %}
 <html lang="vi">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="same-origin">
   <title>{% block title %}Trang chủ{% endblock %} | Secure Bookstore</title>
-  <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+  <link rel="icon" href="{% static 'img/favicon.ico' %}" sizes="16x16 32x32">
+  <link rel="icon" href="{% static 'img/favicon-16x16.png' %}" type="image/png" sizes="16x16">
+  <link rel="icon" href="{% static 'img/favicon-32x32.png' %}" type="image/png" sizes="32x32">
+  <link rel="icon" href="{% static 'img/android-chrome-192x192.png' %}" type="image/png" sizes="192x192">
+  <link rel="icon" href="{% static 'img/android-chrome-512x512.png' %}" type="image/png" sizes="512x512">
+  <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}" sizes="180x180">
+  <link rel="preload" href="{% static 'fonts/plus-jakarta-sans-latin-wght-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{% static 'css/fonts.css' %}">
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
   {% block extra_css %}{% endblock %}
 </head>

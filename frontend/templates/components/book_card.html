@@ -1,0 +1,61 @@
+{% load bookstore %}{% comment %}
+  Thẻ một cuốn sách. Dùng ở trang chủ, danh sách sách, kết quả tìm kiếm:
+      {% include "components/book_card.html" with book=book cart_add_url=cart_add_url %}
+
+  book – đối tượng có các thuộc tính (dữ liệu từ MySQL, view v_public_books):
+      id, title, author, price (VND, số nguyên), rating (0–5 hoặc None),
+      review_count, in_stock (True/False), cover_url (URL ảnh hoặc rỗng)
+  cart_add_url – URL thêm vào giỏ (orders:cart_add). Khi chưa có, nút giỏ bị vô hiệu.
+
+  Bảo mật:
+  - Mọi giá trị in bằng {{ }} đều được auto-escape (không dùng |safe).
+  - Form giỏ hàng chỉ gửi book_id và quantity, KHÔNG gửi giá: server tự lấy giá trong CSDL.
+  - cover_url phải là ảnh của chính site (MEDIA_URL); CSP chặn ảnh từ máy chủ ngoài.
+{% endcomment %}
+<article class="book-card">
+  <div class="book-card__cover">
+    {% if book.cover_url %}
+      <img src="{{ book.cover_url }}" alt="Bìa sách {{ book.title }}" width="240" height="360" loading="lazy">
+    {% else %}
+      <div class="book-card__placeholder book-card__placeholder--{{ book.id|tone }}" aria-hidden="true">
+        {% include "components/icon.html" with name="book" size="lg" %}
+        <span>{{ book.title }}</span>
+      </div>
+    {% endif %}
+    {% if not book.in_stock %}<span class="badge badge--muted book-card__badge">Hết hàng</span>{% endif %}
+  </div>
+
+  <div class="book-card__body">
+    <p class="label book-card__author">{{ book.author }}</p>
+    <h3 class="book-card__title">{{ book.title }}</h3>
+
+    {% if book.review_count %}
+      <p class="rating">
+        <span class="visually-hidden">Đánh giá {{ book.rating|floatformat:1 }} trên 5 sao,</span>
+        {% for icon_name in book.rating|stars %}{% include "components/icon.html" with name=icon_name size="sm" %}{% endfor %}
+        <span class="rating__count">({{ book.review_count }}<span class="visually-hidden"> lượt đánh giá</span>)</span>
+      </p>
+    {% else %}
+      <p class="rating rating--none">Chưa có đánh giá</p>
+    {% endif %}
+
+    <div class="book-card__footer">
+      <span class="book-card__price">{{ book.price|vnd }}</span>
+      {% if cart_add_url and book.in_stock %}
+        <form class="book-card__cart" method="post" action="{{ cart_add_url }}">
+          {% csrf_token %}
+          <input type="hidden" name="book_id" value="{{ book.id }}">
+          <input type="hidden" name="quantity" value="1">
+          <button class="icon-btn icon-btn--primary" type="submit" aria-label="Thêm “{{ book.title }}” vào giỏ">
+            {% include "components/icon.html" with name="shopping-bag" size="sm" %}
+          </button>
+        </form>
+      {% else %}
+        <button class="icon-btn icon-btn--primary" type="button" disabled
+                aria-label="{% if book.in_stock %}Giỏ hàng chưa mở{% else %}Hết hàng{% endif %}">
+          {% include "components/icon.html" with name="shopping-bag" size="sm" %}
+        </button>
+      {% endif %}
+    </div>
+  </div>
+</article>

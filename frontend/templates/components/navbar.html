@@ -1,11 +1,30 @@
-{# Thanh điều hướng khu vực khách hàng. Link thêm dần khi các app có URL. #}
+{% url 'catalog:about' as about_url %}
+{% url 'accounts:login' as login_url %}
+{% url 'accounts:register' as register_url %}
+{% url 'accounts:logout' as logout_url %}
 <header class="navbar">
   <div class="container navbar__inner">
-    <a class="navbar__brand" href="{% url 'catalog:home' %}">Secure Bookstore</a>
+    <a class="navbar__brand" href="{% url 'catalog:home' %}">
+      {% include "components/icon.html" with name="logo" %}
+      <span>Secure Bookstore</span>
+    </a>
     <nav class="navbar__links" aria-label="Điều hướng chính">
-      <a href="{% url 'catalog:home' %}">Trang chủ</a>
-      {% comment %} Thêm khi có URL: sách, giỏ hàng, đăng nhập/đăng ký, tài khoản.
-         Đăng xuất PHẢI là <form method="post"> có {% csrf_token %}, không dùng <a>. {% endcomment %}
+      <a class="navbar__link" href="{{ about_url }}">Giới thiệu</a>
+      {% if user.is_authenticated %}
+        <span class="navbar__user">
+          {% include "components/icon.html" with name="person" size="sm" %}
+          {{ user.get_username }}
+        </span>
+        {% if logout_url %}
+          <form class="navbar__logout" method="post" action="{{ logout_url }}">
+            {% csrf_token %}
+            <button class="btn btn--link" type="submit">Đăng xuất</button>
+          </form>
+        {% endif %}
+      {% else %}
+        <a class="navbar__link" href="{{ login_url|default:'#' }}">Đăng nhập</a>
+        <a class="btn" href="{{ register_url|default:'#' }}">Đăng ký</a>
+      {% endif %}
     </nav>
   </div>
 </header>

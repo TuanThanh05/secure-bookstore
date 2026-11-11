@@ -1,0 +1,13 @@
+{% comment %} Lọc theo thể loại: mỗi thể loại là một link GET ?category=<id>.
+   Tham số:  categories – danh sách thể loại (mỗi phần tử có .id, .name)
+             current    – id thể loại đang chọn (None = tất cả)
+             q          – từ khóa đang tìm, giữ lại khi đổi thể loại
+   View tự kiểm tra category là số nguyên và có thật; giá trị lạ bị bỏ qua. {% endcomment %}
+<nav class="category-filter" aria-label="Lọc theo thể loại">
+  <a class="chip{% if not current %} chip--active{% endif %}"
+     href="?{% if q %}q={{ q|urlencode }}{% endif %}"{% if not current %} aria-current="page"{% endif %}>Tất cả</a>
+  {% for category in categories %}
+    <a class="chip{% if category.id == current %} chip--active{% endif %}"
+       href="?category={{ category.id }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}"{% if category.id == current %} aria-current="page"{% endif %}>{{ category.name }}</a>
+  {% endfor %}
+</nav>

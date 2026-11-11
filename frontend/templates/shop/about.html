@@ -1,0 +1,24 @@
+{% extends "layouts/customer.html" %}
+{% load static %}
+{% block title %}Giới thiệu{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/shop.css' %}">{% endblock %}
+
+{% block content %}
+  <article class="prose">
+    <h1>Về Secure Bookstore</h1>
+    <p>Secure Bookstore là trang web bán sách được xây dựng cho đồ án môn An toàn ứng dụng Web và Cơ sở dữ liệu tại PTIT TP.HCM, do <strong>Nhóm 7</strong> thực hiện.</p>
+    <p>Bán sách chỉ là bối cảnh: trọng tâm của đồ án là áp dụng các biện pháp bảo mật cho ứng dụng web và cơ sở dữ liệu, rồi chứng minh chúng chặn được các tấn công thường gặp.</p>
+
+    <h2>Một số biện pháp bảo mật</h2>
+    <ul>
+      <li>Chống SQL Injection, XSS, CSRF; Content Security Policy chặn script lạ.</li>
+      <li>Mật khẩu băm có salt, khóa tài khoản khi đăng nhập sai nhiều lần.</li>
+      <li>Mỗi vai trò dùng một tài khoản MySQL riêng với quyền tối thiểu; dữ liệu nghiệp vụ chỉ truy cập qua view và stored procedure.</li>
+      <li>Xử lý tranh chấp khi nhiều người đặt cùng một cuốn sách cuối cùng (race condition).</li>
+      <li>Kết nối tới cơ sở dữ liệu được mã hóa TLS.</li>
+    </ul>
+
+    <h2>Công nghệ</h2>
+    <p>Python, Django, MySQL 8.4.</p>
+  </article>
+{% endblock %}

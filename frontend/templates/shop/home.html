@@ -1,9 +1,36 @@
 {% extends "layouts/customer.html" %}
-{# Trang chủ TẠM của bộ khung. FE 1 thay bằng giao diện thật (danh sách sách...). #}
+{% load static %}
+{% comment %} Trang chủ. Dữ liệu do catalog.views.home truyền vào (xem docs/contract.md):
+   categories, books, current_category, q, cart_add_url. {% endcomment %}
 {% block title %}Trang chủ{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/shop.css' %}">{% endblock %}
+
 {% block content %}
   <section class="hero">
-    <h1>Secure Bookstore</h1>
-    <p>Bộ khung đã chạy. Trang này là trang tạm, sẽ được thay bằng danh sách sách.</p>
+    <h1 class="hero__title">Những trang sách làm phong phú tâm hồn</h1>
+    <p class="hero__subtitle">Khám phá tủ sách văn học, triết học, khoa học và kinh tế được chọn lọc tại Secure Bookstore.</p>
+    {% url 'catalog:home' as home_url %}
+    {% include "components/search_bar.html" with action=home_url q=q category=current_category %}
+    {% include "components/category_filter.html" with categories=categories current=current_category q=q %}
+  </section>
+
+  <section class="catalog" aria-labelledby="catalog-title">
+    <div class="catalog__header">
+      <h2 class="catalog__title" id="catalog-title">{% if q %}Kết quả cho “{{ q }}”{% else %}Tủ sách{% endif %}</h2>
+      <p class="catalog__count">{{ books|length }} cuốn sách</p>
+    </div>
+
+    {% if books %}
+      <div class="book-grid">
+        {% for book in books %}
+          {% include "components/book_card.html" with book=book cart_add_url=cart_add_url %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        {% include "components/icon.html" with name="search" size="lg" %}
+        <p>Không tìm thấy sách phù hợp. Thử từ khóa khác hoặc chọn “Tất cả”.</p>
+      </div>
+    {% endif %}
   </section>
 {% endblock %}
