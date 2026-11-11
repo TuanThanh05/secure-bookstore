@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% comment %} Layout khu vực NHÂN VIÊN (dashboard): sidebar + nội dung.
+   Chỉ dùng cho view đã kiểm tra quyền (@permission_required). Ẩn menu KHÔNG thay cho kiểm tra quyền.
+   Trang con điền: title, content. {% endcomment %}
+
+{% block body %}
+  <div class="admin">
+    {% include "components/admin_sidebar.html" %}
+    <main class="admin__main">
+      {% include "components/messages.html" %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+{% endblock %}

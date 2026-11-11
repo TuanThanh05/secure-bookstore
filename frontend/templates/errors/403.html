@@ -1,0 +1,9 @@
+{% extends "layouts/customer.html" %}
+{% block title %}Không có quyền truy cập{% endblock %}
+{% block content %}
+  <section class="error-page">
+    <h1>403</h1>
+    <p>Bạn không có quyền thực hiện thao tác này.</p>
+    <a class="btn" href="{% url 'catalog:home' %}">Về trang chủ</a>
+  </section>
+{% endblock %}

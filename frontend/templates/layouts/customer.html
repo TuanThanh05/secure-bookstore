@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% comment %} Layout khu vực KHÁCH HÀNG: navbar + thông báo + nội dung + footer.
+   Trang con điền: title, content (và extra_css, extra_js nếu cần). {% endcomment %}
+
+{% block body %}
+  {% include "components/navbar.html" %}
+  <main class="container page">
+    {% include "components/messages.html" %}
+    {% block content %}{% endblock %}
+  </main>
+  {% include "components/footer.html" %}
+{% endblock %}

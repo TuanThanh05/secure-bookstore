@@ -1,0 +1,11 @@
+{# Thanh điều hướng khu vực khách hàng. Link thêm dần khi các app có URL. #}
+<header class="navbar">
+  <div class="container navbar__inner">
+    <a class="navbar__brand" href="{% url 'catalog:home' %}">Secure Bookstore</a>
+    <nav class="navbar__links" aria-label="Điều hướng chính">
+      <a href="{% url 'catalog:home' %}">Trang chủ</a>
+      {% comment %} Thêm khi có URL: sách, giỏ hàng, đăng nhập/đăng ký, tài khoản.
+         Đăng xuất PHẢI là <form method="post"> có {% csrf_token %}, không dùng <a>. {% endcomment %}
+    </nav>
+  </div>
+</header>

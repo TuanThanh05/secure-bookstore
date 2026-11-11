@@ -1,0 +1,9 @@
+{% extends "layouts/customer.html" %}
+{% block title %}Phiên làm việc không hợp lệ{% endblock %}
+{% block content %}
+  <section class="error-page">
+    <h1>403</h1>
+    <p>Yêu cầu bị từ chối vì thiếu hoặc sai mã bảo vệ (CSRF). Hãy tải lại trang rồi thử lại.</p>
+    <a class="btn" href="{% url 'catalog:home' %}">Về trang chủ</a>
+  </section>
+{% endblock %}

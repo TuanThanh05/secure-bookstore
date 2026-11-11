@@ -1,0 +1,9 @@
+{% extends "layouts/customer.html" %}
+{% block title %}Yêu cầu không hợp lệ{% endblock %}
+{% block content %}
+  <section class="error-page">
+    <h1>400</h1>
+    <p>Yêu cầu không hợp lệ.</p>
+    <a class="btn" href="{% url 'catalog:home' %}">Về trang chủ</a>
+  </section>
+{% endblock %}

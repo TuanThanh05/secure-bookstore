@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% comment %} Trang 500 KHÔNG dùng layout có navbar/messages: lỗi có thể do CSDL,
+   nên trang này không được phụ thuộc vào request, user hay session. {% endcomment %}
+{% block title %}Lỗi hệ thống{% endblock %}
+{% block body %}
+  <main class="container page">
+    <section class="error-page">
+      <h1>500</h1>
+      <p>Hệ thống đang gặp sự cố. Vui lòng thử lại sau.</p>
+      <a class="btn" href="/">Về trang chủ</a>
+    </section>
+  </main>
+{% endblock %}

@@ -1,0 +1,11 @@
+{# Thông báo một lần (django.contrib.messages). Nội dung luôn được auto-escape. #}
+{% if messages %}
+  <ul class="messages" role="status">
+    {% for message in messages %}
+      <li class="messages__item messages__item--{{ message.tags|default:'info' }}">
+        <span>{{ message }}</span>
+        <button type="button" class="messages__close" aria-label="Đóng thông báo">&times;</button>
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}

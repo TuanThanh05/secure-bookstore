@@ -1,0 +1,9 @@
+{% extends "layouts/customer.html" %}
+{% block title %}Không tìm thấy trang{% endblock %}
+{% block content %}
+  <section class="error-page">
+    <h1>404</h1>
+    <p>Trang bạn tìm không tồn tại hoặc bạn không có quyền truy cập.</p>
+    <a class="btn" href="{% url 'catalog:home' %}">Về trang chủ</a>
+  </section>
+{% endblock %}
