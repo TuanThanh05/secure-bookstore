@@ -1,90 +1,29 @@
 -- =====================================================================
--- secure-bookstore – Lược đồ CSDL (bản thiết kế chốt)
--- Hệ quản trị: MySQL 8.0.16+ (cần bản hỗ trợ CHECK constraint)
--- Vị trí đề xuất trong repo: database/init/01_schema.sql
+-- secure-bookstore – Bảng nghiệp vụ (lược đồ v1)
+-- Hệ quản trị: MySQL 8.4 LTS (Docker theo compose.yaml, hoặc cài thường)
+--
+-- File này KHÔNG chạy bằng tay. Nó được migration
+-- backend/core/migrations/0001_business_schema.py đọc và chạy khi gõ
+-- `python manage.py migrate`, ngay SAU migration tạo accounts_user.
+-- Thứ tự tạo bảng vì vậy luôn đúng: accounts_user (Django) → các bảng dưới đây.
 --
 -- Quy ước:
 --   - Tên bảng, cột: tiếng Anh. Chú thích: tiếng Việt.
---   - Tên bảng theo quy ước của Django: <app>_<model> (accounts_user, catalog_book...)
---     để về sau viết models.py khớp đúng tên, không phải đổi.
+--   - Tên bảng theo quy ước của Django: <app>_<model>.
 --   - Tiền tệ: VND, lưu số nguyên (INT UNSIGNED), không dùng số thực.
---   - Thời gian: DATETIME(6), lưu theo UTC (Django USE_TZ = True).
+--   - Thời gian: DATETIME(6), lưu theo UTC (server đặt default-time-zone = '+00:00').
 --   - Cột *_encrypted: dữ liệu đã mã hóa AES-GCM ở tầng ứng dụng, lưu dạng base64.
 --   - Mọi bảng dùng InnoDB (cần cho transaction, khóa dòng, khóa ngoại).
 --
--- Script này CHỈ tạo bảng, ràng buộc, chỉ mục.
--- Các phần khác nằm ở file riêng trong database/:
---   procedures/ (sp_place_order, sp_confirm_payment, sp_cancel_expired_orders)
---   views/      (v_public_books, v_staff_orders)
---   triggers/   (ghi core_auditlog)
---   init/02_users_grants.sql (app_customer, app_staff, bookstore_migrate)
+-- Bảng accounts_user KHÔNG có ở đây: Django tạo nó từ accounts/models.py
+-- (migration accounts/0001_initial), cùng các cột và 2 CHECK như lược đồ v1.
+-- Các bảng Django khác cũng do migrate tạo: auth_*, accounts_user_groups,
+-- accounts_user_user_permissions, django_session, django_content_type,
+-- django_migrations (sau này thêm axes_*, otp_*).
 --
--- Các bảng Django và thư viện tự tạo khi chạy migrate (KHÔNG viết ở đây):
---   auth_group, auth_permission, auth_group_permissions (vai trò và quyền),
---   accounts_user_groups, accounts_user_user_permissions (bảng nối user với vai trò),
---   django_session, django_admin_log, django_content_type, django_migrations,
---   axes_* (khóa tài khoản), otp_* (2FA).
+-- Muốn sửa lược đồ: KHÔNG sửa file này sau khi nhóm đã migrate.
+-- Tạo file mới (02_..., 03_...) và một migration mới đọc file đó.
 -- =====================================================================
-
-CREATE DATABASE IF NOT EXISTS bookstore
-    CHARACTER SET utf8mb4
-    COLLATE utf8mb4_unicode_ci;
-
-USE bookstore;
-
--- CẢNH BÁO: các lệnh DROP dưới đây xóa sạch dữ liệu.
--- Chỉ dùng trên CSDL nháp khi cần chạy lại script từ đầu. Không chạy trên máy demo thật.
-SET FOREIGN_KEY_CHECKS = 0;
-DROP TABLE IF EXISTS core_securityevent;
-DROP TABLE IF EXISTS core_auditlog;
-DROP TABLE IF EXISTS payments_payment;
-DROP TABLE IF EXISTS orders_orderitem;
-DROP TABLE IF EXISTS orders_order;
-DROP TABLE IF EXISTS orders_cartitem;
-DROP TABLE IF EXISTS orders_cart;
-DROP TABLE IF EXISTS catalog_review;
-DROP TABLE IF EXISTS catalog_book;
-DROP TABLE IF EXISTS catalog_category;
-DROP TABLE IF EXISTS accounts_user;
-SET FOREIGN_KEY_CHECKS = 1;
-
-
--- =====================================================================
--- APP accounts
--- =====================================================================
-
--- Người dùng. Dùng chung cho khách hàng và nhân viên.
--- MySQL không có kế thừa: đây là một bảng bình thường.
--- Các cột từ id đến date_joined khớp với khuôn AbstractUser của Django
--- (phía Python, model User kế thừa AbstractUser); 2 cột cuối là trường nhóm tự thêm.
--- Vai trò gán qua Group của Django (bảng auth_group + accounts_user_groups do Django tạo).
-CREATE TABLE accounts_user (
-    id                BIGINT       NOT NULL AUTO_INCREMENT,
-    password          VARCHAR(128) NOT NULL,                 -- chuỗi băm PBKDF2/Argon2 do Django tạo, không bao giờ là mật khẩu rõ
-    last_login        DATETIME(6)  NULL,
-    is_superuser      TINYINT(1)   NOT NULL DEFAULT 0,
-    username          VARCHAR(150) NOT NULL,
-    first_name        VARCHAR(150) NOT NULL DEFAULT '',
-    last_name         VARCHAR(150) NOT NULL DEFAULT '',
-    email             VARCHAR(254) NOT NULL,
-    is_staff          TINYINT(1)   NOT NULL DEFAULT 0,       -- 1 = được vào khu vực nhân viên
-    is_active         TINYINT(1)   NOT NULL DEFAULT 1,       -- 0 = chưa xác minh email hoặc bị khóa (xóa mềm)
-    date_joined       DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-
-    -- Trường bổ sung của nhóm
-    phone_encrypted   VARCHAR(512) NULL,                     -- SĐT đã mã hóa AES-GCM
-    email_verified    TINYINT(1)   NOT NULL DEFAULT 0,
-
-    PRIMARY KEY (id),
-    CONSTRAINT uq_user_username UNIQUE (username),
-    CONSTRAINT uq_user_email    UNIQUE (email),
-    -- username chỉ gồm chữ, số và . _ - (chặn ký tự lạ ngay từ CSDL)
-    CONSTRAINT ck_user_username_format CHECK (username REGEXP '^[A-Za-z0-9._-]{3,150}$'),
-    -- superuser bắt buộc phải là staff
-    CONSTRAINT ck_user_superuser_is_staff CHECK (is_superuser = 0 OR is_staff = 1)
-) ENGINE=InnoDB
-  COMMENT='Người dùng hệ thống (khách hàng và nhân viên)';
-
 
 -- =====================================================================
 -- APP catalog

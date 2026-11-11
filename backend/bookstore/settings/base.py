@@ -63,13 +63,45 @@ TEMPLATES = [
 ]
 
 # ---------------------------------------------------------------------
-# Cơ sở dữ liệu
+# Cơ sở dữ liệu – MySQL 8.4 (Docker theo compose.yaml, hoặc cài thường)
 # ---------------------------------------------------------------------
-# Bước 5 mới cấu hình MySQL với 2 kết nối:
-#   "default" → tài khoản app_customer
-#   "staff"   → tài khoản app_staff
-# Hiện để trống để chạy thử runserver.
-DATABASES = {}
+# Hai kết nối cùng một CSDL, khác tài khoản MySQL (phân quyền lớp 2):
+#   "default" → app_customer: mọi app trừ dashboard (khách, đăng nhập, phiên)
+#   "staff"   → app_staff:    chỉ app dashboard dùng, bằng .using("staff")
+# Tài khoản migrate KHÔNG có ở đây (xem settings/migrate.py).
+_DB_COMMON = {
+    "ENGINE": "django.db.backends.mysql",
+    "NAME": env("DB_NAME", default="bookstore"),
+    "HOST": env("DB_HOST", default="127.0.0.1"),
+    "PORT": env("DB_PORT", default="3306"),
+    "CONN_MAX_AGE": 60,                 # giữ kết nối 60 giây
+    "CONN_HEALTH_CHECKS": True,         # kiểm tra kết nối còn sống trước khi dùng lại
+    "OPTIONS": {
+        "charset": "utf8mb4",
+        # Bắt buộc mã hóa TLS giữa Django và MySQL (MySQL tự sinh chứng chỉ).
+        # Chưa kiểm tra danh tính server; muốn kiểm tra thì dùng "ssl": {"ca": ...}.
+        "ssl_mode": "REQUIRED",
+        # Chế độ nghiêm ngặt: dữ liệu sai kiểu/quá dài bị từ chối thay vì bị cắt bớt
+        "init_command": "SET sql_mode = 'STRICT_ALL_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,ONLY_FULL_GROUP_BY,NO_ENGINE_SUBSTITUTION'",
+    },
+}
+
+DATABASES = {
+    "default": {
+        **_DB_COMMON,
+        "USER": env("DB_CUSTOMER_USER", default="app_customer"),
+        "PASSWORD": env("DB_CUSTOMER_PASSWORD"),
+    },
+    "staff": {
+        **_DB_COMMON,
+        "USER": env("DB_STAFF_USER", default="app_staff"),
+        "PASSWORD": env("DB_STAFF_PASSWORD"),
+        "TEST": {"MIRROR": "default"},  # khi chạy test: dùng chung CSDL test với "default"
+    },
+}
+
+# Chỉ migrate trên "default"; không bao giờ tạo/sửa bảng qua kết nối "staff"
+DATABASE_ROUTERS = ["core.db_routers.MigrateOnDefaultRouter"]
 
 # Khóa chính BIGINT, khớp với lược đồ v1
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

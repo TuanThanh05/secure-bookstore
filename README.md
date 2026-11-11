@@ -3,7 +3,7 @@
 Đồ án môn **An toàn ứng dụng Web và Cơ sở dữ liệu** (PTIT TP.HCM): xây dựng trang web bán sách **đảm bảo an toàn bảo mật**.
 Trọng tâm là bảo mật; bán sách chỉ là bối cảnh.
 
-> Trạng thái: **đang dựng bộ khung trên `main`** (bước 4/6). Chưa nhận PR tính năng.
+> Trạng thái: **đang dựng bộ khung trên `main`** (bước 5/6). Chưa nhận PR tính năng.
 > Đọc [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md) trước khi làm bất cứ việc gì: quyết định đã chốt, checklist bảo mật, phân công.
 
 ## Công nghệ
@@ -29,13 +29,13 @@ docs/            báo cáo, slide, hợp đồng FE–BE
 ## Chạy thử (máy cá nhân)
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env            # điền giá trị; KHÔNG commit .env
-cd backend && python manage.py runserver
+cp .env.example .env                                   # điền giá trị; KHÔNG commit .env
 ```
 
-Phần MySQL (bước 5) sẽ được bổ sung hướng dẫn khi xong.
+Sau đó dựng MySQL 8.4 (Docker hoặc cài thường) và chạy 4 lệnh theo [`database/README.md`](database/README.md):
+`db_setup` → `migrate` → `db_apply` → `runserver`.
 
 ## Quy tắc bắt buộc
 

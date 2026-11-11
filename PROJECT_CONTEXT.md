@@ -41,10 +41,14 @@
 ## 2. Quyết định đã chốt
 
 - **Ngôn ngữ / framework:** Python 3.14 + **Django 6.1** (`Django~=6.1.0`, chốt 2026-11-10; có sẵn CSP nên không cần `django-csp`). Nếu thư viện phụ (`django-axes`, `django-otp`, `mysqlclient`) không tương thích thì lùi về Django 5.2 LTS. Môi trường ảo `.venv/` đặt ở thư mục gốc repo; `requirements.txt` ở thư mục gốc.
-- **CSDL:** MySQL **8.4 LTS chạy bằng Docker Compose** (chốt 2026-11-10; `compose.yaml` ở thư mục gốc, image `mysql:8.4`). Django 6.1 bắt buộc MySQL ≥ 8.4 (8.0 bị từ chối: `NotSupportedError`). Driver `mysqlclient==2.3.0` (trên Arch build với `mariadb-libs`, chỉ là thư viện client; server vẫn là MySQL).
-  - Cổng 3306 chỉ mở trên `127.0.0.1`; mạng Docker cố định `172.28.0.0/24`, MySQL thấy Django ở `172.28.0.1` nên các tài khoản ứng dụng có host `172.28.0.1`. `root` chỉ đăng nhập từ trong container (`MYSQL_ROOT_HOST=localhost`).
-  - Bắt buộc TLS giữa Django và MySQL (`require_secure_transport = ON` + `OPTIONS["ssl_mode"] = "REQUIRED"`), chứng chỉ tự ký do image sinh.
-  - Mật khẩu: `DB_CUSTOMER_PASSWORD`, `DB_STAFF_PASSWORD` trong `.env` (Django + Compose cùng đọc); `MYSQL_ROOT_PASSWORD`, `DB_MIGRATE_PASSWORD` trong `database/.env.db` (chỉ container đọc, không commit). `validate_password` MEDIUM, ≥ 12 ký tự.
+- **CSDL:** MySQL **8.4 LTS** (Django 6.1 từ chối 8.0 và MariaDB/XAMPP). Driver `mysqlclient==2.3.0` (Arch: build với `mariadb-libs`; Windows: có wheel sẵn).
+  - **Cách dựng đa nền tảng (chốt 2026-11-11):** Docker là tùy chọn. Nhóm trưởng (Arch) dùng `compose.yaml` (image `mysql:8.4`, bật/tắt theo nhu cầu bằng `up`/`down`, không tự khởi động lại, dữ liệu trong volume `mysql_data`). Các bạn Windows cài MySQL 8.4 bằng MySQL Installer. Mọi máy chạy cùng 4 lệnh: `db_setup` → `migrate --settings=bookstore.settings.migrate` → `db_apply` → `runserver` (hướng dẫn: `database/README.md`).
+  - `python manage.py db_setup` (root): tạo CSDL, cài `validate_password` (MEDIUM, ≥ 12, lưu bằng `SET PERSIST`), role `r_customer`/`r_staff`, tài khoản `app_customer`, `app_staff`, `bookstore_migrate` theo **host mà MySQL thấy máy này** (tự dò bằng `USER()`: Docker `172.28.0.1`, cài thường `127.0.0.1`/`localhost`), `bookstore_definer@localhost` khóa đăng nhập. Chạy lại để đồng bộ mật khẩu.
+  - `python manage.py db_apply` (root): chạy `database/objects/*.sql` rồi `database/grants/*.sql` (hiểu `DELIMITER`).
+  - Docker: cổng chỉ mở trên `127.0.0.1`; mạng cố định `172.28.0.0/24` (gateway `172.28.0.1` không đổi sau down/up); `MYSQL_ROOT_HOST=172.28.0.%` (root chỉ vào được từ chính máy này).
+  - Bắt buộc TLS giữa Django và MySQL (`OPTIONS["ssl_mode"] = "REQUIRED"`; máy demo thêm `require_secure_transport = ON` trong `my.cnf`).
+  - Mật khẩu: `DB_CUSTOMER_PASSWORD`, `DB_STAFF_PASSWORD` trong `.env`; `MYSQL_ROOT_PASSWORD`, `DB_MIGRATE_PASSWORD` trong `database/.env.db` (không commit; chỉ Docker, `db_setup`/`db_apply` và `settings/migrate.py` đọc — web lúc chạy không đọc).
+  - `my.cnf` hardening đầy đủ chỉ bắt buộc trên máy demo (Docker của nhóm trưởng).
   - Không dùng `django-browser-reload` (quyết định 2026-11-10); khi sửa code thì tự F5.
 - **Triển khai:** Nginx (HTTPS) → Gunicorn (127.0.0.1:8000) → Django → MySQL (127.0.0.1:3306), chạy trên VM Ubuntu hoặc Docker Compose.
 - **Cách làm:** bảo mật được thiết kế cùng chức năng (secure by design). Mỗi chức năng là một GitHub issue gồm cả yêu cầu chức năng lẫn yêu cầu bảo mật. Người kiểm thử xác nhận cả hai thì mới đóng issue.
@@ -56,7 +60,7 @@
   - Ngoại lệ bắt buộc: bảng nội bộ của Django và thư viện (`accounts_user`, `auth_*`, `django_session`, `django_content_type`, `axes_*`, `otp_*`) do code có sẵn của Django đọc/ghi trực tiếp, với quyền tối thiểu theo từng bảng (chỉ `SELECT` trên `auth_*`, `accounts_user_groups`; không `DELETE` trên `accounts_user`). `core_securityevent` chỉ được `INSERT`.
   - **Chống leo thang quyền bằng trigger thay cho quyền theo cột** (đổi 2026-11-10): `user.save()` của Django luôn ghi mọi cột nên `GRANT UPDATE(cột)` làm hỏng đăng ký/đổi mật khẩu. Thay bằng trigger `trg_user_guard_insert`/`trg_user_guard_update` (`database/objects/10_...`): với `app_customer`, cấm tạo user `is_staff`/`is_superuser` = 1, cấm đổi 2 cột này, và trên dòng của nhân viên chỉ được đổi `last_login` (chặn ghi đè mật khẩu admin). Hệ quả: tạo admin bằng `createsuperuser` với `settings.migrate`; nhân viên đổi mật khẩu/hồ sơ trong app `dashboard` (kết nối `staff`).
   - Quyền cấp qua **role** MySQL `r_customer`, `r_staff` (tài khoản chỉ được gán role), file `database/grants/01_role_privileges.sql`.
-  - Ai tạo gì: `bookstore_migrate` chỉ tạo/sửa **bảng** (Django `migrate`, gồm bảng nghiệp vụ qua migration `core/0001_business_schema` đọc `database/schema/01_tables.sql`). Trigger/view/thủ tục ở `database/objects/`, quyền ở `database/grants/`, do **root** chạy bằng `docker compose exec db sh /database/apply.sh`, `DEFINER = bookstore_definer@localhost` (khóa đăng nhập). Lý do: khi bật binlog, tạo trigger/thủ tục cần SUPER; không cấp cho migrate và không bật `log_bin_trust_function_creators`.
+  - Ai tạo gì: `bookstore_migrate` chỉ tạo/sửa **bảng** (Django `migrate`, gồm bảng nghiệp vụ qua migration `core/0001_business_schema` đọc `database/schema/01_tables.sql`). Trigger/view/thủ tục ở `database/objects/`, quyền ở `database/grants/`, do **root** chạy bằng `python manage.py db_apply`, `DEFINER = bookstore_definer@localhost` (khóa đăng nhập). Lý do: khi bật binlog, tạo trigger/thủ tục cần SUPER; không cấp cho migrate và không bật `log_bin_trust_function_creators`.
   - Danh sách dự kiến – khách (`app_customer`): view `v_public_books`, `v_public_categories`, `v_book_reviews`; thủ tục `sp_cart_add_item`, `sp_cart_update_item`, `sp_cart_remove_item`, `sp_my_cart`, `sp_my_orders`, `sp_my_order_detail`, `sp_place_order`, `sp_confirm_payment`, `sp_review_upsert`. Nhân viên (`app_staff`): view `v_staff_books`, `v_staff_orders` (SĐT che), `v_staff_reviews`, `v_audit_log`, `v_security_events`; thủ tục `sp_book_create`, `sp_book_update`, `sp_book_set_stock`, `sp_book_set_active`, `sp_category_save`, `sp_order_set_status`, `sp_review_set_visible`. `sp_cancel_expired_orders` chạy tự động bằng MySQL Event Scheduler.
   - Thủ tục đọc dữ liệu "của tôi" nhận `p_user_id` từ Django; kiểm tra quyền ở Django (lớp 1) vẫn bắt buộc.
   - Phía Django: model nghiệp vụ chỉ để đọc (`managed = False`, trỏ vào view); mọi thao tác ghi đi qua `services.py` gọi `callproc`. Không dùng `/admin/` mặc định cho bảng nghiệp vụ.
@@ -94,7 +98,7 @@ Các file CSDL còn lại (chưa viết; quy ước đặt tên xem `database/RE
 | `database/objects/1x_trg_audit_*.sql` | Trigger ghi `core_auditlog` cho `catalog_book`, `orders_order` |
 | `database/backup/` | Script `mysqldump` + mã hóa |
 
-Đã có từ bước 5: `init/01_users_roles.sh`, `config/my.cnf`, `schema/01_tables.sql`, `objects/10_trg_accounts_user_guard.sql`, `grants/01_role_privileges.sql`, `apply.sh`, `.env.db.example`, `README.md`.
+Đã có từ bước 5: `config/my.cnf`, `schema/01_tables.sql`, `objects/10_trg_accounts_user_guard.sql`, `grants/01_role_privileges.sql`, `.env.db.example`, `README.md`; lệnh `core/management/commands/db_setup.py`, `db_apply.py` (+ `core/dbadmin.py`).
 
 ### Phân loại
 
@@ -186,16 +190,14 @@ secure-bookstore/
 │   │   └── dashboard/       # quản lý sách, đơn, đánh giá
 │   └── static/              # css/, js/ theo khu vực (base, shop, account, dashboard), img/; không JS inline
 ├── database/                # phần CSDL (40% điểm), xem database/README.md
-│   ├── init/                # 01_users_roles.sh: container chạy 1 lần (role, 4 tài khoản, validate_password)
-│   ├── config/my.cnf        # hardening MySQL
+│   ├── config/my.cnf        # hardening MySQL (container Docker)
 │   ├── schema/              # 01_tables.sql (bảng nghiệp vụ), Django migration đọc
 │   ├── objects/             # 10_trg_*, 20_v_*, 30_sp_*: trigger, view, thủ tục (root chạy)
-│   ├── grants/              # quyền của role và definer (root chạy)
-│   ├── apply.sh             # chạy objects/ rồi grants/ trong container
+│   ├── grants/              # quyền của role và definer (root chạy bằng db_apply)
 │   ├── .env.db.example      # mẫu mật khẩu root/migrate (.env.db không commit)
 │   └── backup/              # script mysqldump + mã hóa, hướng dẫn khôi phục
 ├── deploy/                  # nginx.conf, gunicorn, chứng chỉ demo
-├── compose.yaml             # MySQL 8.4 cho dev (bước 5)
+├── compose.yaml             # MySQL 8.4 bằng Docker (tùy chọn, bước 5)
 ├── security-tests/          # script race condition, payload, cấu hình sqlmap/ZAP – người kiểm thử
 │   └── evidence/            # ảnh chụp bằng chứng trước/sau
 ├── docs/                    # báo cáo, slide, sơ đồ, bảng phân công
@@ -213,7 +215,7 @@ Ghi chú kỹ thuật:
 - `STATIC_ROOT` (kết quả `collectstatic`) và `MEDIA_ROOT` (ảnh upload) nằm ngoài `frontend/` và được đưa vào `.gitignore`.
 - Lệnh chạy: `cd backend && python manage.py runserver` khi phát triển; Gunicorn chạy từ `backend/` khi triển khai.
 - File `.env` đặt ở thư mục gốc, không commit.
-- `DATABASES` có 2 kết nối cùng DB `bookstore`: `default` (`DB_CUSTOMER_USER` = `app_customer`) và `staff` (`DB_STAFF_USER` = `app_staff`, `TEST: MIRROR default`). Trong app `dashboard`, mọi truy vấn dùng `.using("staff")` và `save(using="staff")`. Router `core.db_routers.MigrateOnDefaultRouter` chỉ cho migrate trên `default`. Lệnh cần quyền cao (`migrate`, `createsuperuser`, `test`) chạy với `DJANGO_SETTINGS_MODULE=bookstore.settings.migrate`: dùng `bookstore_migrate` cho cả 2 kết nối, mật khẩu nhập tay vào biến `DB_MIGRATE_PASSWORD` (`read -rs`), không nằm trong `.env`.
+- `DATABASES` có 2 kết nối cùng DB `bookstore`: `default` (`DB_CUSTOMER_USER` = `app_customer`) và `staff` (`DB_STAFF_USER` = `app_staff`, `TEST: MIRROR default`). Trong app `dashboard`, mọi truy vấn dùng `.using("staff")` và `save(using="staff")`. Router `core.db_routers.MigrateOnDefaultRouter` chỉ cho migrate trên `default`. Lệnh cần quyền cao (`migrate`, `createsuperuser`, `test`) chạy với `--settings=bookstore.settings.migrate`: dùng `bookstore_migrate` cho cả 2 kết nối, mật khẩu lấy từ `DB_MIGRATE_PASSWORD` trong biến môi trường hoặc `database/.env.db`, không nằm trong `.env`.
 - Xác thực và session luôn đi qua kết nối `default`, nên `app_customer` cần quyền trên các bảng `auth_*`, `django_session`, `axes_*`, `otp_*`.
 - Gọi procedure bằng `cursor.callproc("sp_place_order", [user_id, items_json])` trong `services.py` (tham số truyền riêng, không nối chuỗi). View đọc qua model `managed = False`, `db_table = "v_staff_orders"`.
 - Lỗi quyền từ MySQL (`OperationalError` 1142 "command denied") được bắt, ghi `security.log` và trả trang 403.
@@ -269,7 +271,7 @@ NhomXX_ATUDW-CSDL_WebBanSachAnToan/
 | 2 | `manage.py` (mặc định dev), `bookstore/urls.py`, `wsgi.py`/`asgi.py` (mặc định prod), `settings/base.py`/`dev.py`/`prod.py`, `.env.example`, `requirements.txt`; `check` và `check --deploy` sạch; `DATABASES = {}` tạm thời | Xong |
 | 3 | 6 app (`core`, `accounts`, `catalog`, `orders`, `payments`, `dashboard`) đăng ký trong `LOCAL_APPS`; Custom User `accounts.User` + `AUTH_USER_MODEL`; mỗi app có `apps.py`, `urls.py` (`app_name`), `views.py`, `models.py`, `admin.py` (chỉ ghi chú), `tests/`; `services.py` ở catalog/orders/payments/dashboard | Xong (`check` sạch, đã sinh `accounts/migrations/0001_initial.py`); chưa chạy `migrate` |
 | 4 | Khung frontend: `base.html`, 3 layout (`customer`/`auth`/`admin`), components (`navbar`, `footer`, `messages`, `admin_sidebar`), trang lỗi 400/403/403_csrf/404/500, `base.css`, `base.js` (`Bookstore.postForm` gửi CSRF), favicon, `frontend/README.md`; trang chủ tạm `catalog:home`; `include("catalog.urls")`; `handler400/403/404/500` và `CSRF_FAILURE_VIEW` trỏ về `core.views` | Xong trên máy; lần đẩy đầu lên GitHub (commit `bff7e92`) thiếu một phần (`urls.py` gốc rỗng, chưa có view `catalog:home`, 2 thẻ `<title>`, thiếu `favicon.svg`, `frontend/README.md`, `tests/__init__.py`, `accounts/app.py` sai tên) → gói `sua-buoc4.zip` |
-| 5 | `compose.yaml` (MySQL 8.4), `database/` (init, config, schema, objects, grants, `apply.sh`), `DATABASES` 2 kết nối + TLS, router, `settings/migrate.py`, migration `core/0001_business_schema`, `mysqlclient`; `migrate` lần đầu + `apply.sh` + `createsuperuser` | Đã gửi gói `buoc5-mysql.zip` (thử trên MySQL 8.0 trong sandbox, vì không tải được image 8.4), chờ áp dụng |
+| 5 | `compose.yaml` (MySQL 8.4, tùy chọn), `database/` (config, schema, objects, grants, README), lệnh `db_setup`/`db_apply`, `DATABASES` 2 kết nối + TLS, router, `settings/migrate.py`, migration `core/0001_business_schema`, `mysqlclient`; `db_setup` + `migrate` + `db_apply` + `createsuperuser` | Gói `buoc5-mysql.zip` bản 1 (chỉ Docker, init script) bị thay; bản 2 `buoc5-mysql-v2.zip` (đa nền tảng: `db_setup`/`db_apply`, Docker tùy chọn) đã gửi 2026-11-11, thử đủ trên MySQL 8.0 trong sandbox; chờ áp dụng |
 | 6 | README, CODEOWNERS, mẫu PR/issue, commit đầu tiên, đẩy lên GitHub, bật branch protection | |
 
 Lưu ý kỹ thuật đã gặp:
@@ -279,14 +281,16 @@ Lưu ý kỹ thuật đã gặp:
 - Comment template: `{# ... #}` chỉ dùng cho MỘT dòng; comment nhiều dòng bằng `{# #}` bị in thẳng ra HTML (lộ ghi chú nội bộ). Nhiều dòng phải dùng `{% comment %}...{% endcomment %}`.
 - Test client của Django không phục vụ `/static/` (trả 404); kiểm tra file static bằng `runserver` thật.
 - Trang 500 render không cần request (không dùng layout có navbar/messages) vì lỗi có thể do CSDL.
-- Custom User: username theo regex `^[A-Za-z0-9._-]{3,50}$` (`max_length=50`, nhóm trưởng đổi từ 150 xuống 50; migration `0001_initial` đã sinh theo 50), email bắt buộc và unique, có `phone_encrypted`, `email_verified`, 2 CHECK constraint giống lược đồ.
+- Custom User: username theo regex `^[A-Za-z0-9._-]{3,50}$` (`max_length=50`, chốt 2026-11-11, đổi từ 150; migration `0001_initial` đã sinh theo 50), email bắt buộc và unique, có `phone_encrypted`, `email_verified`, 2 CHECK constraint giống lược đồ.
 - File cấu hình app phải tên `apps.py` (đặt nhầm `app.py` thì Django lặng lẽ dùng AppConfig mặc định, mất `verbose_name`, không báo lỗi).
-- `.gitignore` có `.env.*` + `!.env.example` sẽ bỏ qua luôn `database/.env.db.example` → cần thêm `!*.env*.example` hoặc `!database/.env.db.example` ở bước 5.
+- `.gitignore` có `.env.*` + `!.env.example` sẽ bỏ qua luôn `database/.env.db.example` → bước 5 thêm dòng `!database/.env.db.example`.
 - Django 6.1 từ chối MySQL < 8.4 (`NotSupportedError: MySQL 8.4 or later is required`).
-- Khi binlog bật, `CREATE TRIGGER`/`PROCEDURE` cần SUPER (lỗi 1419) → trigger/thủ tục do root tạo qua `apply.sh`, không qua migration.
+- Khi binlog bật, `CREATE TRIGGER`/`PROCEDURE` cần SUPER (lỗi 1419) → trigger/thủ tục do root tạo qua `db_apply`, không qua migration.
 - Trigger chạy bằng quyền của DEFINER: definer cần `TRIGGER` và `SELECT` trên bảng (thiếu `SELECT` thì lỗi 1143 khi đọc `NEW.cột`). Trong trigger, `USER()` là tài khoản gọi, `CURRENT_USER()` là definer.
 - `GRANT` trên tên CSDL có `_` phải viết `test\_bookstore` (`_` là ký tự đại diện).
-- Script trong `docker-entrypoint-initdb.d` dạng `.sh` không có quyền thực thi được entrypoint `source` (dùng được `docker_process_sql`); không đặt `set -u` trong đó. `IDENTIFIED BY RANDOM PASSWORD` in mật khẩu ra log, không dùng.
+- `IDENTIFIED BY RANDOM PASSWORD` in mật khẩu ra màn hình/log, không dùng; definer được tạo với mật khẩu ngẫu nhiên sinh trong Python và không lưu.
+- MySQLdb truyền tham số an toàn được cả cho tên tài khoản: `cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user, host, pw))`; tên CSDL (định danh) thì kiểm tra regex rồi mới chèn vào câu lệnh.
+- `--settings=...` thay cho biến `DJANGO_SETTINGS_MODULE=...` để lệnh chạy giống nhau trên bash và PowerShell.
 - `RunSQL` với chuỗi nhiều câu lệnh: Django tách bằng `sqlparse`; tự tách và bỏ câu rỗng (chỉ còn chú thích) để tránh lỗi "Query was empty".
 - CSDL tạm của `manage.py test` không có trigger/phân quyền; kiểm tra phân quyền trên CSDL dev.
 - Việc cần nhớ ở bước accounts: nếu Django nâng số vòng băm PBKDF2, lần đăng nhập đầu của nhân viên sẽ tự lưu lại mật khẩu bằng `app_customer` và bị trigger chặn → cần xử lý (bắt lỗi hoặc băm lại qua kết nối `staff`).
@@ -439,10 +443,10 @@ Ký hiệu: **[BB]** bắt buộc · **[NL]** nên làm · **[CĐ]** cộng đi�
 - [ ] [BB] (1) `mysql_secure_installation`; plugin `validate_password` mức MEDIUM trở lên.
 - [ ] [BB] (2) Không có SQL nối chuỗi, kể cả trong stored procedure.
 - [ ] [BB] (3) Ba tài khoản ứng dụng, mỗi tài khoản quyền tối thiểu theo vai trò (chương 6.2):
-    - `app_customer@172.28.0.1` (role `r_customer`): `SELECT` trên các view công khai; `EXECUTE` trên các thủ tục của khách (xem mục 2); `SELECT, INSERT, UPDATE` trên `accounts_user` (trigger chặn leo thang), `SELECT` trên `auth_*`/`accounts_user_groups`, CRUD trên `django_session`; `INSERT` trên `core_securityevent`. **Không có quyền nào trên bảng nghiệp vụ.** (Phần Django đã làm ở bước 5.)
-    - `app_staff@172.28.0.1` (role `r_staff`): `SELECT` trên các view nhân viên; `EXECUTE` trên các thủ tục nhân viên; quyền theo cột trên các bảng auth; `INSERT` trên `core_securityevent`. **Không có quyền nào trên bảng nghiệp vụ**, không đọc được SĐT/địa chỉ gốc.
+    - `app_customer@<host tự dò>` (role `r_customer`): `SELECT` trên các view công khai; `EXECUTE` trên các thủ tục của khách (xem mục 2); `SELECT, INSERT, UPDATE` trên `accounts_user` (trigger chặn leo thang), `SELECT` trên `auth_*`/`accounts_user_groups`, CRUD trên `django_session`; `INSERT` trên `core_securityevent`. **Không có quyền nào trên bảng nghiệp vụ.** (Phần Django đã làm ở bước 5.)
+    - `app_staff@<host tự dò>` (role `r_staff`): `SELECT` trên các view nhân viên; `EXECUTE` trên các thủ tục nhân viên; quyền theo cột trên các bảng auth; `INSERT` trên `core_securityevent`. **Không có quyền nào trên bảng nghiệp vụ**, không đọc được SĐT/địa chỉ gốc.
     - `bookstore_definer@localhost`: tài khoản **khóa đăng nhập** (`ACCOUNT LOCK`), chỉ dùng làm definer cho thủ tục và view; có quyền trên bảng nghiệp vụ.
-    - `bookstore_migrate@172.28.0.1`: `SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, ALTER, INDEX, REFERENCES` trên `bookstore.*` (+ toàn quyền trên `test\_bookstore.*`); chỉ dùng khi chạy migrate/createsuperuser/test. Không tạo được trigger/view/thủ tục (root làm qua `apply.sh`).
+    - `bookstore_migrate@<host tự dò>`: `SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, ALTER, INDEX, REFERENCES` trên `bookstore.*` (+ toàn quyền trên `test\_bookstore.*`); chỉ dùng khi chạy migrate/createsuperuser/test. Không tạo được trigger/view/thủ tục (root làm qua `db_apply`).
     - Không tài khoản nào có `DELETE`/`UPDATE` trên `audit_log`.
 - [ ] [BB] (3) Stored procedure cho thao tác nhạy cảm: `sp_place_order`, `sp_confirm_payment`, `sp_cancel_expired_orders` (`SQL SECURITY DEFINER`, definer là user không đăng nhập được); tham số kiểm tra kiểu và giới hạn bên trong thủ tục; không ghép chuỗi động.
 - [ ] [BB] (3) View theo vai trò: `v_public_books` (chỉ sách đang bán, không có giá nhập), `v_staff_orders` (SĐT, địa chỉ đã che).

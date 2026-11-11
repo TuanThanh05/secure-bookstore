@@ -1,0 +1,48 @@
+# =====================================================================
+# MySQL 8.4 LTS cho máy phát triển (tùy chọn – máy cài MySQL thường thì bỏ qua file này).
+#
+#   docker compose up -d      # bật MySQL (lần đầu tải image ~ 600 MB)
+#   docker compose ps         # đợi cột STATUS ghi (healthy)
+#   docker compose down       # tắt, GIỮ NGUYÊN dữ liệu (nằm trong volume mysql_data)
+#   docker compose down -v    # tắt và XÓA SẠCH dữ liệu (làm lại từ đầu)
+#
+# Container không tự bật lại khi Docker khởi động: cần thì `up`, xong thì `down`.
+# Tài khoản, CSDL, bảng KHÔNG tạo ở đây mà bằng các lệnh Django:
+#   python manage.py db_setup / migrate / db_apply   (xem database/README.md)
+# =====================================================================
+name: secure-bookstore
+
+services:
+  db:
+    image: mysql:8.4
+    env_file:
+      - database/.env.db            # MYSQL_ROOT_PASSWORD (chỉ dùng lần khởi tạo đầu tiên)
+    environment:
+      # root chỉ đăng nhập được từ chính máy này (qua cổng 127.0.0.1 → gateway
+      # 172.28.0.1 của mạng bên dưới) và từ bên trong container
+      MYSQL_ROOT_HOST: "172.28.0.%"
+    ports:
+      # CHỈ mở trên 127.0.0.1: máy khác trong mạng LAN không kết nối được 3306
+      - "127.0.0.1:${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/config/my.cnf:/etc/mysql/conf.d/bookstore.cnf:ro
+    networks:
+      - bookstore_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  mysql_data:
+
+networks:
+  # Dải địa chỉ cố định: sau mỗi lần down/up, MySQL vẫn thấy máy bạn ở
+  # 172.28.0.1, nên các tài khoản tạo theo địa chỉ đó vẫn dùng được.
+  bookstore_net:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+          gateway: 172.28.0.1
