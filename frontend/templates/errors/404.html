@@ -1,9 +1,20 @@
 {% extends "layouts/customer.html" %}
+{% load static %}
 {% block title %}Không tìm thấy trang{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/shop.css' %}">{% endblock %}
 {% block content %}
   <section class="error-page">
-    <h1>404</h1>
-    <p>Trang bạn tìm không tồn tại hoặc bạn không có quyền truy cập.</p>
-    <a class="btn" href="{% url 'catalog:home' %}">Về trang chủ</a>
+    {% include "components/icon.html" with name="book" size="lg" %}
+    <p class="error-page__code">404</p>
+    <h1 class="error-page__title">Cuốn sách này không có trên kệ</h1>
+    <p class="error-page__text">Trang bạn tìm không tồn tại hoặc bạn không có quyền truy cập. Thử tìm sách bạn cần nhé.</p>
+    {% url 'catalog:home' as home_url %}
+    <div class="error-page__search">
+      {% include "components/search_bar.html" with action=home_url %}
+    </div>
+    <div class="error-page__actions">
+      <a class="btn" href="{{ home_url }}">Về trang chủ</a>
+      <a class="btn btn--secondary" href="{% url 'catalog:about' %}">Giới thiệu</a>
+    </div>
   </section>
 {% endblock %}

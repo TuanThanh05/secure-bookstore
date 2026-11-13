@@ -12,7 +12,7 @@ Ký hiệu: **[BB]** bắt buộc · **[NL]** nên làm · **[CĐ]** cộng đi�
 - Django lo: băm mật khẩu, 4 validator, CSRF, ORM.
 - [x] [BB] Validator riêng: chữ hoa, chữ thường, số, ký tự đặc biệt, tối thiểu 12 ký tự.
 - [x] [BB] Kiểm tra đầu vào ở server bằng Django Form (email, SĐT regex, độ dài họ tên, ký tự username).
-- [ ] [BB] Chống mass assignment: form chỉ khai báo trường cho phép, không gửi được `is_staff`/`is_superuser`.
+- [x] [BB] Chống mass assignment: form chỉ khai báo trường cho phép, không gửi được `is_staff`/`is_superuser`.
 - [ ] [NL] Xác minh email: `is_active=False` cho tới khi bấm link có token 24 giờ.
 - [ ] [NL] CAPTCHA.
 - [ ] [CĐ] Kiểm tra mật khẩu đã bị lộ qua Have I Been Pwned (k-anonymity).
@@ -23,8 +23,8 @@ Ký hiệu: **[BB]** bắt buộc · **[NL]** nên làm · **[CĐ]** cộng đi�
 - Django KHÔNG có: giới hạn đăng nhập sai, khóa tài khoản, 2FA, CAPTCHA.
 - [x] [BB] Sai 5 lần thì khóa 15 phút, theo username và IP (`django-axes`).
 - [x] [BB] Thông báo lỗi chung cho mọi trường hợp sai.
-- [ ] [BB] Đăng xuất bằng POST, xóa session ở server.
-- [ ] [BB] Chống open redirect với `next` (`url_has_allowed_host_and_scheme`).
+- [x] [BB] Đăng xuất bằng POST, xóa session ở server.
+- [x] [BB] Chống open redirect với `next` (`url_has_allowed_host_and_scheme`).
 - [ ] [NL] 2FA TOTP, bắt buộc với admin (`django-otp`).
 - [ ] [NL] CAPTCHA sau 3 lần sai.
 - [ ] [NL] `PASSWORD_RESET_TIMEOUT = 1800`, giới hạn số lần yêu cầu reset mỗi giờ.
