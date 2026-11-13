@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
+from django.contrib.auth.hashers import check_password
 from django.db import models
 from django.db.models import Q
 
@@ -29,6 +30,11 @@ class User(AbstractUser):
 
     phone_encrypted = models.CharField("SĐT (đã mã hóa)", max_length=512, null=True, blank=True)
     email_verified = models.BooleanField("đã xác minh email", default=False)
+
+    def check_password(self, raw_password):
+        if self.is_staff:
+            return check_password(raw_password, self.password)
+        return super().check_password(raw_password)
 
     class Meta:
         db_table = "accounts_user"

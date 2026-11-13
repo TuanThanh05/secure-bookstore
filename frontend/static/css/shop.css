@@ -102,6 +102,72 @@
 .prose ul { padding-left: 1.2rem; }
 .prose li { margin-bottom: var(--space-xs); }
 
+/* --- Trang lỗi (errors/400, 403, 403_csrf, 404, 500) ---
+   Hai kiểu HTML đều dùng được:
+     404:      .error-page > .icon, .error-page__code, .error-page__title, __text, __search, __actions
+     còn lại:  .error-page > h1 (mã lỗi), p (mô tả), .btn
+   Ghi đè rule .error-page của base.css (h1 72px đỏ) cho hợp theme giấy ngà + đỏ đô + vàng đồng. */
+.error-page {
+  display: flex; flex-direction: column; align-items: center;
+  max-width: 640px; margin: 0 auto;
+  padding: var(--space-2xl) 0;
+  text-align: center;
+}
+
+/* Biểu tượng sách trong vòng tròn đỏ nhạt */
+.error-page > .icon {
+  width: 72px; height: 72px; padding: 20px;
+  margin-bottom: var(--space-lg);
+  border-radius: var(--radius-full);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+/* Mã lỗi: số lớn kiểu chữ có chân, gạch vàng đồng bên dưới */
+.error-page__code,
+.error-page > h1:not(.error-page__title) {
+  margin: 0 0 var(--space-md);
+  font-family: var(--font-serif);
+  font-size: 112px; font-weight: 600; line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--color-primary);
+}
+.error-page__code::after,
+.error-page > h1:not(.error-page__title)::after {
+  content: "";
+  display: block;
+  width: 56px; height: 2px;
+  margin: var(--space-md) auto 0;
+  border-radius: var(--radius-full);
+  background: var(--color-gold);
+}
+
+/* Trang có biểu tượng thì mã lỗi nhỏ lại, nhường chỗ cho tiêu đề */
+.error-page > .icon ~ .error-page__code { font-size: 64px; }
+
+.error-page .error-page__title {
+  max-width: 560px;
+  margin: 0 0 var(--space-sm);
+  font-size: 34px; line-height: 1.2; letter-spacing: -0.01em;
+  color: var(--color-text);
+  text-wrap: balance;   /* chia đều các dòng, tránh một chữ rớt xuống dòng riêng */
+}
+
+.error-page__text,
+.error-page > p:not(.error-page__code) {
+  max-width: 520px;
+  margin: 0 0 var(--space-xl);
+  font-size: 16px; line-height: 1.7;
+  color: var(--color-muted);
+}
+
+.error-page__search { width: 100%; }
+.error-page__search .search-bar { margin-bottom: var(--space-lg); }
+
+.error-page__actions {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-sm);
+}
+
 /* --- Đáp ứng màn hình --- */
 @media (max-width: 1023px) {
   .book-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -110,11 +176,22 @@
   .hero__title { font-size: 36px; }
   .hero__subtitle { font-size: 16px; }
   .book-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); }
+  .error-page { padding: var(--space-xl) 0; }
+  .error-page__code,
+  .error-page > h1:not(.error-page__title) { font-size: 80px; }
+  .error-page > .icon ~ .error-page__code { font-size: 52px; }
+  .error-page .error-page__title { font-size: 26px; }
+  .error-page__text,
+  .error-page > p:not(.error-page__code) { font-size: 15px; }
 }
 @media (max-width: 479px) {
   .book-grid { gap: var(--space-sm); }
   .book-card { padding: var(--space-sm); }
   .book-card__title { font-size: 15px; }
+  /* Nút tìm trong ô tìm kiếm của trang 404: bớt chữ cho vừa điện thoại */
+  .error-page__search .search-bar .btn { padding: 0.6rem 1rem; }
+  .error-page__actions { width: 100%; }
+  .error-page__actions .btn { flex: 1 1 100%; }
 }
 @media (max-width: 339px) {
   .book-grid { grid-template-columns: 1fr; }

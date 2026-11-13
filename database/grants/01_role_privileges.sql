@@ -44,6 +44,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON django_session TO 'r_customer';
 
 -- Nhật ký bảo mật: chỉ được ghi thêm, không đọc/sửa/xóa
 GRANT INSERT ON core_securityevent             TO 'r_customer';
+GRANT SELECT, INSERT, UPDATE, DELETE ON axes_accessattempt           TO 'r_customer';
+GRANT SELECT, INSERT, UPDATE, DELETE ON axes_accessattemptexpiration TO 'r_customer';
+GRANT SELECT, INSERT, UPDATE         ON axes_accesslog               TO 'r_customer';
 
 -- ---------------------------------------------------------------------
 -- r_staff: kết nối "staff" (app_staff), chỉ app dashboard dùng

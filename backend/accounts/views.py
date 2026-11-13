@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
+from django.contrib.auth.views import LogoutView
 
 from .forms import RegisterForm
 
@@ -19,3 +20,9 @@ def register(request):
         form = RegisterForm()
 
     return render(request, "account/register.html", {"form": form})
+
+class SecureLogoutView(LogoutView):
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        response["Clear-Site-Data"] = '"cache", "cookies", "storage"'
+        return response

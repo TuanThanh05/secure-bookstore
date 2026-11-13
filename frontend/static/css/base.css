@@ -190,8 +190,27 @@ img { max-width: 100%; height: auto; display: block; }
   color: var(--color-muted); text-decoration: none;
 }
 .navbar__link:hover { color: var(--color-primary); }
-.navbar__user { display: inline-flex; align-items: center; gap: var(--space-xs); color: var(--color-muted); font-size: 13px; }
-.navbar__logout { margin: 0; }
+/* Người dùng đang đăng nhập: viên thuốc nền tối, chữ trắng, biểu tượng trong vòng tròn mờ */
+.navbar__user {
+  display: inline-flex; align-items: center; gap: var(--space-sm);
+  max-width: 220px;
+  padding: 6px 16px 6px 6px;            /* 6 + 32 + 6 = 44px, cao bằng nút .btn */
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 13px; font-weight: 600;
+  box-shadow: var(--shadow-card);
+}
+.navbar__user .icon {
+  width: 32px; height: 32px; padding: 7px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.16);
+}
+/* Tên dài (tối đa 50 ký tự) thì cắt bằng dấu "…" */
+.navbar__username { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Nút đăng xuất: viên thuốc cùng màu .btn (đỏ đô) */
+.navbar__logout { margin: 0; display: inline-flex; }
 
 /* --- Footer --- */
 .footer { margin-top: auto; background: var(--color-surface-low); border-top: 1px solid var(--color-border); }
@@ -249,6 +268,9 @@ img { max-width: 100%; height: auto; display: block; }
   .navbar__links { gap: 2px; }
   .navbar__link { padding: var(--space-xs); font-size: 11px; letter-spacing: 0.04em; }
   .navbar__links .btn { padding: 8px 14px; font-size: 11px; }
+  /* Nút .btn trên màn nhỏ cao 36px, nên viên người dùng cũng 4 + 28 + 4 = 36px */
+  .navbar__user { max-width: 150px; font-size: 12px; padding: 4px 12px 4px 4px; }
+  .navbar__user .icon { width: 28px; height: 28px; padding: 6px; }
   .admin { grid-template-columns: 1fr; }
   .admin__sidebar { border-right: 0; border-bottom: 1px solid var(--color-border); }
 }
@@ -257,4 +279,7 @@ img { max-width: 100%; height: auto; display: block; }
    chữ thương hiệu bị ẩn bằng mắt nhưng trình đọc màn hình vẫn đọc được */
 @media (max-width: 479px) {
   .navbar__brand span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  /* Điện thoại: viên người dùng chỉ còn biểu tượng; tên vẫn đọc được bằng trình đọc màn hình */
+  .navbar__user { padding: 4px; }
+  .navbar__username { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }

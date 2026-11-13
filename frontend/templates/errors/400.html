@@ -1,5 +1,7 @@
 {% extends "layouts/customer.html" %}
+{% load static %}
 {% block title %}Yêu cầu không hợp lệ{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/shop.css' %}">{% endblock %}
 {% block content %}
   <section class="error-page">
     <h1>400</h1>

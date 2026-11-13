@@ -13,12 +13,12 @@
       {% if user.is_authenticated %}
         <span class="navbar__user">
           {% include "components/icon.html" with name="person" size="sm" %}
-          {{ user.get_username }}
+          <span class="navbar__username">{{ user.get_username }}</span>
         </span>
         {% if logout_url %}
           <form class="navbar__logout" method="post" action="{{ logout_url }}">
             {% csrf_token %}
-            <button class="btn btn--link" type="submit">Đăng xuất</button>
+            <button class="btn" type="submit">Đăng xuất</button>
           </form>
         {% endif %}
       {% else %}
