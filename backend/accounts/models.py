@@ -27,9 +27,7 @@ class User(AbstractUser):
         error_messages={"unique": "Email này đã được sử dụng."},
     )
 
-    # --- Trường nhóm tự thêm ---
-    # SĐT đã mã hóa AES-GCM ở tầng ứng dụng (hàm mã hóa sẽ viết trong app core), lưu base64
-    phone_encrypted = models.CharField("SĐT (đã mã hóa)", max_length=512, null=True, blank=True)
+    phone_encrypted = models.CharField("SĐT", max_length=512, null=True, blank=True)
     email_verified = models.BooleanField("đã xác minh email", default=False)
 
     class Meta:
@@ -37,12 +35,10 @@ class User(AbstractUser):
         verbose_name = "người dùng"
         verbose_name_plural = "người dùng"
         constraints = [
-            # Khớp với CHECK trong lược đồ: chặn username lạ ngay tại CSDL
             models.CheckConstraint(
                 condition=Q(username__regex=USERNAME_REGEX),
                 name="ck_user_username_format",
             ),
-            # superuser bắt buộc là staff
             models.CheckConstraint(
                 condition=Q(is_superuser=False) | Q(is_staff=True),
                 name="ck_user_superuser_is_staff",

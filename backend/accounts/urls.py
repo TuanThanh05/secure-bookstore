@@ -1,10 +1,17 @@
-"""URL của app accounts. Dùng trong template: {% url 'accounts:<tên>' %}"""
-from django.urls import path  # noqa: F401  (dùng khi thêm URL)
+from django.contrib.auth import views as auth_views
+from django.urls import path
 
-from . import views  # noqa: F401
+from .forms import LoginForm
+from . import views
 
 app_name = "accounts"
 
 urlpatterns = [
-    # Ví dụ: path("", views.index, name="index"),
+    path("register/", views.register, name="register"),
+    path("login/", auth_views.LoginView.as_view(
+            template_name="account/login.html",
+            authentication_form=LoginForm,
+            redirect_authenticated_user=True,),name="login"),
+    path("logout/", auth_views.LogoutView.as_view(), name="logout"),
 ]
+

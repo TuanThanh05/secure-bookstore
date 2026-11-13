@@ -62,26 +62,16 @@ TEMPLATES = [
     },
 ]
 
-# ---------------------------------------------------------------------
-# Cơ sở dữ liệu – MySQL 8.4 (Docker theo compose.yaml, hoặc cài thường)
-# ---------------------------------------------------------------------
-# Hai kết nối cùng một CSDL, khác tài khoản MySQL (phân quyền lớp 2):
-#   "default" → app_customer: mọi app trừ dashboard (khách, đăng nhập, phiên)
-#   "staff"   → app_staff:    chỉ app dashboard dùng, bằng .using("staff")
-# Tài khoản migrate KHÔNG có ở đây (xem settings/migrate.py).
 _DB_COMMON = {
     "ENGINE": "django.db.backends.mysql",
     "NAME": env("DB_NAME", default="bookstore"),
     "HOST": env("DB_HOST", default="127.0.0.1"),
     "PORT": env("DB_PORT", default="3306"),
-    "CONN_MAX_AGE": 60,                 # giữ kết nối 60 giây
-    "CONN_HEALTH_CHECKS": True,         # kiểm tra kết nối còn sống trước khi dùng lại
+    "CONN_MAX_AGE": 60,
+    "CONN_HEALTH_CHECKS": True,
     "OPTIONS": {
         "charset": "utf8mb4",
-        # Bắt buộc mã hóa TLS giữa Django và MySQL (MySQL tự sinh chứng chỉ).
-        # Chưa kiểm tra danh tính server; muốn kiểm tra thì dùng "ssl": {"ca": ...}.
         "ssl_mode": "REQUIRED",
-        # Chế độ nghiêm ngặt: dữ liệu sai kiểu/quá dài bị từ chối thay vì bị cắt bớt
         "init_command": "SET sql_mode = 'STRICT_ALL_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,ONLY_FULL_GROUP_BY,NO_ENGINE_SUBSTITUTION'",
     },
 }
@@ -96,35 +86,26 @@ DATABASES = {
         **_DB_COMMON,
         "USER": env("DB_STAFF_USER", default="app_staff"),
         "PASSWORD": env("DB_STAFF_PASSWORD"),
-        "TEST": {"MIRROR": "default"},  # khi chạy test: dùng chung CSDL test với "default"
+        "TEST": {"MIRROR": "default"},
     },
 }
 
-# Chỉ migrate trên "default"; không bao giờ tạo/sửa bảng qua kết nối "staff"
 DATABASE_ROUTERS = ["core.db_routers.MigrateOnDefaultRouter"]
 
-# Khóa chính BIGINT, khớp với lược đồ v1
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Bước 3 bật dòng này, PHẢI có trước lần migrate đầu tiên:
 AUTH_USER_MODEL = "accounts.User"
 
-# ---------------------------------------------------------------------
-# Mật khẩu
-# ---------------------------------------------------------------------
 PASSWORD_HASHERS = [
-    "django.contrib.auth.hashers.PBKDF2PasswordHasher",  # sau có thể đổi sang Argon2
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher"
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-        "OPTIONS": {"min_length": 10},
-    },
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator","OPTIONS": {"min_length": 12},},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
-    # Bước sau: thêm validator riêng trong core (chữ hoa, thường, số, ký tự đặc biệt)
 ]
 
 # Link đặt lại mật khẩu hết hạn sau 30 phút
@@ -141,7 +122,7 @@ SESSION_SAVE_EVERY_REQUEST = True         # ...tính từ lần thao tác cuối
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 CSRF_COOKIE_NAME = "bs_csrftoken"
-CSRF_COOKIE_HTTPONLY = True               # AJAX lấy token từ {% csrf_token %} trong trang, không đọc cookie
+CSRF_COOKIE_HTTPONLY = True             
 CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_FAILURE_VIEW = "core.views.csrf_failure"
 
@@ -153,7 +134,6 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
 
-# Content Security Policy: chỉ tải tài nguyên từ chính site, không cho script inline
 SECURE_CSP = {
     "default-src": [CSP.SELF],
     "script-src": [CSP.SELF],

@@ -1,0 +1,42 @@
+{% extends "layouts/auth.html" %}
+{% load static %}
+{% block title %}Đăng nhập{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/account.css' %}">{% endblock %}
+{% block extra_js %}<script src="{% static 'js/account.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+  <h1 class="auth__title">Đăng nhập</h1>
+
+  <form method="post" class="auth-form" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="auth-form__alert" role="alert">
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+      </div>
+    {% endif %}
+
+    {% for field in form %}
+      <div class="auth-form__field{% if field.errors %} auth-form__field--error{% endif %}">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {% if field.widget_type == "password" %}
+          <div class="password-field">
+            {{ field }}
+            <button type="button" class="password-toggle" aria-controls="{{ field.id_for_label }}"
+                    aria-pressed="false" aria-label="Hiện mật khẩu" hidden>
+              {% include "components/icon.html" with name="visibility" %}
+              {% include "components/icon.html" with name="visibility-off" %}
+            </button>
+          </div>
+        {% else %}
+          {{ field }}
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    <input type="hidden" name="next" value="{{ next }}">
+    <button type="submit" class="btn auth-form__submit">Đăng nhập</button>
+  </form>
+
+  <p class="auth__switch">Chưa có tài khoản? <a href="{% url 'accounts:register' %}">Đăng ký</a></p>
+{% endblock %}
