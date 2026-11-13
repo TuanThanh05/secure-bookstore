@@ -182,3 +182,27 @@ STATIC_ROOT = REPO_DIR / "staticfiles"     # kết quả collectstatic, không c
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = REPO_DIR / "media"            # ảnh bìa upload, không commit, Nginx không cho thực thi
+
+LOG_DIR = REPO_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "plain": {"format": "%(asctime)s %(levelname)s %(name)s %(message)s"},
+    },
+    "handlers": {
+        "security_file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOG_DIR / "security.log",
+            "maxBytes": 5 * 1024 * 1024,
+            "backupCount": 5,
+            "encoding": "utf-8",
+            "formatter": "plain",
+        },
+    },
+    "loggers": {
+        "security": {"handlers": ["security_file"], "level": "INFO", "propagate": False},
+    },
+}
