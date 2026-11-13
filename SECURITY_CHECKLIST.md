@@ -10,19 +10,19 @@ Ký hiệu: **[BB]** bắt buộc · **[NL]** nên làm · **[CĐ]** cộng đi�
 
 ### 1. Đăng ký
 - Django lo: băm mật khẩu, 4 validator, CSRF, ORM.
-- [ ] [BB] Validator riêng: chữ hoa, chữ thường, số, ký tự đặc biệt, tối thiểu 10 ký tự.
-- [ ] [BB] Kiểm tra đầu vào ở server bằng Django Form (email, SĐT regex, độ dài họ tên, ký tự username).
+- [x] [BB] Validator riêng: chữ hoa, chữ thường, số, ký tự đặc biệt, tối thiểu 12 ký tự.
+- [x] [BB] Kiểm tra đầu vào ở server bằng Django Form (email, SĐT regex, độ dài họ tên, ký tự username).
 - [ ] [BB] Chống mass assignment: form chỉ khai báo trường cho phép, không gửi được `is_staff`/`is_superuser`.
 - [ ] [NL] Xác minh email: `is_active=False` cho tới khi bấm link có token 24 giờ.
 - [ ] [NL] CAPTCHA.
 - [ ] [CĐ] Kiểm tra mật khẩu đã bị lộ qua Have I Been Pwned (k-anonymity).
-- Demo: Burp thêm `is_staff=1` → vẫn là khách thường; mật khẩu `12345678` bị từ chối; `auth_user` lưu `pbkdf2_sha256$...`.
+- Demo: Burp thêm `is_staff=1` → vẫn là khách thường; mật khẩu `12345678` bị từ chối; `auth_user` lưu `pbkdf2_sha256$...`, `argon2`.
 
 ### 2. Đăng nhập, đăng xuất, quên mật khẩu
 - Django lo: đổi session ID khi đăng nhập, so sánh mật khẩu an toàn, token reset có hạn.
 - Django KHÔNG có: giới hạn đăng nhập sai, khóa tài khoản, 2FA, CAPTCHA.
-- [ ] [BB] Sai 5 lần thì khóa 15 phút, theo username và IP (`django-axes`).
-- [ ] [BB] Thông báo lỗi chung cho mọi trường hợp sai.
+- [x] [BB] Sai 5 lần thì khóa 15 phút, theo username và IP (`django-axes`).
+- [x] [BB] Thông báo lỗi chung cho mọi trường hợp sai.
 - [ ] [BB] Đăng xuất bằng POST, xóa session ở server.
 - [ ] [BB] Chống open redirect với `next` (`url_has_allowed_host_and_scheme`).
 - [ ] [NL] 2FA TOTP, bắt buộc với admin (`django-otp`).
