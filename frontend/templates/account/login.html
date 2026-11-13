@@ -31,6 +31,11 @@
         {% else %}
           {{ field }}
         {% endif %}
+        {% if field.errors %}
+          <ul class="auth-form__errors" id="{{ field.auto_id }}_error">
+            {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+          </ul>
+        {% endif %}
       </div>
     {% endfor %}
 

@@ -27,7 +27,7 @@ class User(AbstractUser):
         error_messages={"unique": "Email này đã được sử dụng."},
     )
 
-    phone_encrypted = models.CharField("SĐT", max_length=512, null=True, blank=True)
+    phone_encrypted = models.CharField("SĐT (đã mã hóa)", max_length=512, null=True, blank=True)
     email_verified = models.BooleanField("đã xác minh email", default=False)
 
     class Meta:
