@@ -12,6 +12,6 @@ urlpatterns = [
             template_name="account/login.html",
             authentication_form=LoginForm,
             redirect_authenticated_user=True,),name="login"),
-    path("logout/", auth_views.LogoutView.as_view(), name="logout"),
+    path("logout/", views.SecureLogoutView.as_view(), name="logout"),
 ]
 
