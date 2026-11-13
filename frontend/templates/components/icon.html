@@ -1,8 +1,2 @@
-{% load static %}{% comment %}
-  Icon SVG từ static/img/icons.svg (không dùng font icon từ CDN: CSP chặn).
-  Dùng:  {% include "components/icon.html" with name="search" %}
-         {% include "components/icon.html" with name="star" size="sm" %}
-  name: search, shopping-bag, star, star-half, star-empty, arrow-forward, logo,
-        person, login, logout, close, info, chevron-left, chevron-right, book
-  size: sm | lg (bỏ trống = 20px). Icon chỉ để trang trí: chữ đi kèm hoặc aria-label nằm ở phần tử cha.
-{% endcomment %}<svg class="icon{% if size %} icon--{{ size }}{% endif %}" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#{{ name }}"></use></svg>
+{% load static %}
+<svg class="icon{% if size %} icon--{{ size }}{% endif %}" aria-hidden="true" focusable="false"><use href="{% static 'img/icons.svg' %}#{{ name }}"></use></svg>

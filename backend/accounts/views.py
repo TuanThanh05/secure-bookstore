@@ -1,7 +1,21 @@
-"""View của app accounts.
+from django.contrib import messages
+from django.shortcuts import redirect, render
+from django.views.decorators.http import require_http_methods
 
-Quy ước: view giữ mỏng, chỉ làm 3 việc
-  1. Kiểm tra quyền (lớp 1): @login_required, @permission_required, lọc theo request.user
-  2. Gọi form (kiểm tra đầu vào) hoặc services.py (logic nghiệp vụ, gọi stored procedure)
-  3. render() hoặc redirect()
-"""
+from .forms import RegisterForm
+
+@require_http_methods(["GET", "POST"])
+def register(request):
+    if request.user.is_authenticated:
+        return redirect("catalog:home")
+
+    if request.method == "POST":
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Đăng ký thành công. Mời bạn đăng nhập.")
+            return redirect("accounts:login")
+    else:
+        form = RegisterForm()
+
+    return render(request, "account/register.html", {"form": form})

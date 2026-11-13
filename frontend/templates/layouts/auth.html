@@ -1,8 +1,7 @@
 {% extends "base.html" %}
-{% comment %} Layout trang ĐĂNG NHẬP / ĐĂNG KÝ / QUÊN MẬT KHẨU / 2FA: không navbar, khung ở giữa.
-   Trang con điền: title, content. {% endcomment %}
 
 {% block body %}
+  {% include "components/navbar.html" %}
   <main class="auth">
     <div class="auth__card">
       <a class="auth__brand" href="{% url 'catalog:home' %}">Secure Bookstore</a>

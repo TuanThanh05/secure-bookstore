@@ -1,0 +1,238 @@
+/* =====================================================================
+   account.css – khu vực tài khoản: đăng ký, đăng nhập, quên mật khẩu.
+   Nạp trong template bằng {% block extra_css %}. Chỉ dùng biến của base.css.
+
+   Khớp với HTML hiện có của account/register.html (vòng lặp {% for field in form %}),
+   không cần sửa template:
+     .auth-form            form, dạng lưới tự chia 1 hoặc 2 cột theo bề rộng thẻ
+     .auth-form__field     một ô: label + input + lỗi + gợi ý
+     .auth-form__errors    lỗi của ô        .auth-form__help   gợi ý của ô
+     .auth-form__alert     lỗi chung        .auth-form__submit nút gửi
+   ===================================================================== */
+
+/* --- Thẻ đăng ký rộng hơn để chia 2 cột ---
+   Nhận biết trang đăng ký bằng ô "nhập lại mật khẩu" (id_password2 do Django tạo).
+   Trang đăng nhập không có ô này nên giữ bề rộng 440px của base.css. */
+.auth__card:has(#id_password2) { max-width: 680px; }
+
+/* --- Viền thẻ cùng màu đỏ đô với nút "Đăng ký" --- */
+.auth__card { border: 2px solid var(--color-primary); }
+
+/* --- Tên thương hiệu căn giữa ---
+   fit-content để vùng bấm chỉ bằng chữ, không kéo dài hết chiều ngang thẻ. */
+.auth__brand {
+  display: flex;
+  justify-content: center;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* --- Tiêu đề, dòng chuyển trang --- */
+.auth__title {
+  text-align: center;
+  font-size: 30px;
+  letter-spacing: -0.01em;
+  margin-bottom: var(--space-lg);
+}
+
+.auth__switch {
+  margin: var(--space-lg) 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+.auth__switch a { font-weight: 600; text-decoration: none; }
+.auth__switch a:hover { text-decoration: underline; }
+
+/* --- Lưới form ---
+   Mỗi cột tối thiểu 240px: thẻ rộng thì 2 cột (email | mật khẩu...), thẻ hẹp
+   (đăng nhập, điện thoại) thì tự về 1 cột. */
+.auth-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-md) var(--space-lg);
+  align-items: start;
+}
+
+/* Lỗi chung, yêu cầu mật khẩu và nút gửi luôn trải hết bề ngang */
+.auth-form__alert,
+.auth-form__help--wide,
+.auth-form__submit { grid-column: 1 / -1; }
+
+/* --- Một ô nhập --- */
+.auth-form__field { display: grid; gap: 6px; min-width: 0; }
+
+.auth-form__field label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+/* Dấu * đỏ cho ô bắt buộc (Django tự gắn thuộc tính required lên input) */
+.auth-form__field:has(:required) label::after {
+  content: " *";
+  color: var(--color-primary);
+}
+
+.auth-form__field input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0.7rem 1rem 0.7rem 2.75rem;   /* chừa chỗ bên trái cho biểu tượng */
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-low);
+  background-repeat: no-repeat;
+  background-position: 1rem center;
+  background-size: 18px 18px;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 14px;
+  transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+}
+
+.auth-form__field input::placeholder { color: var(--color-subtle); opacity: 1; }
+
+.auth-form__field input:hover { background-color: var(--color-surface-mid); }
+
+.auth-form__field input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background-color: var(--color-surface);
+  box-shadow: 0 0 0 4px var(--color-primary-ring);
+}
+
+/* --- Biểu tượng trong ô nhập ---
+   Ảnh SVG nhúng dạng data URI (CSP cho phép img-src data:). Ảnh nền không đọc
+   được biến CSS, nên màu ghi thẳng: %238a7171 chính là --color-subtle (#8a7171).
+   Biểu tượng: Material Icons, Apache License 2.0 (giống icons.svg). */
+.auth-form__field input[name="username"],
+.auth-form__field input[name$="name"] {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238a7171'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E");
+}
+
+.auth-form__field input[type="email"] {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238a7171'%3E%3Cpath d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z'/%3E%3C/svg%3E");
+}
+
+.auth-form__field input[type="tel"] {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238a7171'%3E%3Cpath d='M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.24 1.02l-2.2 2.2z'/%3E%3C/svg%3E");
+}
+
+.auth-form__field input[type="password"] {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238a7171'%3E%3Cpath d='M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z'/%3E%3C/svg%3E");
+  letter-spacing: 0.15em;   /* các chấm mật khẩu thưa ra như mẫu */
+}
+.auth-form__field input[type="password"]::placeholder { letter-spacing: normal; }
+
+/* --- Gợi ý dưới ô (help_text) --- */
+.auth-form__help {
+  position: relative;
+  padding-left: 22px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-subtle);
+}
+
+/* Biểu tượng (i): dùng mask nên tô được bằng biến màu */
+.auth-form__help::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 15px;
+  height: 15px;
+  background-color: var(--color-subtle);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* help_text của ô mật khẩu là danh sách <ul> các yêu cầu */
+.auth-form__help ul { margin: 0; padding-left: 1rem; }
+.auth-form__help li + li { margin-top: 2px; }
+
+/* Khối yêu cầu mật khẩu: một khối liền dưới cả hai ô, kéo sát lên hàng ô nhập,
+   căn giữa theo chiều ngang của thẻ (khối chỉ rộng bằng nội dung) */
+.auth-form__help--wide {
+  justify-self: center;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: calc(var(--space-sm) * -1);
+}
+
+/* --- Lỗi --- */
+.auth-form__field--error label { color: var(--color-error); }
+
+.auth-form__field--error input,
+.auth-form__field--error input:hover {
+  border-color: var(--color-error);
+  background-color: var(--color-surface);
+}
+.auth-form__field--error input:focus { box-shadow: 0 0 0 4px rgba(186, 26, 26, 0.12); }
+
+.auth-form__errors {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--color-error);
+}
+
+.auth-form__alert {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-error);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-error);
+  font-size: 13px;
+}
+.auth-form__alert p { margin: 0; }
+.auth-form__alert p + p { margin-top: var(--space-xs); }
+
+/* --- Nút gửi: to, trải ngang, có mũi tên --- */
+.auth-form__submit {
+  width: 100%;
+  min-height: 52px;
+  margin-top: var(--space-sm);
+  font-size: 13px;
+  letter-spacing: 0.12em;
+}
+.auth-form__submit::after {
+  content: "→";
+  font-size: 16px;
+  letter-spacing: 0;
+  transition: transform 0.2s;
+}
+.auth-form__submit:hover::after { transform: translateX(3px); }
+.auth-form__submit:active { transform: translateY(1px); }
+
+/* --- Màn hình nhỏ --- */
+@media (max-width: 479px) {
+  .auth__card { padding: var(--space-lg) var(--space-md); border-radius: var(--radius-lg); }
+  .auth__title { font-size: 26px; }
+}
+
+/* Nút con mắt hiện/ẩn mật khẩu (account.js) */
+.password-field { position: relative; }
+.password-field input { padding-right: 2.8rem; }   /* chừa chỗ cho nút, chữ không chạy dưới icon */
+
+.password-toggle {
+  position: absolute; top: 50%; right: 0.4rem; transform: translateY(-50%);
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2.2rem; height: 2.2rem;
+  border: 0; border-radius: var(--radius-full); background: none;
+  color: var(--color-subtle); cursor: pointer;
+}
+.password-toggle:hover { color: var(--color-primary); background: var(--color-surface-mid); }
+.password-toggle:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+.password-toggle[hidden] { display: none; }
+
+/* Mặc định hiện con mắt mở; đang hiện mật khẩu (aria-pressed=true) thì đổi sang con mắt gạch chéo */
+.password-toggle .icon + .icon { display: none; }
+.password-toggle[aria-pressed="true"] .icon:first-child { display: none; }
+.password-toggle[aria-pressed="true"] .icon + .icon { display: inline-block; }
