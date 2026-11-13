@@ -14,10 +14,10 @@ LEVELS = {"info": logging.INFO, "warning": logging.WARNING, "critical": logging.
 
 def _client_info(request):
     if request is None:
-        return "0.0.0.0", None, None, None
+        return "unknown", None, None, None
     meta = request.META
     user_agent = (meta.get("HTTP_USER_AGENT") or "")[:255] or None
-    return meta.get("REMOTE_ADDR") or "0.0.0.0", user_agent, request.method, request.path[:255]
+    return meta.get("REMOTE_ADDR") or "unknown", user_agent, request.method, request.path[:255]
 
 
 def log_event(event_type, request=None, *, severity="info", user=None, username=None, ip_address=None, detail=None):
