@@ -11,6 +11,7 @@ urlpatterns = [
     path("tai-khoan/", views.accounts, name="accounts"),
     path("nhat-ky/", views.logs, name="logs"),
     path("thong-tin/", views.profile, name="profile"),
+    path("thong-tin/lien-he/", views.profile_contact, name="profile_contact"),
     path("xac-thuc-lai/", views.reauth, name="reauth"),
 ]
 

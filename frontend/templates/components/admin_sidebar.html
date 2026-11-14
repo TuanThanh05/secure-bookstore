@@ -20,7 +20,7 @@
     <a class="admin__link{% if current == 'logs' %} is-active{% endif %}" href="{% url 'dashboard:logs' %}"{% if current == 'logs' %} aria-current="page"{% endif %}>
       {% include "components/icon.html" with name="list" %}<span>Nhật ký hệ thống</span>
     </a>
-    <a class="admin__link{% if current == 'profile' %} is-active{% endif %}" href="{% url 'dashboard:profile' %}"{% if current == 'profile' %} aria-current="page"{% endif %}>
+    <a class="admin__link{% if current == 'profile' or current == 'profile_contact' %} is-active{% endif %}" href="{% url 'dashboard:profile' %}"{% if current == 'profile' or current == 'profile_contact' %} aria-current="page"{% endif %}>
       {% include "components/icon.html" with name="person" %}<span>Thông tin tài khoản</span>
     </a>
   </nav>

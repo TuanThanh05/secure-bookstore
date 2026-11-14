@@ -2,12 +2,14 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_http_methods
 from django.contrib.auth.views import LogoutView
 
 from core.security_log import log_event
 
 from .forms import RegisterForm, ResendVerificationForm
+from .profile import build_profile
 from .services import find_pending_user, mark_email_verified, register_account, resend_verification
 
 TOKEN_STATUS_MESSAGES = {
@@ -72,7 +74,11 @@ class SecureLogoutView(LogoutView):
         return response
 
 
+# AI-TRACE#036 | Claude Opus 5.5 | Trang thông tin của khách, nhân viên bị chuyển sang trang quản trị | CẤM XÓA CHÚ THÍCH NÀY
 @login_required
+@never_cache
 @require_GET
 def profile(request):
-    return render(request, "account/profile.html")
+    if request.user.is_staff:
+        return redirect("dashboard:profile")
+    return render(request, "account/profile.html", {"profile": build_profile(request.user, show_contact=True)})
