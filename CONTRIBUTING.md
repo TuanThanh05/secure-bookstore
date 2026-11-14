@@ -71,3 +71,5 @@ Nếu `main` đã đi trước khi bạn còn đang làm: `git switch main && gi
 ## Frontend – backend làm song song
 
 Hai bên thống nhất trước trong [`docs/contract.md`](docs/contract.md): mỗi trang có URL name, template, biến backend truyền vào, trường form gửi lên. Frontend dựng giao diện với dữ liệu giả theo hợp đồng; backend viết view trả đúng các biến đó.
+
+- **Code do AI viết phải đánh dấu `AI-TRACE`** và cập nhật `AI_TRACE.md` bằng `python scripts/ai_trace.py`. Quy định: `docs/ai-trace.md`.
