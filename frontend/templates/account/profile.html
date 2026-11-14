@@ -3,17 +3,21 @@
 {% block title %}Thông tin tài khoản{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/account-area.css' %}">{% endblock %}
 {% block account_content %}
+  {# AI-TRACE#039 | Claude Opus 5.5 | Bảng thông tin tài khoản của khách, hiện đầy đủ email và SĐT | CẤM XÓA CHÚ THÍCH NÀY #}
   <header class="area-header">
     <h1 class="area-header__title">Thông tin tài khoản</h1>
-    <p class="area-header__desc">Thông tin cá nhân và mật khẩu của bạn.</p>
+    <p class="area-header__desc">Thông tin cá nhân của bạn.</p>
   </header>
   <dl class="area-info">
-    <div class="area-info__row"><dt>Tên đăng nhập</dt><dd>{{ user.get_username }}</dd></div>
-    <div class="area-info__row"><dt>Email</dt><dd>{{ user.email }}</dd></div>
-    <div class="area-info__row"><dt>Ngày tham gia</dt><dd>{{ user.date_joined|date:"d/m/Y" }}</dd></div>
+    <div class="area-info__row"><dt>Họ</dt><dd>{{ profile.last_name|default:"Chưa cập nhật" }}</dd></div>
+    <div class="area-info__row"><dt>Tên</dt><dd>{{ profile.first_name|default:"Chưa cập nhật" }}</dd></div>
+    <div class="area-info__row"><dt>Tên đăng nhập</dt><dd>{{ profile.username }}</dd></div>
+    <div class="area-info__row"><dt>Email</dt><dd>{{ profile.email }}</dd></div>
+    <div class="area-info__row"><dt>Số điện thoại</dt><dd>{{ profile.phone|default:"Chưa cập nhật" }}</dd></div>
+    <div class="area-info__row"><dt>Ngày tham gia</dt><dd>{{ profile.date_joined|date:"d/m/Y" }}</dd></div>
   </dl>
   <section class="area-empty">
     {% include "components/icon.html" with name="person" size="lg" %}
-    <p>Đổi mật khẩu sẽ có ở bước sau.</p>
+    <p>Sửa thông tin và đổi mật khẩu sẽ có ở bước sau.</p>
   </section>
 {% endblock %}

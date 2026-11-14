@@ -3,12 +3,61 @@
 {% block title %}Thông tin tài khoản{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
 {% block content %}
+  {# AI-TRACE#040 | Claude Opus 5.5 | Bảng thông tin nhân viên, email và SĐT ẩn sau nút con mắt cần xác thực lại | CẤM XÓA CHÚ THÍCH NÀY #}
   <header class="dash-header">
     <h1 class="dash-header__title">Thông tin tài khoản</h1>
-    <p class="dash-header__desc">Thông tin và mật khẩu của bạn.</p>
+    <p class="dash-header__desc">Thông tin của bạn. Email và số điện thoại chỉ hiện sau khi xác nhận lại mật khẩu.</p>
   </header>
-  <section class="dash-empty">
-    {% include "components/icon.html" with name="person" size="lg" %}
-    <p>Chưa có dữ liệu. Phần này nối với cơ sở dữ liệu ở đợt 2.</p>
-  </section>
+
+  {% if not profile.contact_hidden %}
+    <div class="dash-notice" role="status">
+      <p>Bạn vừa xác nhận danh tính. Thông tin liên hệ chỉ hiện ở lần xem này; sau {{ reauth_minutes }} phút muốn xem lại phải xác nhận lại.</p>
+    </div>
+  {% endif %}
+
+  <dl class="dash-info">
+    <div class="dash-info__row"><dt>Họ</dt><dd>{{ profile.last_name|default:"Chưa cập nhật" }}</dd></div>
+    <div class="dash-info__row"><dt>Tên</dt><dd>{{ profile.first_name|default:"Chưa cập nhật" }}</dd></div>
+    <div class="dash-info__row"><dt>Tên đăng nhập</dt><dd>{{ profile.username }}</dd></div>
+    {% if profile.contact_hidden %}
+      <div class="dash-info__row">
+        <dt>Email</dt>
+        <dd class="dash-secret">
+          <span class="dash-secret__mask" aria-label="Đã ẩn">••••••••••</span>
+          <a class="dash-secret__reveal" href="{% url 'dashboard:profile_contact' %}" aria-label="Hiện email và số điện thoại (cần xác nhận lại mật khẩu)" title="Hiện (cần xác nhận lại mật khẩu)">
+            {% include "components/icon.html" with name="visibility" %}
+          </a>
+        </dd>
+      </div>
+      <div class="dash-info__row">
+        <dt>Số điện thoại</dt>
+        <dd class="dash-secret">
+          <span class="dash-secret__mask" aria-label="Đã ẩn">••••••••••</span>
+          <a class="dash-secret__reveal" href="{% url 'dashboard:profile_contact' %}" aria-label="Hiện email và số điện thoại (cần xác nhận lại mật khẩu)" title="Hiện (cần xác nhận lại mật khẩu)">
+            {% include "components/icon.html" with name="visibility" %}
+          </a>
+        </dd>
+      </div>
+    {% else %}
+      <div class="dash-info__row">
+        <dt>Email</dt>
+        <dd class="dash-secret">
+          <span>{{ profile.email }}</span>
+          <a class="dash-secret__reveal" href="{% url 'dashboard:profile' %}" aria-label="Ẩn email và số điện thoại" title="Ẩn">
+            {% include "components/icon.html" with name="visibility-off" %}
+          </a>
+        </dd>
+      </div>
+      <div class="dash-info__row">
+        <dt>Số điện thoại</dt>
+        <dd class="dash-secret">
+          <span>{{ profile.phone|default:"Chưa cập nhật" }}</span>
+          <a class="dash-secret__reveal" href="{% url 'dashboard:profile' %}" aria-label="Ẩn email và số điện thoại" title="Ẩn">
+            {% include "components/icon.html" with name="visibility-off" %}
+          </a>
+        </dd>
+      </div>
+    {% endif %}
+    <div class="dash-info__row"><dt>Ngày tham gia</dt><dd>{{ profile.date_joined|date:"d/m/Y" }}</dd></div>
+  </dl>
 {% endblock %}
