@@ -1,9 +1,12 @@
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm, UserCreationForm
 from django.contrib.auth.models import BaseUserManager
 from django.core.exceptions import ValidationError
+from django.urls import reverse
 
 from core.security_log import log_event
+
+from .emails import send_password_reset_email
 
 from .models import User
 
@@ -66,3 +69,21 @@ class ResendVerificationForm(forms.Form):
 
     def clean_email(self):
         return BaseUserManager.normalize_email(self.cleaned_data["email"].strip()).lower()
+
+
+# AI-TRACE#049 | Claude Opus 5.5 | Form quên mật khẩu chỉ gửi cho khách, dùng thư và giới hạn của nhóm | CẤM XÓA CHÚ THÍCH NÀY
+class CustomerPasswordResetForm(PasswordResetForm):
+    email = forms.EmailField(label="Email đã đăng ký", max_length=254)
+
+    def get_users(self, email):
+        return (user for user in super().get_users(email) if not user.is_staff and not user.is_superuser)
+
+    def save(self, *args, request=None, **kwargs):
+        self._request = request
+        return super().save(*args, request=request, **kwargs)
+
+    def send_mail(self, subject_template_name, email_template_name, context, from_email, to_email,
+                  html_email_template_name=None):
+        path = reverse("accounts:password_reset_confirm", args=[context["uid"], context["token"]])
+        link = f"{context['protocol']}://{context['domain']}{path}"
+        send_password_reset_email(self._request, context["user"], link)
