@@ -64,12 +64,12 @@ Ký hiệu: **[BB]** bắt buộc · **[NL]** nên làm · **[CĐ]** cộng đi�
 
 ### 6. Đặt đơn (race condition)
 - Django không tự chống race condition. Nhóm xử lý ở tầng CSDL bằng stored procedure, Django chỉ gọi `sp_place_order` từ `orders/services.py`.
-- [ ] [BB] Đặt đơn qua `sp_place_order(p_user_id, p_items_json)`: bên trong `START TRANSACTION` → `SELECT ... FOR UPDATE` khóa các dòng sách → kiểm tra kho → trừ kho → tạo `orders`/`order_items` (giá lấy từ bảng `books`) → `COMMIT`; thiếu hàng thì `ROLLBACK` và `SIGNAL` lỗi.
-- [ ] [BB] Khóa theo `id` tăng dần để tránh deadlock.
-- [ ] [BB] `app_customer` không có quyền `UPDATE` trên `books` hay `INSERT` trực tiếp vào `orders`; chỉ có `EXECUTE` trên `sp_place_order`. Thủ tục khai báo `SQL SECURITY DEFINER` với definer là một user riêng không đăng nhập được.
+- [ ] [BB] Đặt đơn qua `sp_place_order(p_user_id, p_idempotency_key, p_shipping_name, p_phone_encrypted, p_address_encrypted, OUT p_order_code, OUT p_created)` (chốt 2026-11-14). Thủ tục **tự đọc giỏ** của `p_user_id`, không nhận danh sách sách hay giá từ bên ngoài: `START TRANSACTION` → khóa dòng giỏ → `SELECT ... FOR UPDATE` khóa các dòng sách → kiểm tra sách ngừng bán, thiếu hàng → tạo `orders_order`/`orders_orderitem` (giá lấy từ `catalog_book`, phí ship cố định 30.000 đ) → trừ kho → xóa giỏ → `COMMIT`. Lỗi thì `ROLLBACK` và `SIGNAL` một trong 4 mã `INVALID_INPUT`, `CART_EMPTY`, `BOOK_INACTIVE`, `OUT_OF_STOCK`.
+- [ ] [BB] Khóa theo `id` tăng dần để tránh deadlock. InnoDB khóa theo thứ tự đọc dòng (không theo `ORDER BY`), nên câu khóa đi từ `orders_cartitem` theo chỉ mục `UNIQUE (cart_id, book_id)` bằng `STRAIGHT_JOIN`; kiểm tra bằng `EXPLAIN`.
+- [ ] [BB] `app_customer` không có quyền `UPDATE` trên `catalog_book` hay `INSERT` trực tiếp vào `orders_order`; chỉ có `EXECUTE` trên `sp_place_order`. Thủ tục khai báo `SQL SECURITY DEFINER` với definer là `bookstore_definer` (khóa đăng nhập). Definer cũng phải có `EXECUTE` trên chính thủ tục, và có `UPDATE`/`DELETE` trên bảng cần khóa dòng (MySQL ≥ 8.0.22).
 - [ ] [BB] `PositiveIntegerField` + `CheckConstraint(stock >= 0)`.
 - [ ] [BB] MySQL dùng InnoDB.
-- [ ] [NL] `idempotency_key` UUID UNIQUE chống submit hai lần; khóa nút sau khi bấm.
+- [ ] [NL] `idempotency_key` (32 ký tự hex, `secrets.token_hex(16)`) UNIQUE chống submit hai lần; khóa dòng giỏ để hai lần bấm **cùng lúc** vẫn ra 1 đơn (`p_created = 0` cho lần sau); khóa nút sau khi bấm.
 - [ ] [NL] Đơn chưa thanh toán sau 15 phút thì tự hủy và cộng trả kho.
 - [ ] [CĐ] Tối đa 3 đơn chưa thanh toán mỗi tài khoản.
 - Demo: kho = 1, 50 request song song (script `threading`/`httpx` hoặc Burp "Send group in parallel"). Bản lỗi: nhiều đơn, kho âm. Bản an toàn: đúng 1 đơn.
