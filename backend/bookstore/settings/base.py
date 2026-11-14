@@ -136,8 +136,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# Link đặt lại mật khẩu hết hạn sau 30 phút
-PASSWORD_RESET_TIMEOUT = 60 * 30
+PASSWORD_RESET_TIMEOUT = 5 * 60
 
 # ---------------------------------------------------------------------
 # Phiên làm việc và cookie (mục A)
