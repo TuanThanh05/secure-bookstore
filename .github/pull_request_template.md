@@ -15,6 +15,12 @@ Closes #<!-- số issue -->
 <!-- Các bước để người duyệt / bạn kiểm thử tự làm lại: lệnh, URL, dữ liệu, payload tấn công thử.
 Ví dụ: Burp gửi thêm is_staff=1 khi đăng ký → tài khoản vẫn là khách thường. -->
 
+## Đánh dấu AI
+
+<!-- Các ID AI-TRACE mới trong PR này, ví dụ: 012, 013. Không dùng AI thì ghi "Không dùng AI". -->
+
+- [ ] Đã chạy `python scripts/ai_trace.py --check`, không báo lỗi
+
 ## Tự kiểm tra trước khi mở PR
 
 - [ ] Không có `.env`, `database/.env.db`, mật khẩu, khóa bí mật trong diff
