@@ -1,0 +1,14 @@
+{% extends "layouts/admin.html" %}
+{% load static %}
+{% block title %}Quản lý đơn hàng{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
+{% block content %}
+  <header class="dash-header">
+    <h1 class="dash-header__title">Quản lý đơn hàng</h1>
+    <p class="dash-header__desc">Danh sách đơn, chi tiết đơn và chuyển trạng thái.</p>
+  </header>
+  <section class="dash-empty">
+    {% include "components/icon.html" with name="shopping-bag" size="lg" %}
+    <p>Chưa có dữ liệu. Phần này nối với cơ sở dữ liệu ở đợt 2.</p>
+  </section>
+{% endblock %}

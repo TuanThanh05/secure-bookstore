@@ -249,11 +249,32 @@ img { max-width: 100%; height: auto; display: block; }
 .auth__brand .icon { color: var(--color-primary); }
 
 /* --- Layout quản trị --- */
-.admin { flex: 1; display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
-.admin__sidebar { background: var(--color-surface); border-right: 1px solid var(--color-border); padding: var(--space-md); }
-.admin__brand { display: block; font-family: var(--font-serif); font-weight: 600; margin-bottom: var(--space-md); text-decoration: none; color: var(--color-text); }
-.admin__nav { display: grid; gap: var(--space-sm); }
-.admin__main { padding: var(--space-lg); }
+.admin { flex: 1; display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+.admin__sidebar {
+  position: sticky; top: 0; height: 100vh;
+  display: flex; flex-direction: column; gap: var(--space-lg);
+  padding: var(--space-lg) var(--space-md);
+  background: var(--color-surface); border-right: 1px solid var(--color-border);
+}
+.admin__brand {
+  display: inline-flex; align-items: center; gap: var(--space-sm); padding: 0 var(--space-sm);
+  font-family: var(--font-serif); font-size: 20px; font-weight: 600; color: var(--color-text); text-decoration: none;
+}
+.admin__brand .icon { color: var(--color-primary); }
+.admin__nav { display: grid; gap: var(--space-xs); }
+.admin__link {
+  display: flex; align-items: center; gap: var(--space-sm); width: 100%;
+  padding: 10px var(--space-sm); border: 0; border-radius: var(--radius);
+  background: none; font: inherit; font-size: 14px; color: var(--color-muted); text-align: left;
+  text-decoration: none; cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+.admin__link:hover { background: var(--color-surface-low); color: var(--color-text); }
+.admin__link.is-active { background: var(--color-primary-soft); color: var(--color-primary); font-weight: 600; }
+.admin__link:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+.admin__footer { margin-top: auto; display: grid; gap: var(--space-xs); padding-top: var(--space-md); border-top: 1px solid var(--color-border); }
+.admin__user { padding: 0 var(--space-sm); font-size: 13px; font-weight: 600; color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin__logout:hover { color: var(--color-error); }
+.admin__main { padding: var(--space-xl); min-width: 0; }
 
 /* --- Trang lỗi --- */
 .error-page { text-align: center; padding: var(--space-2xl) 0; }
@@ -272,7 +293,9 @@ img { max-width: 100%; height: auto; display: block; }
   .navbar__user { max-width: 150px; font-size: 12px; padding: 4px 12px 4px 4px; }
   .navbar__user .icon { width: 28px; height: 28px; padding: 6px; }
   .admin { grid-template-columns: 1fr; }
-  .admin__sidebar { border-right: 0; border-bottom: 1px solid var(--color-border); }
+  .admin__sidebar { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--color-border); }
+  .admin__nav { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; }
+  .admin__main { padding: var(--space-lg) var(--page-margin); }
 }
 
 /* Điện thoại: chỉ giữ biểu tượng logo cho đủ chỗ 3 mục menu;

@@ -1,0 +1,14 @@
+{% extends "layouts/admin.html" %}
+{% load static %}
+{% block title %}Nhật ký hệ thống{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
+{% block content %}
+  <header class="dash-header">
+    <h1 class="dash-header__title">Nhật ký hệ thống</h1>
+    <p class="dash-header__desc">Nhật ký bảo mật và nhật ký thay đổi dữ liệu. Chỉ xem.</p>
+  </header>
+  <section class="dash-empty">
+    {% include "components/icon.html" with name="list" size="lg" %}
+    <p>Chưa có dữ liệu. Phần này nối với cơ sở dữ liệu ở đợt 2.</p>
+  </section>
+{% endblock %}

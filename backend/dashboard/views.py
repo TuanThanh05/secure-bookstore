@@ -1,7 +1,40 @@
-"""View của app dashboard.
+from django.shortcuts import render
+from django.views.decorators.http import require_GET
 
-Quy ước: view giữ mỏng, chỉ làm 3 việc
-  1. Kiểm tra quyền (lớp 1): @login_required, @permission_required, lọc theo request.user
-  2. Gọi form (kiểm tra đầu vào) hoặc services.py (logic nghiệp vụ, gọi stored procedure)
-  3. render() hoặc redirect()
-"""
+from core.decorators import staff_required
+
+
+@staff_required
+@require_GET
+def index(request):
+    return render(request, "dashboard/index.html")
+
+
+@staff_required
+@require_GET
+def books(request):
+    return render(request, "dashboard/books.html")
+
+
+@staff_required
+@require_GET
+def orders(request):
+    return render(request, "dashboard/orders.html")
+
+
+@staff_required
+@require_GET
+def accounts(request):
+    return render(request, "dashboard/accounts.html")
+
+
+@staff_required
+@require_GET
+def logs(request):
+    return render(request, "dashboard/logs.html")
+
+
+@staff_required
+@require_GET
+def profile(request):
+    return render(request, "dashboard/profile.html")
