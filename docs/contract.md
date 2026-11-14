@@ -35,3 +35,40 @@ Component `components/book_card.html` nhận biến `book` có đúng các thu�
 | `cover_url` | str | Đường dẫn ảnh bìa; rỗng thì hiện bìa tạm có màu |
 
 Khi thêm vào giỏ, form chỉ gửi `book_id` và `quantity`. **Không gửi giá**: giá luôn lấy lại từ CSDL ở phía server.
+
+## Đặt đơn: `sp_place_order` và `orders.services.place_order`
+
+Chốt 2026-11-14. Đổi chữ ký thủ tục hoặc hàm thì sửa mục này trong cùng PR.
+
+**Thủ tục MySQL** (`database/objects/30_sp_place_order.sql`), `r_customer` chỉ có `EXECUTE`:
+
+| Tham số | Kiểu | Ghi chú |
+| --- | --- | --- |
+| `p_user_id` | IN BIGINT | Luôn là `request.user.pk`, không bao giờ lấy từ form |
+| `p_idempotency_key` | IN CHAR(32) | 32 ký tự hex thường, sinh bằng `new_idempotency_key()` khi mở trang đặt hàng |
+| `p_shipping_name` | IN VARCHAR(255) | Tên người nhận, 1–100 ký tự sau khi bỏ khoảng trắng hai đầu |
+| `p_phone_encrypted` | IN VARCHAR(512) | SĐT đã mã hóa AES-GCM ở Django (đợt 2) |
+| `p_address_encrypted` | IN VARCHAR(1024) | Địa chỉ đã mã hóa AES-GCM ở Django (đợt 2) |
+| `p_order_code` | OUT CHAR(32) | Mã đơn, dùng trên URL thay cho id |
+| `p_created` | OUT TINYINT | `1` = đơn mới, `0` = gửi lại cùng mã yêu cầu, trả mã đơn cũ |
+
+Danh sách sách, số lượng, giá đều do thủ tục đọc từ giỏ và `catalog_book`. Phí ship cố định 30.000 đ; hạn thanh toán 15 phút.
+
+**Hàm Django** (`backend/orders/services.py`):
+
+```python
+place_order(user, idempotency_key, shipping_name, phone_encrypted, address_encrypted) -> PlaceOrderResult(order_code, created)
+```
+
+- Không gọi bên trong `transaction.atomic` (hàm sẽ raise `RuntimeError`): thủ tục tự quản giao dịch.
+- Lỗi nghiệp vụ raise `OrderError` có `.code` và `.message`. Frontend chỉ hiển thị `.message`:
+
+| `code` | `message` | Frontend làm gì |
+| --- | --- | --- |
+| `OUT_OF_STOCK` | Một số sách vừa hết hàng, vui lòng kiểm tra lại giỏ. | Quay lại giỏ |
+| `BOOK_INACTIVE` | Một số sách đã ngừng bán. | Quay lại giỏ |
+| `CART_EMPTY` | Giỏ hàng đang trống. | Quay lại giỏ |
+| `INVALID_INPUT` | Thông tin giao hàng không hợp lệ. | Ở lại form đặt hàng |
+
+- `created = True`: chuyển sang trang đơn, báo "Đặt hàng thành công". `created = False`: chuyển tới đơn cũ, không báo lỗi.
+- Mọi lỗi khác (mất kết nối, lỗi quyền 1142...) được ném nguyên ra ngoài để ghi log, không đổi thành `OrderError`.
