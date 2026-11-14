@@ -1,0 +1,9 @@
+{% extends "layouts/customer.html" %}
+{% block content %}
+  <div class="account-area">
+    {% include "components/account_sidebar.html" %}
+    <section class="account-area__main">
+      {% block account_content %}{% endblock %}
+    </section>
+  </div>
+{% endblock %}

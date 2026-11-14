@@ -1,0 +1,15 @@
+{% extends "layouts/account.html" %}
+{% load static %}
+{% block title %}Giỏ hàng{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/account-area.css' %}">{% endblock %}
+{% block account_content %}
+  <header class="area-header">
+    <h1 class="area-header__title">Giỏ hàng</h1>
+    <p class="area-header__desc">Sách bạn đã chọn, chưa đặt hàng.</p>
+  </header>
+  <section class="area-empty">
+    {% include "components/icon.html" with name="shopping-bag" size="lg" %}
+    <p>Giỏ hàng đang trống.</p>
+    <a class="btn" href="{% url 'catalog:home' %}">Xem sách</a>
+  </section>
+{% endblock %}

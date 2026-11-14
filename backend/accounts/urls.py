@@ -13,5 +13,6 @@ urlpatterns = [
             authentication_form=LoginForm,
             redirect_authenticated_user=True,),name="login"),
     path("logout/", views.SecureLogoutView.as_view(), name="logout"),
+    path("profile/", views.profile, name="profile"),
 ]
 

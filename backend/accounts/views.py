@@ -1,6 +1,7 @@
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_GET, require_http_methods
 from django.contrib.auth.views import LogoutView
 
 from .forms import RegisterForm
@@ -26,3 +27,9 @@ class SecureLogoutView(LogoutView):
         response = super().post(request, *args, **kwargs)
         response["Clear-Site-Data"] = '"cache", "cookies", "storage"'
         return response
+
+
+@login_required
+@require_GET
+def profile(request):
+    return render(request, "account/profile.html")

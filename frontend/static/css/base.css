@@ -208,6 +208,9 @@ img { max-width: 100%; height: auto; display: block; }
 }
 /* Tên dài (tối đa 50 ký tự) thì cắt bằng dấu "…" */
 .navbar__username { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+a.navbar__user { text-decoration: none; transition: background 0.15s; }
+a.navbar__user:hover { background: var(--color-primary-strong); color: var(--color-on-primary); }
+a.navbar__user:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 
 /* Nút đăng xuất: viên thuốc cùng màu .btn (đỏ đô) */
 .navbar__logout { margin: 0; display: inline-flex; }
@@ -276,6 +279,25 @@ img { max-width: 100%; height: auto; display: block; }
 .admin__logout:hover { color: var(--color-error); }
 .admin__main { padding: var(--space-xl); min-width: 0; }
 
+/* --- Khu vực tài khoản khách hàng --- */
+.account-area { display: grid; grid-template-columns: 240px 1fr; gap: var(--space-xl); align-items: start; }
+.account-nav {
+  position: sticky; top: calc(var(--navbar-height) + var(--space-md));
+  display: grid; gap: var(--space-sm); padding: var(--space-md);
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+}
+.account-nav__title { margin: 0; padding: 0 var(--space-sm); font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-subtle); }
+.account-nav__links { display: grid; gap: var(--space-xs); }
+.account-nav__link {
+  display: flex; align-items: center; gap: var(--space-sm);
+  padding: 10px var(--space-sm); border-radius: var(--radius);
+  font-size: 14px; color: var(--color-muted); text-decoration: none; transition: background 0.15s, color 0.15s;
+}
+.account-nav__link:hover { background: var(--color-surface-low); color: var(--color-text); }
+.account-nav__link.is-active { background: var(--color-primary-soft); color: var(--color-primary); font-weight: 600; }
+.account-nav__link:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+.account-area__main { min-width: 0; }
+
 /* --- Trang lỗi --- */
 .error-page { text-align: center; padding: var(--space-2xl) 0; }
 .error-page h1 { font-size: 72px; margin: 0; color: var(--color-primary); }
@@ -292,6 +314,9 @@ img { max-width: 100%; height: auto; display: block; }
   /* Nút .btn trên màn nhỏ cao 36px, nên viên người dùng cũng 4 + 28 + 4 = 36px */
   .navbar__user { max-width: 150px; font-size: 12px; padding: 4px 12px 4px 4px; }
   .navbar__user .icon { width: 28px; height: 28px; padding: 6px; }
+  .account-area { grid-template-columns: 1fr; gap: var(--space-lg); }
+  .account-nav { position: static; }
+  .account-nav__links { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; }
   .admin { grid-template-columns: 1fr; }
   .admin__sidebar { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--color-border); }
   .admin__nav { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; }
