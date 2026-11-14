@@ -1,0 +1,35 @@
+{% extends "layouts/admin.html" %}
+{% load static %}
+{% block title %}Xác nhận danh tính{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
+{% block content %}
+  <section class="reauth">
+    <div class="reauth__card">
+      {% include "components/icon.html" with name="group" size="lg" %}
+      <h1 class="reauth__title">Xác nhận danh tính</h1>
+      <p class="reauth__desc">Khu vực quản lý tài khoản là khu vực nhạy cảm. Nhập lại tên đăng nhập và mật khẩu của bạn để tiếp tục. Xác nhận có hiệu lực trong 2 phút.</p>
+      <form method="post" class="reauth__form" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <div class="reauth__alert" role="alert">
+            {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+          </div>
+        {% endif %}
+        {% for field in form %}
+          <div class="reauth__field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+              <ul class="reauth__errors" id="{{ field.auto_id }}_error">
+                {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        {% endfor %}
+        <input type="hidden" name="next" value="{{ next }}">
+        <button class="btn reauth__submit" type="submit">Xác nhận</button>
+      </form>
+      <a class="reauth__back" href="{% url 'dashboard:index' %}">Quay lại Tổng quan</a>
+    </div>
+  </section>
+{% endblock %}

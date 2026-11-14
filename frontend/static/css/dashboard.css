@@ -18,3 +18,30 @@
 }
 .dash-empty .icon { color: var(--color-subtle); }
 .dash-empty p { margin: 0; }
+
+.reauth { display: grid; place-items: center; padding: var(--space-xl) 0; }
+.reauth__card {
+  display: grid; justify-items: center; gap: var(--space-md); width: 100%; max-width: 440px;
+  padding: var(--space-xl); text-align: center;
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); box-shadow: var(--shadow-card);
+}
+.reauth__card > .icon { color: var(--color-primary); }
+.reauth__title { margin: 0; font-family: var(--font-serif); font-size: 26px; font-weight: 600; }
+.reauth__desc { margin: 0; font-size: 14px; color: var(--color-muted); }
+.reauth__form { display: grid; gap: var(--space-md); width: 100%; text-align: left; }
+.reauth__field { display: grid; gap: var(--space-xs); }
+.reauth__field label { font-size: 14px; font-weight: 600; }
+.reauth__field input {
+  width: 100%; padding: 0.7rem 0.9rem; font: inherit; color: var(--color-text);
+  background: var(--color-surface-low); border: 1px solid var(--color-border); border-radius: var(--radius);
+}
+.reauth__field input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-ring); }
+.reauth__errors { margin: 0; padding: 0; list-style: none; font-size: 13px; color: var(--color-error); }
+.reauth__alert {
+  padding: var(--space-sm) var(--space-md); font-size: 14px; color: var(--color-error);
+  background: rgba(186, 26, 26, 0.06); border-left: 3px solid var(--color-error); border-radius: var(--radius-sm);
+}
+.reauth__alert p { margin: 0; }
+.reauth__submit { width: 100%; }
+.reauth__back { font-size: 14px; color: var(--color-muted); }
+.reauth__back:hover { color: var(--color-primary); }

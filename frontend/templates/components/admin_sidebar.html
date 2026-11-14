@@ -14,7 +14,7 @@
     <a class="admin__link{% if current == 'orders' %} is-active{% endif %}" href="{% url 'dashboard:orders' %}"{% if current == 'orders' %} aria-current="page"{% endif %}>
       {% include "components/icon.html" with name="shopping-bag" %}<span>Quản lý đơn hàng</span>
     </a>
-    <a class="admin__link{% if current == 'accounts' %} is-active{% endif %}" href="{% url 'dashboard:accounts' %}"{% if current == 'accounts' %} aria-current="page"{% endif %}>
+    <a class="admin__link{% if current == 'accounts' or current == 'reauth' %} is-active{% endif %}" href="{% url 'dashboard:accounts' %}"{% if current == 'accounts' or current == 'reauth' %} aria-current="page"{% endif %}>
       {% include "components/icon.html" with name="group" %}<span>Quản lý tài khoản</span>
     </a>
     <a class="admin__link{% if current == 'logs' %} is-active{% endif %}" href="{% url 'dashboard:logs' %}"{% if current == 'logs' %} aria-current="page"{% endif %}>
