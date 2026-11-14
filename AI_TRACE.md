@@ -37,7 +37,19 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 031 | Claude Opus 5.5 |  | `backend/accounts/tests/test_email_verification.py` | `EmailVerificationTests` | 19 | Test luồng xác nhận email: đăng ký, xác nhận, gửi lại, chặn đăng nhập | [ ] |
 | 032 | Claude Opus 5.5 |  | `database/schema/02_securityevent_email_events.sql` | `ALTER TABLE core_securityevent DROP CHECK ck_secevent_type;` | 10 | Mở rộng danh sách loại sự kiện bảo mật cho xác nhận email | [ ] |
 | 033 | Claude Opus 5.5 |  | `backend/core/mail_backends.py` | `ReadableConsoleEmailBackend` | 4 | In thư ra terminal dạng chữ đọc được thay vì base64 khi chạy máy dev | [ ] |
+| 034 | Claude Opus 5.5 |  | `backend/accounts/profile.py` | `ProfileView` | 7 | Dữ liệu trang thông tin tài khoản, email và SĐT có thể bị giấu | [ ] |
+| 035 | Claude Opus 5.5 |  | `backend/accounts/profile.py` | `build_profile` | 19 | Tạo dữ liệu trang thông tin, chỉ đưa email và SĐT khi được phép | [ ] |
 | 036 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `profile` | 130 | Trang thông tin của khách, nhân viên bị chuyển sang trang quản trị | [ ] |
+| 037 | Claude Opus 5.5 |  | `backend/dashboard/views.py` | `profile` | 46 | Trang thông tin của nhân viên, mặc định không gửi email và SĐT | [ ] |
+| 038 | Claude Opus 5.5 |  | `backend/dashboard/views.py` | `profile_contact` | 54 | Hiện email và SĐT của chính nhân viên sau khi xác thực lại, có ghi log | [ ] |
+| 039 | Claude Opus 5.5 |  | `frontend/templates/account/profile.html` | `<header class="area-header">` | 6 | Bảng thông tin tài khoản của khách, hiện đầy đủ email và SĐT | [ ] |
+| 040 | Claude Opus 5.5 |  | `frontend/templates/dashboard/profile.html` | `<header class="dash-header">` | 6 | Bảng thông tin nhân viên, email và SĐT ẩn sau nút con mắt cần xác thực lại | [ ] |
+| 041 | Claude Opus 5.5 |  | `frontend/static/css/dashboard.css` | `.dash-info` | 49 | Kiểu bảng thông tin tài khoản và ô bị ẩn có nút con mắt | [ ] |
+| 042 | Claude Opus 5.5 |  | `database/schema/03_securityevent_sensitive_view.sql` | `ALTER TABLE core_securityevent DROP CHECK ck_secevent_type;` | 7 | Thêm loại sự kiện xem dữ liệu nhạy cảm vào danh sách cho phép | [ ] |
+| 043 | Claude Opus 5.5 |  | `backend/core/migrations/0003_securityevent_email_events.py` | `_statements` | 9 | Đọc file SQL mở rộng danh sách sự kiện cho xác nhận email | [ ] |
+| 044 | Claude Opus 5.5 |  | `backend/core/migrations/0004_securityevent_sensitive_view.py` | `_statements` | 9 | Đọc file SQL thêm loại sự kiện xem dữ liệu nhạy cảm | [ ] |
+| 045 | Claude Opus 5.5 |  | `backend/accounts/tests/test_profile.py` | `CustomerProfileTests` | 11 | Test trang thông tin của khách: hiện email, chặn nhân viên, không lưu cache | [ ] |
+| 046 | Claude Opus 5.5 |  | `backend/dashboard/tests/test_profile.py` | `StaffProfileTests` | 15 | Test trang thông tin nhân viên: giấu email, hiện sau xác thực lại, ghi log | [ ] |
 | 047 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_password_reset_email` | 54 | Gửi thư chứa link đặt lại mật khẩu có hạn dùng | [ ] |
 | 048 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_password_changed_email` | 61 | Báo cho chủ tài khoản biết mật khẩu vừa được đổi | [ ] |
 | 049 | Claude Opus 5.5 |  | `backend/accounts/forms.py` | `CustomerPasswordResetForm` | 74 | Form quên mật khẩu chỉ gửi cho khách, dùng thư và giới hạn của nhóm | [ ] |

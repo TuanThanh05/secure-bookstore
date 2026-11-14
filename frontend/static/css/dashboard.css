@@ -45,3 +45,30 @@
 .reauth__submit { width: 100%; }
 .reauth__back { font-size: 14px; color: var(--color-muted); }
 .reauth__back:hover { color: var(--color-primary); }
+
+/* AI-TRACE#041 | Claude Opus 5.5 | Kiểu bảng thông tin tài khoản và ô bị ẩn có nút con mắt | CẤM XÓA CHÚ THÍCH NÀY */
+.dash-info {
+  margin: 0 0 var(--space-lg); padding: var(--space-sm) var(--space-lg);
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+}
+.dash-info__row { display: grid; grid-template-columns: 180px 1fr; gap: var(--space-md); padding: var(--space-md) 0; border-bottom: 1px solid var(--color-border); }
+.dash-info__row:last-child { border-bottom: 0; }
+.dash-info dt { font-size: 14px; color: var(--color-subtle); }
+.dash-info dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.dash-secret { display: flex; align-items: center; gap: var(--space-sm); }
+.dash-secret__mask { letter-spacing: 0.15em; color: var(--color-muted); }
+.dash-secret__reveal {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 50%;
+  color: var(--color-muted); text-decoration: none;
+}
+.dash-secret__reveal:hover, .dash-secret__reveal:focus-visible { color: var(--color-primary); background: var(--color-surface-low); }
+.dash-notice {
+  margin-bottom: var(--space-md); padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border); border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius-md); background: var(--color-surface); font-size: 14px;
+}
+.dash-notice p { margin: 0; }
+@media (max-width: 640px) {
+  .dash-info__row { grid-template-columns: 1fr; gap: var(--space-xs); }
+}

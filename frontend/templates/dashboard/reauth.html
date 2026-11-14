@@ -7,7 +7,7 @@
     <div class="reauth__card">
       {% include "components/icon.html" with name="group" size="lg" %}
       <h1 class="reauth__title">Xác nhận danh tính</h1>
-      <p class="reauth__desc">Khu vực quản lý tài khoản là khu vực nhạy cảm. Nhập lại tên đăng nhập và mật khẩu của bạn để tiếp tục. Xác nhận có hiệu lực trong 2 phút.</p>
+      <p class="reauth__desc">Đây là thao tác nhạy cảm. Nhập lại tên đăng nhập và mật khẩu của bạn để tiếp tục. Xác nhận có hiệu lực trong {{ reauth_minutes }} phút.</p>
       <form method="post" class="reauth__form" novalidate>
         {% csrf_token %}
         {% if form.non_field_errors %}
