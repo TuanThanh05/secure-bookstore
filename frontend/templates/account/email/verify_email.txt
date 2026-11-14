@@ -1,0 +1,12 @@
+{% autoescape off %}Xin chào {{ username }},
+
+Bạn vừa đăng ký tài khoản tại Secure Bookstore. Mở link dưới đây để xác nhận email:
+
+{{ link }}
+
+Link chỉ có hiệu lực trong {{ minutes }} phút. Hết hạn thì vào trang đăng nhập, chọn "Chưa nhận được thư xác nhận email?" để nhận link mới.
+
+Nếu bạn không đăng ký, hãy bỏ qua thư này. Không ai dùng được email của bạn khi chưa bấm xác nhận.
+
+Secure Bookstore
+{% endautoescape %}

@@ -1,0 +1,11 @@
+{% autoescape off %}Xin chào {{ username }},
+
+Vừa có người dùng địa chỉ email này để đăng ký tài khoản mới tại Secure Bookstore. Email này đã có tài khoản nên chúng tôi không tạo thêm tài khoản nào.
+
+Nếu đó là bạn, hãy đăng nhập bằng tài khoản hiện có:
+{{ login_link }}
+
+Nếu không phải bạn, bạn không cần làm gì. Tài khoản của bạn vẫn an toàn.
+
+Secure Bookstore
+{% endautoescape %}

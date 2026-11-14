@@ -1,0 +1,27 @@
+{% extends "layouts/auth.html" %}
+{% load static %}
+{% block title %}Gửi lại thư xác nhận{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/account.css' %}">{% endblock %}
+
+{% block content %}
+  {# AI-TRACE#029 | Claude Opus 5.5 | Form nhập email để gửi lại thư xác nhận | CẤM XÓA CHÚ THÍCH NÀY #}
+  <h1 class="auth__title">Gửi lại thư xác nhận</h1>
+
+  <form method="post" class="auth-form" novalidate>
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="auth-form__field{% if field.errors %} auth-form__field--error{% endif %}">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+          <ul class="auth-form__errors" id="{{ field.auto_id }}_error">
+            {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+    {% endfor %}
+    <button type="submit" class="btn auth-form__submit">Gửi lại thư</button>
+  </form>
+
+  <p class="auth__switch"><a href="{% url 'accounts:login' %}">Về trang đăng nhập</a></p>
+{% endblock %}
