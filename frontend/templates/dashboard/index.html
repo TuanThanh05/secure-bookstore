@@ -1,0 +1,15 @@
+{% extends "layouts/admin.html" %}
+{% load static %}
+{% block title %}Tổng quan{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
+{% block content %}
+  <header class="dash-header">
+    <h1 class="dash-header__title">Tổng quan</h1>
+    <p class="dash-header__desc">Tình hình cửa hàng hôm nay.</p>
+  </header>
+  <section class="dash-stats">
+    <article class="dash-stat"><p class="dash-stat__label">Đơn chờ xử lý</p><p class="dash-stat__value">—</p></article>
+    <article class="dash-stat"><p class="dash-stat__label">Sách sắp hết hàng</p><p class="dash-stat__value">—</p></article>
+    <article class="dash-stat"><p class="dash-stat__label">Đăng nhập sai hôm nay</p><p class="dash-stat__value">—</p></article>
+  </section>
+{% endblock %}

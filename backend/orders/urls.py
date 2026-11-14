@@ -1,10 +1,10 @@
-"""URL của app orders. Dùng trong template: {% url 'orders:<tên>' %}"""
-from django.urls import path  # noqa: F401  (dùng khi thêm URL)
+from django.urls import path
 
-from . import views  # noqa: F401
+from . import views
 
 app_name = "orders"
 
 urlpatterns = [
-    # Ví dụ: path("", views.index, name="index"),
+    path("", views.order_list, name="list"),
+    path("cart/", views.cart, name="cart"),
 ]

@@ -1,10 +1,16 @@
-"""URL của app dashboard. Dùng trong template: {% url 'dashboard:<tên>' %}"""
-from django.urls import path  # noqa: F401  (dùng khi thêm URL)
+from django.urls import path
 
-from . import views  # noqa: F401
+from . import views
 
 app_name = "dashboard"
 
 urlpatterns = [
-    # Ví dụ: path("", views.index, name="index"),
+    path("", views.index, name="index"),
+    path("kho-sach/", views.books, name="books"),
+    path("don-hang/", views.orders, name="orders"),
+    path("tai-khoan/", views.accounts, name="accounts"),
+    path("nhat-ky/", views.logs, name="logs"),
+    path("thong-tin/", views.profile, name="profile"),
+    path("xac-thuc-lai/", views.reauth, name="reauth"),
 ]
+

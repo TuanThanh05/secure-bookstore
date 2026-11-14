@@ -1,7 +1,23 @@
-"""View của app orders.
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.views.decorators.http import require_GET
 
-Quy ước: view giữ mỏng, chỉ làm 3 việc
-  1. Kiểm tra quyền (lớp 1): @login_required, @permission_required, lọc theo request.user
-  2. Gọi form (kiểm tra đầu vào) hoặc services.py (logic nghiệp vụ, gọi stored procedure)
-  3. render() hoặc redirect()
-"""
+ORDER_TABS = {
+    "active": "Đang xử lý",
+    "history": "Lịch sử",
+}
+
+
+@login_required
+@require_GET
+def cart(request):
+    return render(request, "shop/cart.html")
+
+
+@login_required
+@require_GET
+def order_list(request):
+    status = request.GET.get("status", "active")
+    if status not in ORDER_TABS:
+        status = "active"
+    return render(request, "account/orders.html", {"status": status, "tabs": ORDER_TABS})

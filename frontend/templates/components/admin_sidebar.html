@@ -1,7 +1,40 @@
-{# Menu khu vực nhân viên. Link thêm dần khi app dashboard có URL. #}
+{% with current=request.resolver_match.url_name %}
 <aside class="admin__sidebar">
-  <a class="admin__brand" href="{% url 'catalog:home' %}">Secure Bookstore</a>
+  <a class="admin__brand" href="{% url 'dashboard:index' %}">
+    {% include "components/icon.html" with name="logo" %}
+    <span>Quản trị</span>
+  </a>
   <nav class="admin__nav" aria-label="Quản trị">
-    {# Ví dụ: <a href="{% url 'dashboard:books' %}">Sách</a> #}
+    <a class="admin__link{% if current == 'index' %} is-active{% endif %}" href="{% url 'dashboard:index' %}"{% if current == 'index' %} aria-current="page"{% endif %}>
+      {% include "components/icon.html" with name="dashboard" %}<span>Tổng quan</span>
+    </a>
+    <a class="admin__link{% if current == 'books' %} is-active{% endif %}" href="{% url 'dashboard:books' %}"{% if current == 'books' %} aria-current="page"{% endif %}>
+      {% include "components/icon.html" with name="book" %}<span>Quản lý kho sách</span>
+    </a>
+    <a class="admin__link{% if current == 'orders' %} is-active{% endif %}" href="{% url 'dashboard:orders' %}"{% if current == 'orders' %} aria-current="page"{% endif %}>
+      {% include "components/icon.html" with name="shopping-bag" %}<span>Quản lý đơn hàng</span>
+    </a>
+    <a class="admin__link{% if current == 'accounts' or current == 'reauth' %} is-active{% endif %}" href="{% url 'dashboard:accounts' %}"{% if current == 'accounts' or current == 'reauth' %} aria-current="page"{% endif %}>
+      {% include "components/icon.html" with name="group" %}<span>Quản lý tài khoản</span>
+    </a>
+    <a class="admin__link{% if current == 'logs' %} is-active{% endif %}" href="{% url 'dashboard:logs' %}"{% if current == 'logs' %} aria-current="page"{% endif %}>
+      {% include "components/icon.html" with name="list" %}<span>Nhật ký hệ thống</span>
+    </a>
+    <a class="admin__link{% if current == 'profile' %} is-active{% endif %}" href="{% url 'dashboard:profile' %}"{% if current == 'profile' %} aria-current="page"{% endif %}>
+      {% include "components/icon.html" with name="person" %}<span>Thông tin tài khoản</span>
+    </a>
   </nav>
+  <div class="admin__footer">
+    <span class="admin__user">{{ user.get_username }}</span>
+    <a class="admin__link" href="{% url 'catalog:home' %}">
+      {% include "components/icon.html" with name="arrow-forward" %}<span>Về cửa hàng</span>
+    </a>
+    <form method="post" action="{% url 'accounts:logout' %}">
+      {% csrf_token %}
+      <button class="admin__link admin__logout" type="submit">
+        {% include "components/icon.html" with name="logout" %}<span>Đăng xuất</span>
+      </button>
+    </form>
+  </div>
 </aside>
+{% endwith %}

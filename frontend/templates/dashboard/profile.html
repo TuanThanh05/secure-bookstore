@@ -1,0 +1,14 @@
+{% extends "layouts/admin.html" %}
+{% load static %}
+{% block title %}Thông tin tài khoản{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
+{% block content %}
+  <header class="dash-header">
+    <h1 class="dash-header__title">Thông tin tài khoản</h1>
+    <p class="dash-header__desc">Thông tin và mật khẩu của bạn.</p>
+  </header>
+  <section class="dash-empty">
+    {% include "components/icon.html" with name="person" size="lg" %}
+    <p>Chưa có dữ liệu. Phần này nối với cơ sở dữ liệu ở đợt 2.</p>
+  </section>
+{% endblock %}

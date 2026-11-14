@@ -11,10 +11,11 @@
     <nav class="navbar__links" aria-label="Điều hướng chính">
       <a class="navbar__link" href="{{ about_url }}">Giới thiệu</a>
       {% if user.is_authenticated %}
-        <span class="navbar__user">
+        {% if user.is_staff %}{% url 'dashboard:profile' as profile_url %}{% else %}{% url 'accounts:profile' as profile_url %}{% endif %}
+        <a class="navbar__user" href="{{ profile_url }}" title="Thông tin tài khoản">
           {% include "components/icon.html" with name="person" size="sm" %}
           <span class="navbar__username">{{ user.get_username }}</span>
-        </span>
+        </a>
         {% if logout_url %}
           <form class="navbar__logout" method="post" action="{{ logout_url }}">
             {% csrf_token %}

@@ -1,0 +1,19 @@
+{% extends "layouts/account.html" %}
+{% load static %}
+{% block title %}Thông tin tài khoản{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/account-area.css' %}">{% endblock %}
+{% block account_content %}
+  <header class="area-header">
+    <h1 class="area-header__title">Thông tin tài khoản</h1>
+    <p class="area-header__desc">Thông tin cá nhân và mật khẩu của bạn.</p>
+  </header>
+  <dl class="area-info">
+    <div class="area-info__row"><dt>Tên đăng nhập</dt><dd>{{ user.get_username }}</dd></div>
+    <div class="area-info__row"><dt>Email</dt><dd>{{ user.email }}</dd></div>
+    <div class="area-info__row"><dt>Ngày tham gia</dt><dd>{{ user.date_joined|date:"d/m/Y" }}</dd></div>
+  </dl>
+  <section class="area-empty">
+    {% include "components/icon.html" with name="person" size="lg" %}
+    <p>Đổi mật khẩu sẽ có ở bước sau.</p>
+  </section>
+{% endblock %}
