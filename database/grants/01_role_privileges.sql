@@ -53,3 +53,20 @@ GRANT SELECT, INSERT, UPDATE         ON axes_accesslog               TO 'r_custo
 -- Phần lớn quyền (view v_staff_*, thủ tục sp_book_*...) thêm ở các bước sau.
 -- ---------------------------------------------------------------------
 GRANT INSERT ON core_securityevent             TO 'r_staff';
+
+-- ---------------------------------------------------------------------
+-- sp_place_order (database/objects/30_sp_place_order.sql)
+-- Definer đọc/ghi đúng các bảng thủ tục cần. Từ MySQL 8.0.22, câu khóa dòng
+-- SELECT ... FOR UPDATE cần SELECT cộng thêm UPDATE hoặc DELETE trên bảng đó.
+-- ---------------------------------------------------------------------
+GRANT SELECT, UPDATE ON orders_cart      TO 'bookstore_definer'@'localhost';
+GRANT SELECT, DELETE ON orders_cartitem  TO 'bookstore_definer'@'localhost';
+GRANT SELECT, UPDATE ON catalog_book     TO 'bookstore_definer'@'localhost';
+GRANT SELECT, INSERT ON orders_order     TO 'bookstore_definer'@'localhost';
+GRANT INSERT         ON orders_orderitem TO 'bookstore_definer'@'localhost';
+
+-- Thủ tục SQL SECURITY DEFINER: MySQL kiểm tra cả quyền EXECUTE của chính definer
+GRANT EXECUTE ON PROCEDURE sp_place_order TO 'bookstore_definer'@'localhost';
+
+-- Khách chỉ được gọi thủ tục, không có quyền nào trên các bảng trên
+GRANT EXECUTE ON PROCEDURE sp_place_order TO 'r_customer';
