@@ -15,8 +15,11 @@ Quy ước:
 | `accounts:register` | `/account/register/` | `account/register.html` | Chưa đăng nhập | `form` | `username`, `email`, `password1`, `password2` |
 | `accounts:login` | `/account/login/` | `account/login.html` | Chưa đăng nhập | `form`, `next` | `username`, `password`, `next` |
 | `accounts:logout` | `/account/logout/` | – (redirect) | Đã đăng nhập | – | (chỉ POST + CSRF) |
+| `accounts:check_email` | `/account/kiem-tra-email/` | `account/check_email.html` | Mọi người | `verify_minutes` | – |
+| `accounts:verify_email` | `/account/xac-nhan-email/<token>/` | `account/verify_email.html` | Mọi người (có link trong thư) | `username` (link hợp lệ) hoặc `error`, `expired` (link hỏng, trả 400) | Chỉ POST + CSRF mới xác nhận; GET chỉ hiện nút |
+| `accounts:resend_verification` | `/account/gui-lai-xac-nhan/` | `account/resend_verification.html` | Mọi người | `form` | `email` (luôn chuyển tới `check_email`, dù email có tồn tại hay không) |
 
-Các dòng `accounts:*` là ví dụ để bạn làm phần account sửa lại cho đúng khi bắt đầu.
+Đăng ký thành công hay email đã có tài khoản đều chuyển tới `accounts:check_email` (không lộ email nào đã đăng ký). Khách chưa xác nhận email đăng nhập đúng mật khẩu thì nhận lỗi `email_unverified`; nhân viên được miễn.
 
 ## BookCard: một cuốn sách hiển thị trên lưới
 

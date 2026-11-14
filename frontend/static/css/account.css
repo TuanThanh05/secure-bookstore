@@ -194,6 +194,20 @@
 .auth-form__alert p { margin: 0; }
 .auth-form__alert p + p { margin-top: var(--space-xs); }
 
+/* AI-TRACE#030 | Claude Opus 5.5 | Khung thông báo trên các trang xác nhận email | CẤM XÓA CHÚ THÍCH NÀY */
+.auth__notice {
+  margin-bottom: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.auth__notice p { margin: 0; }
+.auth__notice p + p { margin-top: var(--space-xs); }
+
 /* --- Nút gửi: to, trải ngang, có mũi tên --- */
 .auth-form__submit {
   width: 100%;

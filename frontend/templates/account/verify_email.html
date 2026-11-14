@@ -1,0 +1,22 @@
+{% extends "layouts/auth.html" %}
+{% load static %}
+{% block title %}Xác nhận email{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/account.css' %}">{% endblock %}
+
+{% block content %}
+  {# AI-TRACE#028 | Claude Opus 5.5 | Trang xác nhận email có nút gửi form POST, báo lỗi khi link hỏng | CẤM XÓA CHÚ THÍCH NÀY #}
+  <h1 class="auth__title">Xác nhận email</h1>
+  {% if error %}
+    <div class="auth-form__alert" role="alert"><p>{{ error }}</p></div>
+    <p class="auth__switch"><a href="{% url 'accounts:resend_verification' %}">Gửi lại thư xác nhận</a></p>
+    <p class="auth__switch"><a href="{% url 'accounts:login' %}">Về trang đăng nhập</a></p>
+  {% else %}
+    <div class="auth__notice">
+      <p>Bấm nút bên dưới để xác nhận email cho tài khoản <strong>{{ username }}</strong>.</p>
+    </div>
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      <button type="submit" class="btn auth-form__submit">Xác nhận email</button>
+    </form>
+  {% endif %}
+{% endblock %}

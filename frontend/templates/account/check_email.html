@@ -1,0 +1,16 @@
+{% extends "layouts/auth.html" %}
+{% load static %}
+{% block title %}Kiểm tra hộp thư{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/account.css' %}">{% endblock %}
+
+{% block content %}
+  {# AI-TRACE#027 | Claude Opus 5.5 | Trang kiểm tra hộp thư dùng chung cho đăng ký và gửi lại thư | CẤM XÓA CHÚ THÍCH NÀY #}
+  <h1 class="auth__title">Kiểm tra hộp thư</h1>
+  <div class="auth__notice">
+    <p>Nếu thông tin hợp lệ, chúng tôi đã gửi một thư tới địa chỉ email bạn vừa nhập.</p>
+    <p>Mở thư và bấm vào link để xác nhận email. Link chỉ có hiệu lực trong {{ verify_minutes }} phút.</p>
+    <p>Không thấy thư? Hãy xem cả mục Thư rác / Quảng cáo.</p>
+  </div>
+  <p class="auth__switch"><a href="{% url 'accounts:resend_verification' %}">Gửi lại thư xác nhận</a></p>
+  <p class="auth__switch"><a href="{% url 'accounts:login' %}">Về trang đăng nhập</a></p>
+{% endblock %}
