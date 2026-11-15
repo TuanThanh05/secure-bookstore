@@ -31,3 +31,9 @@
 @media (max-width: 767px) {
   .area-info__row { grid-template-columns: 1fr; gap: var(--space-xs); }
 }
+
+/* AI-TRACE#062 | Claude Opus 5.5 | Kiểu nút thao tác và form đổi mật khẩu trong khu vực tài khoản | CẤM XÓA CHÚ THÍCH NÀY */
+.area-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.area-form { max-width: 480px; }
+.area-form .auth-form { grid-template-columns: 1fr; }
+.area-form__links { margin-top: var(--space-md); font-size: 14px; color: var(--color-muted); }

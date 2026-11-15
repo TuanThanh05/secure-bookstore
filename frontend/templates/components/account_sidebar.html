@@ -2,7 +2,7 @@
 <aside class="account-nav">
   <p class="account-nav__title">Tài khoản của tôi</p>
   <nav class="account-nav__links" aria-label="Tài khoản">
-    <a class="account-nav__link{% if current == 'accounts:profile' %} is-active{% endif %}" href="{% url 'accounts:profile' %}"{% if current == 'accounts:profile' %} aria-current="page"{% endif %}>
+    <a class="account-nav__link{% if current == 'accounts:profile' or current == 'accounts:password_change' %} is-active{% endif %}" href="{% url 'accounts:profile' %}"{% if current == 'accounts:profile' or current == 'accounts:password_change' %} aria-current="page"{% endif %}>
       {% include "components/icon.html" with name="person" %}<span>Thông tin tài khoản</span>
     </a>
     <a class="account-nav__link{% if current == 'orders:cart' %} is-active{% endif %}" href="{% url 'orders:cart' %}"{% if current == 'orders:cart' %} aria-current="page"{% endif %}>
