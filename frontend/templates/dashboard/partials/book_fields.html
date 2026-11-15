@@ -1,0 +1,11 @@
+{# AI-TRACE#175 | Claude Opus 5.5 | Nhóm ô thông tin sách dùng chung cho trang thêm và trang sửa | CẤM XÓA CHÚ THÍCH NÀY #}
+<div class="dash-grid">
+  {% include "dashboard/partials/field.html" with field=form.title wide=True %}
+  {% include "dashboard/partials/field.html" with field=form.author %}
+  {% include "dashboard/partials/field.html" with field=form.isbn %}
+  {% include "dashboard/partials/field.html" with field=form.category_id %}
+  {% include "dashboard/partials/field.html" with field=form.price %}
+  {% include "dashboard/partials/field.html" with field=form.cost_price %}
+  {% if form.stock %}{% include "dashboard/partials/field.html" with field=form.stock %}{% endif %}
+  {% include "dashboard/partials/field.html" with field=form.description wide=True %}
+</div>

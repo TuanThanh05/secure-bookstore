@@ -1,0 +1,61 @@
+{% extends "layouts/admin.html" %}
+{% load static %}
+{% block title %}Thể loại sách{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
+{% block content %}
+  {# AI-TRACE#179 | Claude Opus 5.5 | Trang thể loại: form thêm, bảng thể loại có số sách, sửa tên từng dòng, liên kết xóa khi không còn sách | CẤM XÓA CHÚ THÍCH NÀY #}
+  <header class="dash-header">
+    <h1 class="dash-header__title">Thể loại sách</h1>
+    <p class="dash-header__desc">Tên trùng (kể cả khác hoa/thường hay dấu) sẽ bị từ chối. Thể loại còn sách thì không xóa được.</p>
+  </header>
+
+  <form class="dash-panel dash-inline-form dash-inline-form--wide" method="post" novalidate>
+    {% csrf_token %}
+    {% include "dashboard/partials/form_errors.html" %}
+    {% include "dashboard/partials/field.html" with field=form.name %}
+    <button class="btn" type="submit">Thêm thể loại</button>
+  </form>
+
+  {% if categories %}
+    <div class="dash-table-wrap">
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th scope="col">Tên thể loại</th>
+            <th scope="col" class="is-num">Số sách</th>
+            <th scope="col" class="is-num">Đang hiện</th>
+            <th scope="col"><span class="visually-hidden">Thao tác</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in categories %}
+            <tr>
+              <td>
+                <form class="dash-rename" method="post" action="{% url 'dashboard:category_rename' category_id=c.id %}">
+                  {% csrf_token %}
+                  <label class="visually-hidden" for="ten-{{ c.id }}">Tên thể loại {{ c.name }}</label>
+                  <input id="ten-{{ c.id }}" name="name" value="{{ c.name }}" maxlength="100" required>
+                  <button class="btn btn--secondary" type="submit">Đổi tên</button>
+                </form>
+              </td>
+              <td class="is-num">{{ c.book_count }}</td>
+              <td class="is-num">{{ c.active_book_count }}</td>
+              <td>
+                {% if c.can_delete %}
+                  <a class="btn btn--link dash-danger-link" href="{% url 'dashboard:category_delete' category_id=c.id %}">Xóa…</a>
+                {% else %}
+                  <span class="dash-field__help">Còn sách</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <section class="dash-empty">
+      {% include "components/icon.html" with name="list" size="lg" %}
+      <p>Chưa có thể loại nào.</p>
+    </section>
+  {% endif %}
+{% endblock %}

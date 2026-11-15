@@ -40,8 +40,8 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 034 | Claude Opus 5.5 |  | `backend/accounts/profile.py` | `ProfileView` | 9 | Dữ liệu trang thông tin tài khoản, email và SĐT có thể bị giấu | [ ] |
 | 035 | Claude Opus 5.5 |  | `backend/accounts/profile.py` | `build_profile` | 43 | Tạo dữ liệu trang thông tin, chỉ đưa email và SĐT khi được phép | [ ] |
 | 036 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `profile` | 150 | Trang thông tin của khách, nhân viên bị chuyển sang trang quản trị | [ ] |
-| 037 | Claude Opus 5.5 |  | `backend/dashboard/views.py` | `profile` | 48 | Trang thông tin của nhân viên, mặc định không gửi email và SĐT | [ ] |
-| 038 | Claude Opus 5.5 |  | `backend/dashboard/views.py` | `profile_contact` | 56 | Hiện email và SĐT của chính nhân viên sau khi xác thực lại, có ghi log | [ ] |
+| 037 | Claude Opus 5.5 |  | `backend/dashboard/views.py` | `profile` | 42 | Trang thông tin của nhân viên, mặc định không gửi email và SĐT | [ ] |
+| 038 | Claude Opus 5.5 |  | `backend/dashboard/views.py` | `profile_contact` | 50 | Hiện email và SĐT của chính nhân viên sau khi xác thực lại, có ghi log | [ ] |
 | 039 | Claude Opus 5.5 |  | `frontend/templates/account/profile.html` | `<header class="area-header">` | 6 | Bảng thông tin tài khoản của khách, hiện đầy đủ email và SĐT | [ ] |
 | 040 | Claude Opus 5.5 |  | `frontend/templates/dashboard/profile.html` | `<header class="dash-header">` | 6 | Bảng thông tin nhân viên, email và SĐT ẩn sau nút con mắt cần xác thực lại | [ ] |
 | 041 | Claude Opus 5.5 |  | `frontend/static/css/dashboard.css` | `.dash-info` | 49 | Kiểu bảng thông tin tài khoản và ô bị ẩn có nút con mắt | [ ] |
@@ -99,7 +99,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 093 | Claude Opus 5.5 |  | `backend/accounts/tests/test_admin_password_command.py` | `AdminPasswordCommandTests` | 24 | Test lệnh đổi mật khẩu admin: chỉ nhân viên, quy tắc mật khẩu, đăng xuất phiên, log, thư báo, chặn kết nối web | [ ] |
 | 094 | Claude Opus 5.5 |  | `backend/dashboard/forms.py` | `StaffProfileUpdateForm` | 31 | Form sửa họ, tên, SĐT của nhân viên; ô SĐT luôn trống, để trống là giữ số cũ | [ ] |
 | 095 | Claude Opus 5.5 |  | `backend/dashboard/services.py` | `update_staff_profile` | 17 | Lưu họ, tên, SĐT của nhân viên bằng kết nối staff, chỉ ghi cột thay đổi, log tên cột | [ ] |
-| 096 | Claude Opus 5.5 |  | `backend/dashboard/views.py` | `profile_update` | 71 | Nhân viên sửa họ, tên, SĐT của chính mình sau khi xác thực lại, không hiện SĐT cũ | [ ] |
+| 096 | Claude Opus 5.5 |  | `backend/dashboard/views.py` | `profile_update` | 65 | Nhân viên sửa họ, tên, SĐT của chính mình sau khi xác thực lại, không hiện SĐT cũ | [ ] |
 | 097 | Claude Opus 5.5 |  | `frontend/templates/dashboard/profile_update.html` | `<header class="dash-header">` | 6 | Form sửa họ, tên, SĐT của nhân viên; không hiện email và SĐT hiện tại | [ ] |
 | 098 | Claude Opus 5.5 |  | `frontend/static/css/dashboard.css` | `.dash-actions { display: flex; flex-wrap: wrap; gap: var(--s` | 72 | Kiểu form cập nhật thông tin nhân viên và hàng nút thao tác | [ ] |
 | 099 | Claude Opus 5.5 |  | `database/objects/10_trg_accounts_user_guard.sql` | `IF SUBSTRING_INDEX(USER(), '@', 1) = 'app_staff' AND OLD.is_` | 80 | Chặn app_staff sửa dòng của khách hàng | [ ] |
@@ -157,3 +157,37 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 152 | Claude Opus 5.5 |  | `backend/catalog/tests/test_covers.py` | `SanitizeCoverTests` | 38 | Test kiểm tra ảnh bìa: nhận ảnh thật, chặn file giả, ảnh bom, file quá lớn, xóa metadata và nội dung cài kèm | [ ] |
 | 153 | Claude Opus 5.5 |  | `backend/catalog/tests/test_covers.py` | `CoverStorageTests` | 107 | Test lưu và xóa file ảnh bìa: tên UUID trong media/covers, không xóa được file ngoài thư mục | [ ] |
 | 154 | Claude Opus 5.5 |  | `backend/catalog/tests/test_covers.py` | `BookCoverFlowTests` | 141 | Test ảnh bìa trong luồng thêm/sửa/xóa sách: dọn file khi CSDL báo lỗi, xóa ảnh cũ khi thay hoặc bỏ | [ ] |
+| 155 | Claude Opus 5.5 |  | `backend/dashboard/catalog_forms.py` | `attach_error` | 32 | Gắn lỗi nghiệp vụ từ service vào đúng ô của form, không có ô phù hợp thì thành lỗi chung | [ ] |
+| 156 | Claude Opus 5.5 |  | `backend/dashboard/catalog_forms.py` | `BookForm` | 41 | Form thông tin sách dùng chung cho thêm và sửa: kiểm tra độ dài, khoảng giá, ISBN, thể loại, dung lượng ảnh | [ ] |
+| 157 | Claude Opus 5.5 |  | `backend/dashboard/catalog_forms.py` | `BookCreateForm` | 83 | Form thêm sách: thêm ô tồn kho ban đầu 0 đến 10.000 | [ ] |
+| 158 | Claude Opus 5.5 |  | `backend/dashboard/catalog_forms.py` | `BookEditForm` | 88 | Form sửa sách: thêm ô bỏ ảnh bìa, không cho vừa chọn ảnh mới vừa bỏ ảnh | [ ] |
+| 159 | Claude Opus 5.5 |  | `backend/dashboard/catalog_forms.py` | `StockForm` | 99 | Form số lượng nhập kho hoặc giảm kho, 1 đến 10.000 cuốn | [ ] |
+| 160 | Claude Opus 5.5 |  | `backend/dashboard/catalog_forms.py` | `CategoryForm` | 104 | Form tên thể loại dùng cho thêm và sửa tên | [ ] |
+| 161 | Claude Opus 5.5 |  | `backend/dashboard/catalog_views.py` | `_book_or_404` | 36 | Lấy sách theo id trong URL, không có thì trả 404 | [ ] |
+| 162 | Claude Opus 5.5 |  | `backend/dashboard/catalog_views.py` | `books` | 44 | Trang danh sách sách: lọc theo tên, tác giả, thể loại, trạng thái, phân trang, cảnh báo tồn kho thấp | [ ] |
+| 163 | Claude Opus 5.5 |  | `backend/dashboard/catalog_views.py` | `book_create` | 75 | Trang thêm sách: form thông tin, tồn kho ban đầu, ảnh bìa; lỗi service gắn vào đúng ô | [ ] |
+| 164 | Claude Opus 5.5 |  | `backend/dashboard/catalog_views.py` | `book_edit` | 97 | Trang sửa sách: form thông tin và ảnh, kèm khung tồn kho, trạng thái và nút xóa | [ ] |
+| 165 | Claude Opus 5.5 |  | `backend/dashboard/catalog_views.py` | `_change_stock` | 130 | Xử lý chung form nhập kho/giảm kho: kiểm tra số lượng, gọi service, báo kết quả rồi quay lại trang sửa | [ ] |
+| 166 | Claude Opus 5.5 |  | `backend/dashboard/catalog_views.py` | `book_restock` | 147 | Nhập thêm hàng cho một sách (POST) | [ ] |
+| 167 | Claude Opus 5.5 |  | `backend/dashboard/catalog_views.py` | `book_reduce` | 155 | Giảm kho ngoại lệ cho một sách (POST) | [ ] |
+| 168 | Claude Opus 5.5 |  | `backend/dashboard/catalog_views.py` | `book_toggle` | 163 | Ẩn hoặc hiện sách theo trạng thái gửi lên rõ ràng, không đảo trạng thái mù | [ ] |
+| 169 | Claude Opus 5.5 |  | `backend/dashboard/catalog_views.py` | `book_delete` | 182 | Xóa hẳn sách: cần xác thực lại, có trang xác nhận, chỉ xóa sách đang ẩn | [ ] |
+| 170 | Claude Opus 5.5 |  | `backend/dashboard/catalog_views.py` | `categories` | 203 | Trang thể loại: danh sách kèm số sách, form thêm, form sửa tên từng dòng | [ ] |
+| 171 | Claude Opus 5.5 |  | `backend/dashboard/catalog_views.py` | `category_rename` | 222 | Sửa tên thể loại (POST), báo lỗi trùng tên hoặc không tồn tại | [ ] |
+| 172 | Claude Opus 5.5 |  | `backend/dashboard/catalog_views.py` | `category_delete` | 240 | Xóa thể loại: cần xác thực lại, có trang xác nhận, chỉ xóa thể loại không còn sách | [ ] |
+| 173 | Claude Opus 5.5 |  | `frontend/templates/dashboard/partials/field.html` | `<div class="dash-field{% if field.errors %} has-error{% endi` | 1 | Hiển thị một ô form dashboard: nhãn, ô nhập, gợi ý, lỗi gắn aria-describedby | [ ] |
+| 174 | Claude Opus 5.5 |  | `frontend/templates/dashboard/books.html` | `<header class="dash-header dash-header--row">` | 6 | Trang danh sách sách: bộ lọc GET, bảng sách có ảnh, giá nhập, tồn kho, trạng thái, phân trang | [ ] |
+| 175 | Claude Opus 5.5 |  | `frontend/templates/dashboard/partials/book_fields.html` | `<div class="dash-grid">` | 1 | Nhóm ô thông tin sách dùng chung cho trang thêm và trang sửa | [ ] |
+| 176 | Claude Opus 5.5 |  | `frontend/templates/dashboard/book_create.html` | `<a class="dash-back" href="{% url 'dashboard:books' %}">{% i` | 6 | Trang thêm sách: form multipart gồm thông tin, tồn kho ban đầu và ảnh bìa | [ ] |
+| 177 | Claude Opus 5.5 |  | `frontend/templates/dashboard/book_edit.html` | `<a class="dash-back" href="{% url 'dashboard:books' %}">{% i` | 6 | Trang sửa sách: khung thông tin và ảnh, khung tồn kho, khung trạng thái, vùng xóa | [ ] |
+| 178 | Claude Opus 5.5 |  | `frontend/templates/dashboard/book_delete.html` | `<section class="dash-confirm" aria-labelledby="xac-nhan">` | 6 | Trang xác nhận xóa sách vĩnh viễn, nêu rõ hậu quả | [ ] |
+| 179 | Claude Opus 5.5 |  | `frontend/templates/dashboard/categories.html` | `<header class="dash-header">` | 6 | Trang thể loại: form thêm, bảng thể loại có số sách, sửa tên từng dòng, liên kết xóa khi không còn sách | [ ] |
+| 180 | Claude Opus 5.5 |  | `frontend/templates/dashboard/category_delete.html` | `<section class="dash-confirm" aria-labelledby="xac-nhan">` | 6 | Trang xác nhận xóa thể loại không còn sách | [ ] |
+| 181 | Claude Opus 5.5 |  | `frontend/static/css/dashboard.css` | `.dash-header--row { display: flex; flex-wrap: wrap; align-it` | 83 | Kiểu trang kho sách: bộ lọc, bảng, nhãn trạng thái, khung, form, ảnh bìa, phân trang, xác nhận xóa | [ ] |
+| 182 | Claude Opus 5.5 |  | `backend/dashboard/tests/test_catalog_views.py` | `CatalogViewTestBase` | 45 | Khung test trang kho sách: tài khoản admin, giả lập service, đánh dấu đã xác thực lại | [ ] |
+| 183 | Claude Opus 5.5 |  | `backend/dashboard/tests/test_catalog_views.py` | `CatalogAccessTests` | 70 | Test phân quyền trang kho sách: ẩn danh phải đăng nhập, khách bị 403, POST thiếu CSRF bị chặn, GET không đổi dữ liệu | [ ] |
+| 184 | Claude Opus 5.5 |  | `backend/dashboard/tests/test_catalog_views.py` | `BookListViewTests` | 120 | Test trang danh sách sách: truyền bộ lọc, bỏ qua giá trị lạ, nhãn tồn kho, escape dữ liệu | [ ] |
+| 185 | Claude Opus 5.5 |  | `backend/dashboard/tests/test_catalog_views.py` | `BookFormViewTests` | 152 | Test thêm và sửa sách: gửi dữ liệu sạch, ảnh, gắn lỗi service vào đúng ô, 404 khi không có sách | [ ] |
+| 186 | Claude Opus 5.5 |  | `backend/dashboard/tests/test_catalog_views.py` | `BookStockAndStatusTests` | 207 | Test nhập kho, giảm kho, ẩn hiện: chỉ POST, kiểm tra số lượng, trạng thái rõ ràng, báo lỗi service | [ ] |
+| 187 | Claude Opus 5.5 |  | `backend/dashboard/tests/test_catalog_views.py` | `DeleteFlowTests` | 239 | Test xóa sách và xóa thể loại: bắt buộc xác thực lại, có trang xác nhận, chặn khi sách đang hiện hoặc thể loại còn sách | [ ] |
+| 188 | Claude Opus 5.5 |  | `backend/dashboard/tests/test_catalog_views.py` | `CategoryViewTests` | 287 | Test trang thể loại: thêm, báo trùng tên đúng ô, đổi tên | [ ] |

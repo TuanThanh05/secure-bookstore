@@ -1,14 +1,93 @@
 {% extends "layouts/admin.html" %}
-{% load static %}
+{% load static bookstore %}
 {% block title %}Quản lý kho sách{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
 {% block content %}
-  <header class="dash-header">
-    <h1 class="dash-header__title">Quản lý kho sách</h1>
-    <p class="dash-header__desc">Sách, thể loại, tồn kho, ẩn hoặc hiện sách.</p>
+  {# AI-TRACE#174 | Claude Opus 5.5 | Trang danh sách sách: bộ lọc GET, bảng sách có ảnh, giá nhập, tồn kho, trạng thái, phân trang | CẤM XÓA CHÚ THÍCH NÀY #}
+  <header class="dash-header dash-header--row">
+    <div>
+      <h1 class="dash-header__title">Quản lý kho sách</h1>
+      <p class="dash-header__desc">{{ page.paginator.count }} đầu sách{% if query %} khớp bộ lọc{% endif %}.</p>
+    </div>
+    <a class="btn" href="{% url 'dashboard:book_create' %}">Thêm sách</a>
   </header>
-  <section class="dash-empty">
-    {% include "components/icon.html" with name="book" size="lg" %}
-    <p>Chưa có dữ liệu. Phần này nối với cơ sở dữ liệu ở đợt 2.</p>
-  </section>
+
+  <form class="dash-filters" method="get" role="search" aria-label="Lọc sách">
+    <div class="dash-field">
+      <label for="loc-ten">Tên sách</label>
+      <input id="loc-ten" type="search" name="ten" value="{{ filters.ten }}" maxlength="100">
+    </div>
+    <div class="dash-field">
+      <label for="loc-tac-gia">Tác giả</label>
+      <input id="loc-tac-gia" type="search" name="tac_gia" value="{{ filters.tac_gia }}" maxlength="100">
+    </div>
+    <div class="dash-field">
+      <label for="loc-the-loai">Thể loại</label>
+      <select id="loc-the-loai" name="the_loai">
+        <option value="">Tất cả</option>
+        {% for c in categories %}
+          <option value="{{ c.id }}"{% if filters.the_loai == c.id|stringformat:"d" %} selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="dash-field">
+      <label for="loc-trang-thai">Trạng thái</label>
+      <select id="loc-trang-thai" name="trang_thai">
+        <option value="">Tất cả</option>
+        <option value="hien"{% if filters.trang_thai == "hien" %} selected{% endif %}>Đang hiện</option>
+        <option value="an"{% if filters.trang_thai == "an" %} selected{% endif %}>Đang ẩn</option>
+      </select>
+    </div>
+    <div class="dash-filters__actions">
+      <button class="btn" type="submit">Lọc</button>
+      {% if query %}<a class="btn btn--link" href="{% url 'dashboard:books' %}">Bỏ lọc</a>{% endif %}
+    </div>
+  </form>
+
+  {% if page.object_list %}
+    <div class="dash-table-wrap">
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th scope="col"><span class="visually-hidden">Ảnh bìa</span></th>
+            <th scope="col">Sách</th>
+            <th scope="col">Thể loại</th>
+            <th scope="col" class="is-num">Giá bán</th>
+            <th scope="col" class="is-num">Giá nhập</th>
+            <th scope="col" class="is-num">Tồn kho</th>
+            <th scope="col">Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for book in page.object_list %}
+            <tr>
+              <td><img class="dash-cover dash-cover--sm" src="{{ book.cover_url }}" alt="" width="48" height="72" loading="lazy"></td>
+              <td>
+                <a class="dash-table__title" href="{% url 'dashboard:book_edit' book_id=book.id %}">{{ book.title }}</a>
+                <span class="dash-table__sub">{{ book.author }} · ISBN {{ book.isbn }}</span>
+              </td>
+              <td>{{ book.category_name|default:"—" }}</td>
+              <td class="is-num">{{ book.price|vnd }}</td>
+              <td class="is-num">{{ book.cost_price|vnd }}</td>
+              <td class="is-num">{{ book.stock }} {% include "dashboard/partials/stock_badge.html" with stock=book.stock %}</td>
+              <td>{% if book.is_active %}<span class="dash-badge dash-badge--success">Đang hiện</span>{% else %}<span class="dash-badge">Đang ẩn</span>{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if page.has_other_pages %}
+      <nav class="dash-pager" aria-label="Phân trang">
+        {% if page.has_previous %}<a class="btn btn--secondary" href="?{% if query %}{{ query }}&{% endif %}trang={{ page.previous_page_number }}">Trang trước</a>{% endif %}
+        <span>Trang {{ page.number }} / {{ page.paginator.num_pages }}</span>
+        {% if page.has_next %}<a class="btn btn--secondary" href="?{% if query %}{{ query }}&{% endif %}trang={{ page.next_page_number }}">Trang sau</a>{% endif %}
+      </nav>
+    {% endif %}
+  {% else %}
+    <section class="dash-empty">
+      {% include "components/icon.html" with name="book" size="lg" %}
+      <p>{% if query %}Không có sách nào khớp bộ lọc.{% else %}Chưa có sách nào. Bấm “Thêm sách” để bắt đầu.{% endif %}</p>
+    </section>
+  {% endif %}
 {% endblock %}

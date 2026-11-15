@@ -210,3 +210,37 @@ Thư mục `media/` đã có trong `.gitignore`, không commit ảnh người d�
 ### Kiểm thử
 
 `catalog/tests/test_covers.py` (23 test): ảnh thật 3 định dạng, ảnh trong suốt, thu nhỏ, xóa EXIF/GPS, mã PHP/JS nối đuôi bị loại, file giả/SVG/GIF/BMP/cắt cụt/rỗng, quá 2 MB (kể cả khi `size` nói dối), ảnh bom 8000×8000, tên UUID và quyền 0644, `delete_cover` không xóa được file ngoài `covers/`, và thứ tự file ↔ CSDL khi thêm/sửa/bỏ/xóa thành công hoặc lỗi.
+
+## 6. Giao diện quản lý kho (dashboard)
+
+### Trang và URL (đều cần đăng nhập admin, `Cache-Control: no-store`)
+
+| Trang | URL | Phương thức |
+| --- | --- | --- |
+| Danh sách sách | `/dashboard/kho-sach/` | GET: lọc `ten`, `tac_gia`, `the_loai`, `trang_thai` (`hien`/`an`), trang `trang`; 20 sách/trang |
+| Thêm sách | `/dashboard/kho-sach/them/` | GET/POST (multipart) |
+| Sửa sách | `/dashboard/kho-sach/<id>/` | GET/POST (multipart): thông tin + ảnh |
+| Nhập kho / giảm kho | `/dashboard/kho-sach/<id>/nhap-kho/`, `/giam-kho/` | chỉ POST |
+| Ẩn/hiện | `/dashboard/kho-sach/<id>/trang-thai/` | chỉ POST, gửi trạng thái đích `trang_thai=an|hien` (không đảo mù) |
+| Xóa sách | `/dashboard/kho-sach/<id>/xoa/` | GET: trang xác nhận; POST: xóa. **Cần xác thực lại** |
+| Thể loại | `/dashboard/the-loai/` | GET/POST (thêm) |
+| Đổi tên thể loại | `/dashboard/the-loai/<id>/sua/` | chỉ POST |
+| Xóa thể loại | `/dashboard/the-loai/<id>/xoa/` | GET: xác nhận; POST: xóa. **Cần xác thực lại** |
+
+Code: `dashboard/catalog_views.py`, `dashboard/catalog_forms.py`, template `dashboard/books.html`, `book_create.html`, `book_edit.html`, `book_delete.html`, `categories.html`, `category_delete.html`, partial `dashboard/partials/`. CSS trong `dashboard.css`. **Không thêm dòng JS nào.**
+
+### Quy tắc bảo mật đã áp dụng
+
+- GET chỉ đọc; mọi thay đổi là POST có CSRF, mỗi thao tác một URL, xong thì redirect (Post/Redirect/Get) kèm thông báo.
+- Kiểm tra ở server: form Django → service → thủ tục. `attach_error` gắn mỗi mã `BookError`/`CoverError`/`CategoryError` vào đúng ô (ví dụ `ISBN_EXISTS` dưới ô ISBN). `min`/`max`/`accept` trên HTML chỉ để người dùng đỡ nhập sai.
+- Thể loại trong form là danh sách chọn lấy từ CSDL; id ngoài danh sách bị form từ chối.
+- Tham số lọc và trang sai kiểu → danh sách rỗng hoặc trang 1, không lỗi 500. Sách/thể loại không tồn tại → 404.
+- Xóa sách và xóa thể loại: cần xác thực lại (2 phút), có trang xác nhận nêu hậu quả. Sách đang hiện hoặc thể loại còn sách thì không vào được bước xóa.
+- Template không `|safe`, không JS/CSS inline; tên sách, tác giả, mô tả luôn được escape (đã test với `<script>`).
+- **Không xem trước ảnh** trước khi upload: muốn xem trước phải thêm `blob:` vào `img-src` của CSP; nhóm chọn giữ CSP chặt. Trình duyệt vẫn hiện tên file đã chọn.
+- Giá nhập chỉ có trong dashboard.
+- Nhãn tồn kho: `Hết hàng` khi 0, `Sắp hết` khi 1 đến `LOW_STOCK_THRESHOLD` (10, trong `settings/base.py`).
+
+### Kiểm thử
+
+`dashboard/tests/test_catalog_views.py` (33 test): ẩn danh phải đăng nhập, khách 403, POST thiếu CSRF bị chặn, URL thay đổi dữ liệu từ chối GET, bộ lọc và phân trang, escape `<script>`, nhãn tồn kho, lỗi service gắn đúng ô, nhập/giảm kho, ẩn/hiện, xóa cần xác thực lại và có xác nhận. Đã chạy thử toàn bộ luồng trên CSDL thật trong sandbox và chụp màn hình, không có lỗi CSP hay lỗi console.

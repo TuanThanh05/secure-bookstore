@@ -204,6 +204,7 @@ STATIC_ROOT = REPO_DIR / "staticfiles"     # kết quả collectstatic, không c
 MEDIA_URL = "media/"
 MEDIA_ROOT = REPO_DIR / "media"            # ảnh bìa upload, không commit, Nginx không cho thực thi
 BOOK_DEFAULT_COVER = "img/book-cover-default.webp"   # ảnh bìa mặc định trong frontend/static, dùng khi sách chưa có ảnh
+LOW_STOCK_THRESHOLD = 10                            # dashboard tô "Sắp hết" khi tồn kho từ 1 đến ngưỡng này
 
 LOG_DIR = REPO_DIR / "logs"
 LOG_DIR.mkdir(exist_ok=True)

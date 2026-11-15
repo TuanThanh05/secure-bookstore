@@ -1,0 +1,29 @@
+{% extends "layouts/admin.html" %}
+{% load static %}
+{% block title %}Thêm sách{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
+{% block content %}
+  {# AI-TRACE#176 | Claude Opus 5.5 | Trang thêm sách: form multipart gồm thông tin, tồn kho ban đầu và ảnh bìa | CẤM XÓA CHÚ THÍCH NÀY #}
+  <a class="dash-back" href="{% url 'dashboard:books' %}">{% include "components/icon.html" with name="chevron-left" %}<span>Danh sách sách</span></a>
+  <header class="dash-header">
+    <h1 class="dash-header__title">Thêm sách</h1>
+    <p class="dash-header__desc">Sách mới sẽ hiện ngay trong cửa hàng. Không chọn ảnh thì dùng ảnh bìa mặc định.</p>
+  </header>
+
+  {% if not has_categories %}
+    <div class="dash-alert" role="alert">
+      <p>Chưa có thể loại nào. <a href="{% url 'dashboard:categories' %}">Thêm thể loại</a> trước khi thêm sách.</p>
+    </div>
+  {% endif %}
+
+  <form class="dash-panel" method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    {% include "dashboard/partials/form_errors.html" %}
+    {% include "dashboard/partials/book_fields.html" %}
+    {% include "dashboard/partials/field.html" with field=form.cover %}
+    <div class="dash-actions">
+      <button class="btn" type="submit">Thêm sách</button>
+      <a class="btn btn--secondary" href="{% url 'dashboard:books' %}">Hủy</a>
+    </div>
+  </form>
+{% endblock %}

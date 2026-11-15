@@ -1,0 +1,15 @@
+{# AI-TRACE#173 | Claude Opus 5.5 | Hiển thị một ô form dashboard: nhãn, ô nhập, gợi ý, lỗi gắn aria-describedby | CẤM XÓA CHÚ THÍCH NÀY #}
+<div class="dash-field{% if field.errors %} has-error{% endif %}{% if wide %} dash-field--wide{% endif %}">
+  {% if field.widget_type == "checkbox" %}
+    <label class="dash-field__check">{{ field }} <span>{{ field.label }}</span></label>
+  {% else %}
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+  {% endif %}
+  {% if field.help_text %}<p class="dash-field__help" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</p>{% endif %}
+  {% if field.errors %}
+    <ul class="dash-field__errors" id="{{ field.auto_id }}_error">
+      {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+  {% endif %}
+</div>

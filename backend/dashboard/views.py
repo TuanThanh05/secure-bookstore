@@ -22,12 +22,6 @@ def index(request):
 
 @staff_required
 @require_GET
-def books(request):
-    return render(request, "dashboard/books.html")
-
-
-@staff_required
-@require_GET
 def orders(request):
     return render(request, "dashboard/orders.html")
 
