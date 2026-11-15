@@ -104,3 +104,21 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 098 | Claude Opus 5.5 |  | `frontend/static/css/dashboard.css` | `.dash-actions { display: flex; flex-wrap: wrap; gap: var(--s` | 72 | Kiểu form cập nhật thông tin nhân viên và hàng nút thao tác | [ ] |
 | 099 | Claude Opus 5.5 |  | `database/objects/10_trg_accounts_user_guard.sql` | `IF SUBSTRING_INDEX(USER(), '@', 1) = 'app_staff' AND OLD.is_` | 80 | Chặn app_staff sửa dòng của khách hàng | [ ] |
 | 100 | Claude Opus 5.5 |  | `backend/dashboard/tests/test_profile_update.py` | `StaffProfileUpdateTests` | 19 | Test nhân viên cập nhật họ, tên, SĐT: xác thực lại, không lộ SĐT cũ, để trống giữ số, chặn mass assignment | [ ] |
+| 101 | Claude Opus 5.5 |  | `database/objects/40_category.sql` | `PROCEDURE sp_category_list` | 54 | Thủ tục trả danh sách thể loại kèm tổng số sách và số sách đang hiện, chỉ cho nhân viên | [ ] |
+| 102 | Claude Opus 5.5 |  | `database/objects/40_category.sql` | `PROCEDURE sp_category_create` | 71 | Thủ tục thêm thể loại: kiểm tra nhân viên và đầu vào, chặn trùng, ghi nhật ký | [ ] |
+| 103 | Claude Opus 5.5 |  | `database/objects/40_category.sql` | `PROCEDURE sp_category_rename` | 125 | Thủ tục sửa tên thể loại: khóa dòng, đổi tên và slug, chặn trùng, ghi nhật ký | [ ] |
+| 104 | Claude Opus 5.5 |  | `database/objects/40_category.sql` | `PROCEDURE sp_category_delete` | 196 | Thủ tục xóa thể loại: khóa dòng, từ chối nếu còn sách, ghi nhật ký | [ ] |
+| 106 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `StaffCategory` | 22 | Một dòng thể loại trả về từ sp_category_list, kèm số sách và cờ xóa được | [ ] |
+| 107 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `CategoryError` | 37 | Lỗi nghiệp vụ khi quản lý thể loại, mang mã lỗi và câu tiếng Việt | [ ] |
+| 108 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `clean_name` | 45 | Chuẩn hóa tên thể loại: bỏ khoảng trắng thừa, kiểm tra độ dài | [ ] |
+| 109 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `make_slug` | 53 | Tạo slug không dấu từ tên tiếng Việt, xử lý riêng chữ đ | [ ] |
+| 110 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `_call` | 63 | Gọi một thủ tục thể loại qua kết nối staff, đổi lỗi SIGNAL thành CategoryError | [ ] |
+| 111 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `list_categories` | 92 | Danh sách thể loại cho nhân viên, gọi sp_category_list qua kết nối staff | [ ] |
+| 112 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `create_category` | 105 | Thêm thể loại bằng sp_category_create, trả id mới | [ ] |
+| 113 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `rename_category` | 111 | Sửa tên thể loại bằng sp_category_rename, slug đổi theo tên | [ ] |
+| 114 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `delete_category` | 117 | Xóa thể loại bằng sp_category_delete | [ ] |
+| 115 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `_category_id` | 84 | Đổi id thể loại nhận từ request thành số nguyên, sai kiểu thì coi như không tìm thấy | [ ] |
+| 116 | Claude Opus 5.5 |  | `backend/core/management/commands/db_check_grants.py` | `Command` | 23 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi | [ ] |
+| 117 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `SlugAndNameTests` | 22 | Test tạo slug và chuẩn hóa tên thể loại tiếng Việt | [ ] |
+| 118 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `CategoryProcedureTests` | 48 | Test gọi thủ tục thể loại bằng cursor giả qua kết nối staff, đổi lỗi SIGNAL | [ ] |
+| 119 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `CategoryListTests` | 101 | Test đọc danh sách thể loại qua sp_category_list và lệnh kiểm tra quyền từ chối settings.migrate | [ ] |

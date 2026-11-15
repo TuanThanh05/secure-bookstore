@@ -59,7 +59,7 @@ GRANT SELECT, INSERT, UPDATE         ON axes_accesslog               TO 'r_custo
 
 -- ---------------------------------------------------------------------
 -- r_staff: kết nối "staff" (app_staff), chỉ app dashboard dùng
--- Phần lớn quyền (view v_staff_*, thủ tục sp_book_*...) thêm ở các bước sau.
+-- Phần lớn quyền (thủ tục sp_category_*, sp_book_*...) thêm ở các bước sau.
 -- ---------------------------------------------------------------------
 GRANT INSERT ON core_securityevent             TO 'r_staff';
 
@@ -85,3 +85,22 @@ GRANT EXECUTE ON PROCEDURE sp_place_order TO 'bookstore_definer'@'localhost';
 
 -- Khách chỉ được gọi thủ tục, không có quyền nào trên các bảng trên
 GRANT EXECUTE ON PROCEDURE sp_place_order TO 'r_customer';
+
+-- ---------------------------------------------------------------------
+-- Thể loại sách (database/objects/40_category.sql)
+-- Definer: đọc/khóa/ghi catalog_category, đếm sách, ghi nhật ký.
+-- r_staff: chỉ gọi bốn thủ tục; không có quyền nào trên bảng.
+-- r_customer: không có gì ở đây.
+-- ---------------------------------------------------------------------
+GRANT SELECT, INSERT, UPDATE, DELETE ON catalog_category TO 'bookstore_definer'@'localhost';
+GRANT INSERT ON core_auditlog                            TO 'bookstore_definer'@'localhost';
+
+GRANT EXECUTE ON PROCEDURE sp_category_list   TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_category_create TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_category_rename TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_category_delete TO 'bookstore_definer'@'localhost';
+
+GRANT EXECUTE ON PROCEDURE sp_category_list    TO 'r_staff';
+GRANT EXECUTE ON PROCEDURE sp_category_create  TO 'r_staff';
+GRANT EXECUTE ON PROCEDURE sp_category_rename  TO 'r_staff';
+GRANT EXECUTE ON PROCEDURE sp_category_delete  TO 'r_staff';
