@@ -40,3 +40,7 @@
 .area-form__links--center { text-align: center; }
 .area-info--compact { margin-bottom: var(--space-lg); }
 .area-info--compact .area-info__row { padding: var(--space-sm) 0; }
+
+/* AI-TRACE#084 | Claude Opus 5.5 | Căn giữa form xác thực lại và đổi mật khẩu theo chiều ngang vùng nội dung tài khoản | CẤM XÓA CHÚ THÍCH NÀY */
+.area-form--center { margin-left: auto; margin-right: auto; }
+.area-form--center .area-form__links { text-align: center; }

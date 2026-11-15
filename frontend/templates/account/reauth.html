@@ -10,7 +10,7 @@
     <p class="area-header__desc">Để bảo vệ tài khoản, hãy nhập lại tên đăng nhập và mật khẩu trước khi sửa thông tin. Xác thực có hiệu lực trong {{ reauth_minutes }} phút.</p>
   </header>
 
-  <div class="area-form">
+  <div class="area-form area-form--center">
     <form method="post" class="auth-form" novalidate>
       {% csrf_token %}
       {% if form.non_field_errors %}
