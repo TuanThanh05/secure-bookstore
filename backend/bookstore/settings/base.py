@@ -207,6 +207,8 @@ BOOK_DEFAULT_COVER = "img/book-cover-default.webp"   # ảnh bìa mặc định 
 LOW_STOCK_THRESHOLD = 10                            # dashboard tô "Sắp hết" khi tồn kho từ 1 đến ngưỡng này
 REVIEW_RATE_LIMIT = 5                               # mỗi khách gửi/sửa tối đa 5 đánh giá trong REVIEW_RATE_WINDOW
 REVIEW_RATE_WINDOW = 60 * 60
+CART_ADD_RATE_LIMIT = 20                            # mỗi khách thêm vào giỏ tối đa 20 lần trong CART_ADD_RATE_WINDOW
+CART_ADD_RATE_WINDOW = 60
 
 LOG_DIR = REPO_DIR / "logs"
 LOG_DIR.mkdir(exist_ok=True)
