@@ -1,0 +1,78 @@
+{% extends "layouts/admin.html" %}
+{% load static bookstore %}
+{% block title %}{{ book.title }} – Kho sách{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
+{% block content %}
+  {# AI-TRACE#177 | Claude Opus 5.5 | Trang sửa sách: khung thông tin và ảnh, khung tồn kho, khung trạng thái, vùng xóa | CẤM XÓA CHÚ THÍCH NÀY #}
+  <a class="dash-back" href="{% url 'dashboard:books' %}">{% include "components/icon.html" with name="chevron-left" %}<span>Danh sách sách</span></a>
+  <header class="dash-header">
+    <h1 class="dash-header__title">{{ book.title }}</h1>
+    <p class="dash-header__desc">{{ book.author }} · {{ category_name|default:"Không rõ thể loại" }} ·
+      {% if book.is_active %}<span class="dash-badge dash-badge--success">Đang hiện</span>{% else %}<span class="dash-badge">Đang ẩn</span>{% endif %}</p>
+  </header>
+
+  <div class="dash-split">
+    <form class="dash-panel" method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      <h2 class="dash-panel__title">Thông tin sách</h2>
+      {% include "dashboard/partials/form_errors.html" %}
+      {% include "dashboard/partials/book_fields.html" %}
+      <div class="dash-cover-edit">
+        <img class="dash-cover" src="{{ book.cover_url }}" alt="Ảnh bìa hiện tại" width="120" height="180">
+        <div class="dash-cover-edit__fields">
+          {% include "dashboard/partials/field.html" with field=form.cover %}
+          {% if book.cover_image %}{% include "dashboard/partials/field.html" with field=form.remove_cover %}{% endif %}
+        </div>
+      </div>
+      <div class="dash-actions">
+        <button class="btn" type="submit">Lưu thông tin</button>
+      </div>
+    </form>
+
+    <div class="dash-side">
+      <section class="dash-panel" aria-labelledby="ton-kho">
+        <h2 class="dash-panel__title" id="ton-kho">Tồn kho</h2>
+        <p class="dash-stock">{{ book.stock }} <span>cuốn</span> {% include "dashboard/partials/stock_badge.html" with stock=book.stock %}</p>
+        <form class="dash-inline-form" method="post" action="{% url 'dashboard:book_restock' book_id=book.id %}">
+          {% csrf_token %}
+          <label for="{{ restock_form.quantity.id_for_label }}">Nhập thêm</label>
+          <input type="number" name="{{ restock_form.quantity.html_name }}" id="{{ restock_form.quantity.id_for_label }}" min="1" max="10000" required>
+          <button class="btn" type="submit">Nhập kho</button>
+        </form>
+        <form class="dash-inline-form" method="post" action="{% url 'dashboard:book_reduce' book_id=book.id %}">
+          {% csrf_token %}
+          <label for="{{ reduce_form.quantity.id_for_label }}">Giảm (hỏng, thất lạc...)</label>
+          <input type="number" name="{{ reduce_form.quantity.html_name }}" id="{{ reduce_form.quantity.id_for_label }}" min="1" max="10000" required>
+          <button class="btn btn--secondary" type="submit">Giảm kho</button>
+        </form>
+        <p class="dash-field__help">Tồn kho mỗi đầu sách tối đa 10.000 cuốn.</p>
+      </section>
+
+      <section class="dash-panel" aria-labelledby="trang-thai">
+        <h2 class="dash-panel__title" id="trang-thai">Trạng thái</h2>
+        <form method="post" action="{% url 'dashboard:book_toggle' book_id=book.id %}">
+          {% csrf_token %}
+          {% if book.is_active %}
+            <p class="dash-field__help">Sách đang hiện trong cửa hàng.</p>
+            <input type="hidden" name="trang_thai" value="an">
+            <button class="btn btn--secondary" type="submit">Ẩn sách</button>
+          {% else %}
+            <p class="dash-field__help">Sách đang ẩn, khách không thấy và không mua được.</p>
+            <input type="hidden" name="trang_thai" value="hien">
+            <button class="btn" type="submit">Hiện sách</button>
+          {% endif %}
+        </form>
+      </section>
+
+      <section class="dash-panel dash-panel--danger" aria-labelledby="vung-xoa">
+        <h2 class="dash-panel__title" id="vung-xoa">Xóa sách</h2>
+        {% if book.can_delete %}
+          <p class="dash-field__help">Chỉ xóa được sách chưa từng có trong đơn hàng. Cần xác thực lại.</p>
+          <a class="btn btn--danger" href="{% url 'dashboard:book_delete' book_id=book.id %}">Xóa sách…</a>
+        {% else %}
+          <p class="dash-field__help">Muốn xóa, hãy ẩn sách trước.</p>
+        {% endif %}
+      </section>
+    </div>
+  </div>
+{% endblock %}

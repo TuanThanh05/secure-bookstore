@@ -8,8 +8,11 @@
     <a class="admin__link{% if current == 'index' %} is-active{% endif %}" href="{% url 'dashboard:index' %}"{% if current == 'index' %} aria-current="page"{% endif %}>
       {% include "components/icon.html" with name="dashboard" %}<span>Tổng quan</span>
     </a>
-    <a class="admin__link{% if current == 'books' %} is-active{% endif %}" href="{% url 'dashboard:books' %}"{% if current == 'books' %} aria-current="page"{% endif %}>
+    <a class="admin__link{% if current == 'books' or current == 'book_create' or current == 'book_edit' or current == 'book_delete' %} is-active{% endif %}" href="{% url 'dashboard:books' %}"{% if current == 'books' %} aria-current="page"{% endif %}>
       {% include "components/icon.html" with name="book" %}<span>Quản lý kho sách</span>
+    </a>
+    <a class="admin__link{% if current == 'categories' or current == 'category_delete' %} is-active{% endif %}" href="{% url 'dashboard:categories' %}"{% if current == 'categories' %} aria-current="page"{% endif %}>
+      {% include "components/icon.html" with name="list" %}<span>Thể loại sách</span>
     </a>
     <a class="admin__link{% if current == 'orders' %} is-active{% endif %}" href="{% url 'dashboard:orders' %}"{% if current == 'orders' %} aria-current="page"{% endif %}>
       {% include "components/icon.html" with name="shopping-bag" %}<span>Quản lý đơn hàng</span>

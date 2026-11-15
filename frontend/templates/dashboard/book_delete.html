@@ -1,0 +1,21 @@
+{% extends "layouts/admin.html" %}
+{% load static %}
+{% block title %}Xóa sách{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
+{% block content %}
+  {# AI-TRACE#178 | Claude Opus 5.5 | Trang xác nhận xóa sách vĩnh viễn, nêu rõ hậu quả | CẤM XÓA CHÚ THÍCH NÀY #}
+  <section class="dash-confirm" aria-labelledby="xac-nhan">
+    <h1 class="dash-confirm__title" id="xac-nhan">Xóa vĩnh viễn sách này?</h1>
+    <dl class="dash-info">
+      <div class="dash-info__row"><dt>Tên sách</dt><dd>{{ book.title }}</dd></div>
+      <div class="dash-info__row"><dt>Tác giả</dt><dd>{{ book.author }}</dd></div>
+      <div class="dash-info__row"><dt>ISBN</dt><dd>{{ book.isbn }}</dd></div>
+    </dl>
+    <p>Sách, ảnh bìa, sách này trong giỏ hàng và đánh giá của khách sẽ bị xóa. <strong>Không hoàn tác được.</strong></p>
+    <form method="post" class="dash-actions">
+      {% csrf_token %}
+      <button class="btn btn--danger" type="submit">Xóa vĩnh viễn</button>
+      <a class="btn btn--secondary" href="{% url 'dashboard:book_edit' book_id=book.id %}">Hủy</a>
+    </form>
+  </section>
+{% endblock %}
