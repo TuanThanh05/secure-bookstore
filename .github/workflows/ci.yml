@@ -1,6 +1,6 @@
 # Chạy tự động trên mỗi Pull Request và mỗi lần main thay đổi.
 # Dựng một MySQL 8.4 tạm, rồi chạy đúng các lệnh mọi người chạy trên máy mình:
-# db_setup → migrate → db_apply → check → test, và quét lỗi bảo mật trong code.
+# db_setup → migrate → db_apply → db_check_grants → check → test, và quét lỗi bảo mật trong code.
 # PR nào làm hỏng một bước là thấy dấu X đỏ ngay, trước khi merge vào main.
 name: CI
 
@@ -76,6 +76,10 @@ jobs:
       - name: db_apply (trigger, phân quyền)
         working-directory: backend
         run: python manage.py db_apply
+
+      - name: Kiểm tra phân quyền trên CSDL thật (app_customer, app_staff)
+        working-directory: backend
+        run: python manage.py db_check_grants
 
       - name: Django check (kết nối bằng app_customer)
         working-directory: backend
