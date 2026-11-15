@@ -6,6 +6,7 @@ from django.core.cache import cache
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils import timezone
 
 from core.security_log import log_event
 
@@ -67,3 +68,10 @@ def send_password_changed_email(request, user, via):
     }
     return _send(request, "password_changed", user, user.email, "Mật khẩu của bạn vừa được thay đổi – Secure Bookstore",
                  "account/email/password_changed.txt", context)
+
+
+# AI-TRACE#092 | Claude Opus 5.5 | Báo cho nhân viên biết mật khẩu vừa được đổi bằng lệnh trên máy chủ, không kèm link | CẤM XÓA CHÚ THÍCH NÀY
+def send_staff_password_changed_email(user):
+    context = {"username": user.username, "changed_at": timezone.localtime()}
+    return _send(None, "staff_password_changed", user, user.email, "Mật khẩu tài khoản quản trị vừa được thay đổi – Secure Bookstore",
+                 "account/email/staff_password_changed.txt", context)

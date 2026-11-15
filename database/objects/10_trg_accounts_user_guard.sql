@@ -17,7 +17,9 @@
 --
 -- Hệ quả cho code:
 --   - Tạo tài khoản admin: chạy createsuperuser bằng settings.migrate.
---   - Nhân viên đổi mật khẩu/hồ sơ: làm trong app dashboard (kết nối staff).
+--   - Đổi mật khẩu nhân viên: chỉ bằng lệnh trên máy chủ
+--     `python manage.py doi_mat_khau_admin <tên> --settings=bookstore.settings.migrate`.
+--     Trên web không có đường nào đổi được mật khẩu nhân viên.
 -- Kể cả khi có lỗi SQL injection trên web, kẻ tấn công cũng không tự
 -- nâng mình lên nhân viên/quản trị được.
 --

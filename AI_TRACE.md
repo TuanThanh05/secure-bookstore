@@ -19,10 +19,10 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 013 | Claude Opus 5.5 |  | `backend/accounts/forms.py` | `RegisterForm.validate_unique` | 27 | Bỏ kiểm tra trùng email để không lộ email nào đã có tài khoản | [ ] |
 | 014 | Claude Opus 5.5 |  | `backend/accounts/forms.py` | `LoginForm.confirm_login_allowed` | 63 | Chặn khách chưa xác nhận email đăng nhập, nhân viên được miễn | [ ] |
 | 015 | Claude Opus 5.5 |  | `backend/accounts/forms.py` | `ResendVerificationForm` | 71 | Form gửi lại thư xác nhận, chỉ nhận một ô email | [ ] |
-| 016 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `_allow_send` | 15 | Giới hạn mỗi địa chỉ email chỉ nhận một thư mỗi loại trong một khoảng thời gian | [ ] |
-| 017 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `_send` | 21 | Gửi một thư văn bản thuần, lỗi SMTP chỉ ghi log không lộ ra ngoài | [ ] |
-| 018 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_verification_email` | 36 | Gửi thư chứa link xác nhận email có hạn dùng | [ ] |
-| 019 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_existing_account_email` | 44 | Báo cho chủ email biết có người dùng email này để đăng ký lại | [ ] |
+| 016 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `_allow_send` | 16 | Giới hạn mỗi địa chỉ email chỉ nhận một thư mỗi loại trong một khoảng thời gian | [ ] |
+| 017 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `_send` | 22 | Gửi một thư văn bản thuần, lỗi SMTP chỉ ghi log không lộ ra ngoài | [ ] |
+| 018 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_verification_email` | 37 | Gửi thư chứa link xác nhận email có hạn dùng | [ ] |
+| 019 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_existing_account_email` | 45 | Báo cho chủ email biết có người dùng email này để đăng ký lại | [ ] |
 | 020 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `register_account` | 14 | Đăng ký: email mới thì tạo tài khoản, email đã có thì xử lý y hệt bề ngoài | [ ] |
 | 021 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `find_pending_user` | 38 | Tìm tài khoản ứng với mã xác nhận, chỉ khi còn chờ xác nhận | [ ] |
 | 022 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `mark_email_verified` | 53 | Đánh dấu email đã xác nhận, chỉ cập nhật đúng một cột | [ ] |
@@ -50,8 +50,8 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 044 | Claude Opus 5.5 |  | `backend/core/migrations/0004_securityevent_sensitive_view.py` | `_statements` | 9 | Đọc file SQL thêm loại sự kiện xem dữ liệu nhạy cảm | [ ] |
 | 045 | Claude Opus 5.5 |  | `backend/accounts/tests/test_profile.py` | `CustomerProfileTests` | 11 | Test trang thông tin của khách: hiện email, chặn nhân viên, không lưu cache | [ ] |
 | 046 | Claude Opus 5.5 |  | `backend/dashboard/tests/test_profile.py` | `StaffProfileTests` | 15 | Test trang thông tin nhân viên: giấu email, hiện sau xác thực lại, ghi log | [ ] |
-| 047 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_password_reset_email` | 54 | Gửi thư chứa link đặt lại mật khẩu có hạn dùng | [ ] |
-| 048 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_password_changed_email` | 61 | Báo cho chủ tài khoản biết mật khẩu vừa được đổi | [ ] |
+| 047 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_password_reset_email` | 55 | Gửi thư chứa link đặt lại mật khẩu có hạn dùng | [ ] |
+| 048 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_password_changed_email` | 62 | Báo cho chủ tài khoản biết mật khẩu vừa được đổi | [ ] |
 | 049 | Claude Opus 5.5 |  | `backend/accounts/forms.py` | `CustomerPasswordResetForm` | 79 | Form quên mật khẩu chỉ gửi cho khách, dùng thư và giới hạn của nhóm | [ ] |
 | 050 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `CustomerPasswordResetView` | 93 | Trang quên mật khẩu: nhập email, ghi log, trả lời giống nhau cho mọi email | [ ] |
 | 051 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `password_reset_done` | 105 | Trang báo đã gửi thư đặt lại mật khẩu kèm thời hạn link | [ ] |
@@ -94,3 +94,6 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 088 | Claude Opus 5.5 |  | `backend/accounts/models.py` | `PasswordHistory` | 58 | Model chỉ đọc cho bảng lịch sử mã băm mật khẩu do trigger ghi | [ ] |
 | 089 | Claude Opus 5.5 |  | `backend/accounts/validators.py` | `PasswordHistoryValidator` | 7 | Chặn mật khẩu mới trùng một trong N mật khẩu gần nhất, tính cả mật khẩu đang dùng | [ ] |
 | 090 | Claude Opus 5.5 |  | `backend/accounts/tests/test_password_history.py` | `PasswordHistoryTests` | 18 | Test chặn dùng lại 5 mật khẩu gần nhất, tính cả mật khẩu hiện tại, qua validator và trang đổi mật khẩu | [ ] |
+| 091 | Claude Opus 5.5 |  | `backend/accounts/management/commands/doi_mat_khau_admin.py` | `Command` | 19 | Lệnh máy chủ đổi mật khẩu nhân viên: kiểm tra quy tắc mật khẩu, đăng xuất mọi phiên, ghi log, gửi thư báo | [ ] |
+| 092 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_staff_password_changed_email` | 73 | Báo cho nhân viên biết mật khẩu vừa được đổi bằng lệnh trên máy chủ, không kèm link | [ ] |
+| 093 | Claude Opus 5.5 |  | `backend/accounts/tests/test_admin_password_command.py` | `AdminPasswordCommandTests` | 24 | Test lệnh đổi mật khẩu admin: chỉ nhân viên, quy tắc mật khẩu, đăng xuất phiên, log, thư báo, chặn kết nối web | [ ] |
