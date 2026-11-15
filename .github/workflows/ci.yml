@@ -59,6 +59,8 @@ jobs:
           import secrets
           strong = lambda: secrets.token_urlsafe(24) + "-Aa9"
           print(f"DJANGO_SECRET_KEY={secrets.token_urlsafe(50)}")
+          import base64
+          print(f"FIELD_ENCRYPTION_KEY={base64.b64encode(secrets.token_bytes(32)).decode()}")
           for name in ("DB_CUSTOMER_PASSWORD", "DB_STAFF_PASSWORD", "DB_MIGRATE_PASSWORD"):
               print(f"{name}={strong()}")
           PY

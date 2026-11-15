@@ -37,3 +37,6 @@
 .area-form { max-width: 480px; }
 .area-form .auth-form { grid-template-columns: 1fr; }
 .area-form__links { margin-top: var(--space-md); font-size: 14px; color: var(--color-muted); }
+.area-form__links--center { text-align: center; }
+.area-info--compact { margin-bottom: var(--space-lg); }
+.area-info--compact .area-info__row { padding: var(--space-sm) 0; }

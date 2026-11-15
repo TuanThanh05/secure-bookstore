@@ -17,6 +17,7 @@
     <div class="area-info__row"><dt>Ngày tham gia</dt><dd>{{ profile.date_joined|date:"d/m/Y" }}</dd></div>
   </dl>
   <div class="area-actions">
+    <a class="btn" href="{% url 'accounts:profile_update' %}">Cập nhật thông tin</a>
     <a class="btn btn--secondary" href="{% url 'accounts:password_change' %}">Đổi mật khẩu</a>
   </div>
 {% endblock %}

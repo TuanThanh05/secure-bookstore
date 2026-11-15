@@ -21,5 +21,7 @@ urlpatterns = [
     path("logout/", views.SecureLogoutView.as_view(), name="logout"),
     path("profile/", views.profile, name="profile"),
     path("doi-mat-khau/", views.password_change, name="password_change"),
+    path("xac-thuc-lai/", views.reauth, name="reauth"),
+    path("cap-nhat/", views.profile_update, name="profile_update"),
 ]
 

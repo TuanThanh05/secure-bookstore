@@ -3,17 +3,28 @@ from django.contrib import messages
 from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_http_methods
 from axes.utils import reset as axes_reset
 from django.contrib.auth.views import LogoutView, PasswordResetConfirmView, PasswordResetView
 from django.urls import reverse_lazy
 
+from core.decorators import mark_recent_auth
 from core.security_log import log_event
 
+from .decorators import customer_recent_auth_required, customer_required
 from .emails import send_password_changed_email
-from .forms import CustomerPasswordChangeForm, CustomerPasswordResetForm, RegisterForm, ResendVerificationForm
-from .profile import build_profile
+from .forms import (
+    CustomerPasswordChangeForm,
+    CustomerPasswordResetForm,
+    CustomerReauthForm,
+    ProfileUpdateForm,
+    RegisterForm,
+    ResendVerificationForm,
+)
+from .profile import build_profile, decrypt_phone
 from .services import (
     clear_password_change_failures,
     find_pending_user,
@@ -21,6 +32,7 @@ from .services import (
     record_password_change_failure,
     register_account,
     resend_verification,
+    update_profile,
 )
 
 TOKEN_STATUS_MESSAGES = {
@@ -178,3 +190,53 @@ def password_change(request):
         form = CustomerPasswordChangeForm(user)
 
     return render(request, "account/password_change.html", {"form": form})
+
+
+def _safe_next(request, value, default):
+    if value and url_has_allowed_host_and_scheme(value, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return value
+    return reverse(default)
+
+
+# AI-TRACE#076 | Claude Opus 5.5 | Trang xác thực lại riêng cho khách, có link quên mật khẩu, next chỉ trỏ trong site | CẤM XÓA CHÚ THÍCH NÀY
+@customer_required
+@never_cache
+@require_http_methods(["GET", "POST"])
+def reauth(request):
+    next_url = _safe_next(request, request.POST.get("next") or request.GET.get("next"), "accounts:profile")
+    if request.method == "POST":
+        form = CustomerReauthForm(request, data=request.POST)
+        if form.is_valid():
+            mark_recent_auth(request)
+            log_event("login_success", request, user=request.user, username=request.user.get_username(),
+                      detail={"step_up": True})
+            return redirect(next_url)
+        if form.user_mismatch:
+            log_event("access_denied", request, severity="warning", user=request.user,
+                      username=request.user.get_username(), detail={"step_up": "user_mismatch"})
+    else:
+        form = CustomerReauthForm(request)
+    return render(request, "account/reauth.html",
+                  {"form": form, "next": next_url, "reauth_minutes": settings.REAUTH_MAX_AGE // 60})
+
+
+# AI-TRACE#077 | Claude Opus 5.5 | Cập nhật họ, tên, SĐT của khách sau khi xác thực lại | CẤM XÓA CHÚ THÍCH NÀY
+@customer_required
+@customer_recent_auth_required
+@never_cache
+@require_http_methods(["GET", "POST"])
+def profile_update(request):
+    user = request.user
+    if request.method == "POST":
+        form = ProfileUpdateForm(request.POST)
+        if form.is_valid():
+            changed = update_profile(request, user, form.cleaned_data)
+            messages.success(request, "Đã cập nhật thông tin." if changed else "Không có thay đổi nào.")
+            return redirect("accounts:profile")
+    else:
+        form = ProfileUpdateForm(initial={
+            "last_name": user.last_name,
+            "first_name": user.first_name,
+            "phone": decrypt_phone(user) or "",
+        })
+    return render(request, "account/profile_update.html", {"form": form})
