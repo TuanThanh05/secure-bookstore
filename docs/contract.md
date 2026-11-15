@@ -23,21 +23,36 @@ Quy ước:
 
 ## BookCard: một cuốn sách hiển thị trên lưới
 
-Component `components/book_card.html` nhận biến `book` có đúng các thuộc tính sau. Tên trùng với cột của view `v_public_books` sẽ tạo sau, nên khi bỏ dữ liệu giả trong `catalog/services.py` thì template không phải sửa.
+Component `components/book_card.html` nhận biến `book` có đúng các thuộc tính sau. Dữ liệu lấy từ thủ tục `sp_public_book_list` qua `catalog.services.list_public_books()`.
 
 | Thuộc tính | Kiểu | Ghi chú |
 | --- | --- | --- |
-| `id` | int | Khóa sách; cũng dùng chọn màu bìa tạm |
+| `id` | int | Khóa sách |
 | `title` | str | Tên sách |
 | `author` | str | Tác giả |
 | `category_id` | int | Thể loại |
 | `price` | int | Giá (đồng), hiển thị bằng filter `vnd` |
-| `rating` | float hoặc `None` | Điểm trung bình 0–5; `None` = chưa có đánh giá |
-| `review_count` | int | Số lượt đánh giá |
+| `rating` | float hoặc `None` | Điểm trung bình 0–5 (chỉ đánh giá đang hiện); `None` = chưa có đánh giá |
+| `review_count` | int | Số lượt đánh giá đang hiện |
 | `in_stock` | bool | `False` thì hiện "Hết hàng" và khóa nút giỏ |
-| `cover_url` | str | Đường dẫn ảnh bìa; rỗng thì hiện bìa tạm có màu |
+| `cover_url` | str | **Luôn có giá trị**: ảnh đã upload, hoặc ảnh mặc định `img/book-cover-default.webp` khi sách chưa có ảnh |
+| `isbn`, `description`, `created_at` | str / str hoặc `None` / datetime | Có sẵn cho trang chi tiết sách sau này |
 
 Khi thêm vào giỏ, form chỉ gửi `book_id` và `quantity`. **Không gửi giá**: giá luôn lấy lại từ CSDL ở phía server.
+
+## Danh mục sách cho khách: `sp_public_book_list` và `sp_public_category_list`
+
+Chốt 2026-11-15, thay cho `v_public_books` / `v_public_categories` trong issue #9: MySQL từ chối view `SQL SECURITY DEFINER` có WHERE/JOIN/GROUP BY khi phiên người gọi bật role, mà điều kiện "chỉ sách đang hiện" cần WHERE. File: `database/objects/20_public_catalog.sql`.
+
+- **Ai xem được:** mọi người, kể cả chưa đăng nhập (Django luôn dùng kết nối `app_customer`). `r_customer` chỉ có `EXECUTE` hai thủ tục, **không có quyền nào** trên `catalog_book`, `catalog_category`, `catalog_review` (đọc thẳng → lỗi 1142).
+- **`sp_public_category_list()`** → `id`, `name`, `slug`, theo tên.
+- **`sp_public_book_list(p_category_id, p_query)`** → đúng các cột: `id`, `title`, `author`, `isbn`, `category_id`, `description`, `price`, `cover_image`, `created_at`, `in_stock` (0/1, `stock > 0`), `rating` (`ROUND(AVG, 1)` của đánh giá `is_visible = 1`, NULL khi chưa có), `review_count`.
+  - **Không bao giờ trả** `cost_price`, `stock`, `is_active`, `updated_at`. Chỉ sách `is_active = 1`.
+  - `p_category_id`: NULL = mọi thể loại; số ≤ 0 → `INVALID_INPUT`.
+  - `p_query`: NULL/rỗng = không lọc; tối đa 100 ký tự (hơn → `INVALID_INPUT`); tìm trong tên sách hoặc tác giả, không phân biệt hoa/thường và dấu; ký tự `%`, `_`, `\` được thoát nên chỉ tìm đúng chữ người dùng gõ. Không có SQL động.
+  - Mới nhất trước (`created_at DESC`), tối đa 200 cuốn (chưa có phân trang).
+- **Django:** `catalog/services.py` giữ nguyên `list_categories()` và `list_public_books(category_id=None, q="")`; gọi `callproc` với tham số truyền riêng; `catalog/views.py` và template không đổi.
+- **Kiểm thử:** `catalog/tests/test_public_catalog.py`, `catalog/tests/test_home.py`; `db_check_grants` có 4 dòng cho phần này. Đã chạy trên CSDL thật: sách ẩn và thể loại chỉ có sách ẩn không lộ, đánh giá ẩn không được tính, `' OR 1=1 -- `, `%' UNION SELECT password FROM accounts_user -- `, `%`, `_` đều trả 0 kết quả, không lỗi 500.
 
 ## Đặt đơn: `sp_place_order` và `orders.services.place_order`
 

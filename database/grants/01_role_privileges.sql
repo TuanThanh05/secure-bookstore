@@ -128,3 +128,16 @@ GRANT EXECUTE ON PROCEDURE sp_book_set_active   TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_book_restock      TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_book_reduce_stock TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_book_delete       TO 'r_staff';
+
+-- ---------------------------------------------------------------------
+-- Danh mục sách cho khách (database/objects/20_public_catalog.sql)
+-- Definer: đọc thêm catalog_review để tính điểm đánh giá.
+-- r_customer: chỉ gọi hai thủ tục đọc; không có quyền nào trên catalog_*.
+-- ---------------------------------------------------------------------
+GRANT SELECT ON catalog_review                       TO 'bookstore_definer'@'localhost';
+
+GRANT EXECUTE ON PROCEDURE sp_public_category_list   TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_public_book_list       TO 'bookstore_definer'@'localhost';
+
+GRANT EXECUTE ON PROCEDURE sp_public_category_list   TO 'r_customer';
+GRANT EXECUTE ON PROCEDURE sp_public_book_list       TO 'r_customer';
