@@ -141,3 +141,17 @@ GRANT EXECUTE ON PROCEDURE sp_public_book_list       TO 'bookstore_definer'@'loc
 
 GRANT EXECUTE ON PROCEDURE sp_public_category_list   TO 'r_customer';
 GRANT EXECUTE ON PROCEDURE sp_public_book_list       TO 'r_customer';
+
+-- ---------------------------------------------------------------------
+-- Đánh giá sách (database/objects/21_review.sql)
+-- Definer: thêm/sửa catalog_review (đã có SELECT ở phần danh mục cho khách),
+-- đọc accounts_user và catalog_book để kiểm tra (đã có).
+-- r_customer: chỉ gọi hai thủ tục; không có quyền ghi nào trên catalog_review.
+-- ---------------------------------------------------------------------
+GRANT INSERT, UPDATE ON catalog_review               TO 'bookstore_definer'@'localhost';
+
+GRANT EXECUTE ON PROCEDURE sp_review_save            TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_review_get_mine        TO 'bookstore_definer'@'localhost';
+
+GRANT EXECUTE ON PROCEDURE sp_review_save            TO 'r_customer';
+GRANT EXECUTE ON PROCEDURE sp_review_get_mine        TO 'r_customer';
