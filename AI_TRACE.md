@@ -139,12 +139,21 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 134 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `_call_book` | 94 | Gọi thủ tục sách với bảng mã lỗi của sách | [ ] |
 | 135 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `list_books` | 99 | Danh sách sách cho nhân viên, lọc theo thể loại, tác giả, tên sách, trạng thái bằng ORM | [ ] |
 | 136 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `get_book` | 116 | Lấy một sách theo id cho form sửa, không có thì báo BOOK_NOT_FOUND | [ ] |
-| 137 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `create_book` | 124 | Thêm sách bằng sp_book_create kèm tồn kho ban đầu, trả id mới | [ ] |
-| 138 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `update_book` | 133 | Sửa thông tin sách bằng sp_book_update, mặc định giữ nguyên ảnh bìa đang có | [ ] |
-| 139 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `set_book_active` | 144 | Ẩn hoặc hiện sách bằng sp_book_set_active | [ ] |
-| 140 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `restock_book` | 149 | Nhập thêm hàng bằng sp_book_restock, trả tồn kho mới | [ ] |
-| 141 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `reduce_book_stock` | 155 | Giảm kho ngoại lệ bằng sp_book_reduce_stock, trả tồn kho mới | [ ] |
-| 142 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `delete_book` | 161 | Xóa hẳn sách bằng sp_book_delete (sách phải đang ẩn và chưa có đơn) | [ ] |
+| 137 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `create_book` | 124 | Thêm sách bằng sp_book_create kèm tồn kho ban đầu và ảnh bìa tùy chọn; lỗi thì xóa ảnh vừa lưu | [ ] |
+| 138 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `update_book` | 138 | Sửa thông tin sách bằng sp_book_update: giữ ảnh cũ, thay ảnh mới hoặc bỏ ảnh; chỉ xóa file cũ khi CSDL đã lưu xong | [ ] |
+| 139 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `set_book_active` | 162 | Ẩn hoặc hiện sách bằng sp_book_set_active | [ ] |
+| 140 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `restock_book` | 167 | Nhập thêm hàng bằng sp_book_restock, trả tồn kho mới | [ ] |
+| 141 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `reduce_book_stock` | 173 | Giảm kho ngoại lệ bằng sp_book_reduce_stock, trả tồn kho mới | [ ] |
+| 142 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `delete_book` | 179 | Xóa hẳn sách bằng sp_book_delete (đang ẩn, chưa có đơn), xong thì xóa file ảnh bìa | [ ] |
 | 143 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_books.py` | `BookFieldTests` | 34 | Test chuẩn hóa ISBN, kiểm tra chữ số kiểm tra và các giới hạn thông tin sách | [ ] |
 | 144 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_books.py` | `BookProcedureTests` | 75 | Test gọi sáu thủ tục sách bằng cursor giả qua kết nối staff, đổi lỗi SIGNAL thành BookError | [ ] |
-| 145 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_books.py` | `StaffBookReadTests` | 162 | Test model sách đọc qua kết nối staff, lọc theo thể loại/tác giả/tên và đường dẫn ảnh bìa | [ ] |
+| 145 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_books.py` | `StaffBookReadTests` | 165 | Test model sách đọc qua kết nối staff, lọc theo thể loại/tác giả/tên và đường dẫn ảnh bìa | [ ] |
+| 146 | Claude Opus 5.5 |  | `backend/catalog/covers.py` | `CoverError` | 26 | Lỗi khi xử lý ảnh bìa upload, mang mã lỗi và câu tiếng Việt | [ ] |
+| 147 | Claude Opus 5.5 |  | `backend/catalog/covers.py` | `_read_limited` | 34 | Đọc file upload có giới hạn dung lượng, không tin kích thước client gửi | [ ] |
+| 148 | Claude Opus 5.5 |  | `backend/catalog/covers.py` | `sanitize_cover` | 47 | Xác nhận đúng là ảnh JPEG/PNG/WebP thật, chặn ảnh bom giải nén, rồi lưu lại thành WebP sạch metadata | [ ] |
+| 149 | Claude Opus 5.5 |  | `backend/catalog/covers.py` | `_cover_file` | 81 | Đường dẫn tuyệt đối của ảnh bìa, chỉ nhận đúng mẫu covers/<uuid>.<đuôi> và phải nằm trong MEDIA_ROOT/covers | [ ] |
+| 150 | Claude Opus 5.5 |  | `backend/catalog/covers.py` | `save_cover` | 92 | Kiểm tra và lưu ảnh bìa mới vào MEDIA_ROOT/covers với tên UUID, trả đường dẫn để ghi vào CSDL | [ ] |
+| 151 | Claude Opus 5.5 |  | `backend/catalog/covers.py` | `delete_cover` | 104 | Xóa file ảnh bìa đã upload; bỏ qua mọi đường dẫn không đúng mẫu nên không xóa được file khác | [ ] |
+| 152 | Claude Opus 5.5 |  | `backend/catalog/tests/test_covers.py` | `SanitizeCoverTests` | 38 | Test kiểm tra ảnh bìa: nhận ảnh thật, chặn file giả, ảnh bom, file quá lớn, xóa metadata và nội dung cài kèm | [ ] |
+| 153 | Claude Opus 5.5 |  | `backend/catalog/tests/test_covers.py` | `CoverStorageTests` | 107 | Test lưu và xóa file ảnh bìa: tên UUID trong media/covers, không xóa được file ngoài thư mục | [ ] |
+| 154 | Claude Opus 5.5 |  | `backend/catalog/tests/test_covers.py` | `BookCoverFlowTests` | 141 | Test ảnh bìa trong luồng thêm/sửa/xóa sách: dọn file khi CSDL báo lỗi, xóa ảnh cũ khi thay hoặc bỏ | [ ] |

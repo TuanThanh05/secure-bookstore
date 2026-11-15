@@ -1,5 +1,6 @@
 import re
 
+from .covers import delete_cover, save_cover
 from .models import StaffBook
 from .staff_services import _call
 
@@ -7,7 +8,6 @@ TITLE_MAX_LENGTH = 255
 DESCRIPTION_MAX_LENGTH = 5000
 PRICE_MAX = 100_000_000
 STOCK_MAX = 10_000
-KEEP_COVER = object()
 
 BOOK_ERROR_MESSAGES = {
     "INVALID_INPUT": "Thông tin sách không hợp lệ.",
@@ -121,24 +121,42 @@ def get_book(book_id):
     return book
 
 
-# AI-TRACE#137 | Claude Opus 5.5 | Thêm sách bằng sp_book_create kèm tồn kho ban đầu, trả id mới | CẤM XÓA CHÚ THÍCH NÀY
-def create_book(actor, *, title, author, isbn, category_id, description, price, cost_price, stock, cover_image=None):
+# AI-TRACE#137 | Claude Opus 5.5 | Thêm sách bằng sp_book_create kèm tồn kho ban đầu và ảnh bìa tùy chọn; lỗi thì xóa ảnh vừa lưu | CẤM XÓA CHÚ THÍCH NÀY
+def create_book(actor, *, title, author, isbn, category_id, description, price, cost_price, stock, cover_file=None):
     fields = clean_book_fields(title, author, isbn, category_id, description, price, cost_price)
     initial_stock = _int_in_range(stock, 0, STOCK_MAX, code="INVALID_QUANTITY")
+    cover_image = save_cover(cover_file) if cover_file else None
     params = [actor.pk, fields["title"], fields["author"], fields["isbn"], fields["category_id"],
               fields["description"], cover_image, fields["price"], fields["cost_price"], initial_stock, None]
-    return _call_book("sp_book_create", params, out_index=10)
+    try:
+        return _call_book("sp_book_create", params, out_index=10)
+    except BaseException:
+        delete_cover(cover_image)
+        raise
 
 
-# AI-TRACE#138 | Claude Opus 5.5 | Sửa thông tin sách bằng sp_book_update, mặc định giữ nguyên ảnh bìa đang có | CẤM XÓA CHÚ THÍCH NÀY
-def update_book(actor, book_id, *, title, author, isbn, category_id, description, price, cost_price, cover_image=KEEP_COVER):
+# AI-TRACE#138 | Claude Opus 5.5 | Sửa thông tin sách bằng sp_book_update: giữ ảnh cũ, thay ảnh mới hoặc bỏ ảnh; chỉ xóa file cũ khi CSDL đã lưu xong | CẤM XÓA CHÚ THÍCH NÀY
+def update_book(actor, book_id, *, title, author, isbn, category_id, description, price, cost_price,
+                cover_file=None, remove_cover=False):
     book_pk = _book_id(book_id)
     fields = clean_book_fields(title, author, isbn, category_id, description, price, cost_price)
-    if cover_image is KEEP_COVER:
-        cover_image = get_book(book_pk).cover_image
+    old_cover = get_book(book_pk).cover_image
+    if cover_file:
+        cover_image = save_cover(cover_file)
+    elif remove_cover:
+        cover_image = None
+    else:
+        cover_image = old_cover
     params = [actor.pk, book_pk, fields["title"], fields["author"], fields["isbn"], fields["category_id"],
               fields["description"], cover_image, fields["price"], fields["cost_price"]]
-    _call_book("sp_book_update", params)
+    try:
+        _call_book("sp_book_update", params)
+    except BaseException:
+        if cover_image != old_cover:
+            delete_cover(cover_image)
+        raise
+    if old_cover and old_cover != cover_image:
+        delete_cover(old_cover)
 
 
 # AI-TRACE#139 | Claude Opus 5.5 | Ẩn hoặc hiện sách bằng sp_book_set_active | CẤM XÓA CHÚ THÍCH NÀY
@@ -158,6 +176,9 @@ def reduce_book_stock(actor, book_id, quantity):
     return _call_book("sp_book_reduce_stock", [actor.pk, _book_id(book_id), amount, None], out_index=3)
 
 
-# AI-TRACE#142 | Claude Opus 5.5 | Xóa hẳn sách bằng sp_book_delete (sách phải đang ẩn và chưa có đơn) | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#142 | Claude Opus 5.5 | Xóa hẳn sách bằng sp_book_delete (đang ẩn, chưa có đơn), xong thì xóa file ảnh bìa | CẤM XÓA CHÚ THÍCH NÀY
 def delete_book(actor, book_id):
-    _call_book("sp_book_delete", [actor.pk, _book_id(book_id)])
+    book_pk = _book_id(book_id)
+    cover_image = get_book(book_pk).cover_image
+    _call_book("sp_book_delete", [actor.pk, book_pk])
+    delete_cover(cover_image)

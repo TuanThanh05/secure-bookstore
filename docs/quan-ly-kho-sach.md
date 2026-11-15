@@ -1,6 +1,6 @@
 # Quản lý kho sách (backend)
 
-Đã có: **thể loại sách** (mục 1) và **sách, tồn kho, ẩn/hiện** (mục 4). Upload ảnh bìa làm ở nhánh sau. Chưa có URL, view hay template; frontend làm sau.
+Đã có: **thể loại sách** (mục 1), **sách, tồn kho, ẩn/hiện** (mục 4) và **upload ảnh bìa** (mục 5). Chưa có URL, view hay template; frontend làm sau.
 
 ## 1. Thể loại sách
 
@@ -132,7 +132,7 @@ from catalog.book_services import (BookError, create_book, delete_book, reduce_b
 book_id = create_book(request.user, title=..., author=..., isbn=..., category_id=..., description=...,
                       price=..., cost_price=..., stock=...)
 update_book(request.user, book_id, title=..., author=..., isbn=..., category_id=..., description=...,
-            price=..., cost_price=...)          # giữ nguyên ảnh bìa đang có
+            price=..., cost_price=...)          # giữ nguyên ảnh bìa đang có (thay/bỏ ảnh: mục 5)
 set_book_active(request.user, book_id, False)
 new_stock = restock_book(request.user, book_id, 50)
 new_stock = reduce_book_stock(request.user, book_id, 2)
@@ -143,4 +143,70 @@ Mọi lỗi nghiệp vụ là `BookError` với `code` và `message` tiếng Vi�
 
 ### Ảnh bìa
 
-Cột `cover_image` đã có sẵn trong `01_tables.sql`, mỗi sách đúng một ảnh. Sách chưa có ảnh: CSDL để **NULL**, `cover_url` trả ảnh mặc định `settings.BOOK_DEFAULT_COVER` (`frontend/static/img/book-cover-default.webp`). Ảnh mặc định không bao giờ bị xóa khi xóa sách hay thay ảnh. Upload ảnh (kiểm tra ảnh thật bằng Pillow, lưu lại thành file mới, đặt tên UUID, thư mục `media/covers/`) làm ở nhánh sau.
+Cột `cover_image` đã có sẵn trong `01_tables.sql`, mỗi sách đúng một ảnh. Sách chưa có ảnh: CSDL để **NULL**, `cover_url` trả ảnh mặc định `settings.BOOK_DEFAULT_COVER` (`frontend/static/img/book-cover-default.webp`). Ảnh mặc định không bao giờ bị xóa khi xóa sách hay thay ảnh. Upload ảnh: xem mục 5.
+
+## 5. Upload ảnh bìa
+
+### Luồng
+
+Ảnh đi **cùng form thêm/sửa sách** (một lần gửi, `enctype="multipart/form-data"`). View truyền `request.FILES["cover"]` vào service:
+
+```python
+from catalog.covers import CoverError
+
+create_book(request.user, ..., stock=..., cover_file=request.FILES.get("cover"))           # không có ảnh → NULL → ảnh mặc định
+update_book(request.user, book_id, ..., cover_file=request.FILES.get("cover"))              # có file → thay ảnh
+update_book(request.user, book_id, ..., remove_cover=True)                                  # bỏ ảnh → về ảnh mặc định
+# Lỗi ảnh: CoverError (code, message); lỗi nghiệp vụ: BookError
+```
+
+Không có hàm nào nhận đường dẫn ảnh từ bên ngoài: đường dẫn chỉ do `save_cover` tạo ra.
+
+### Các lớp kiểm tra (`catalog/covers.py`)
+
+| # | Kiểm tra | Chặn được |
+| --- | --- | --- |
+| 1 | Đọc tối đa 2 MB + 1 byte, **không tin** `size` client gửi (`COVER_TOO_LARGE`). Django giữ file ≤ 2,5 MB trong RAM (`FILE_UPLOAD_MAX_MEMORY_SIZE`); production thêm `client_max_body_size` của Nginx | Làm đầy ổ đĩa, tốn RAM |
+| 2 | **Bỏ qua tên file và Content-Type** của client; Pillow đọc nội dung thật, chỉ nhận `JPEG`, `PNG`, `WEBP` (`COVER_INVALID`) | `shell.php` đổi tên `.jpg`, SVG có script, GIF/BMP |
+| 3 | Đọc kích thước từ header **trước khi giải nén**: mỗi cạnh ≤ 6000, tổng ≤ 25 triệu điểm ảnh (`COVER_DIMENSIONS`); cảnh báo `DecompressionBombWarning` của Pillow bị coi là lỗi | Ảnh "bom giải nén" (file nhỏ, giải nén ra hàng GB RAM) |
+| 4 | `verify()` rồi mở lại và giải mã toàn bộ | File hỏng, file cắt cụt |
+| 5 | **Vẽ lại thành ảnh mới**: xoay theo EXIF, nền trắng cho ảnh trong suốt, thu về tối đa 1200×1800, lưu **WebP** chất lượng 85 | Mã độc nối đuôi ảnh (polyglot `ảnh + <?php ... ?>`), **EXIF/GPS** lộ vị trí người chụp |
+| 6 | Tên file `covers/<uuid4 hex>.webp`, mở bằng chế độ `xb` (không ghi đè), quyền `0644` | Path traversal qua tên file, ghi đè file khác, file thực thi được |
+| 7 | Thủ tục chỉ nhận đường dẫn đúng mẫu `covers/<32 hex>.<jpg|png|webp>` | Ghi đường dẫn tùy ý vào CSDL |
+| 8 | `delete_cover` chỉ xóa file đúng mẫu **và** nằm thẳng trong `MEDIA_ROOT/covers` (so sau khi `resolve()`) | Dữ liệu CSDL bị sửa thành `../../.env` để lừa xóa file |
+
+### Thứ tự với CSDL (không để file mồ côi, không mất ảnh)
+
+- **Thêm:** lưu file → gọi thủ tục; thủ tục lỗi (ví dụ trùng ISBN) → xóa file vừa lưu.
+- **Sửa có ảnh mới:** lưu file mới → gọi thủ tục; lỗi → xóa file **mới**, giữ file cũ; thành công → xóa file **cũ**.
+- **Bỏ ảnh:** thủ tục ghi NULL → xóa file cũ.
+- **Xóa sách:** thủ tục xóa xong → xóa file. Thủ tục từ chối (`BOOK_HAS_ORDERS`...) → giữ file.
+- Ảnh mặc định nằm ở `frontend/static`, không bao giờ nằm trong `media/covers`, nên không thể bị xóa.
+
+Giới hạn đã biết: nếu tiến trình chết giữa lúc lưu file và gọi thủ tục, có thể còn file không ai dùng trong `media/covers` (vô hại, không ai truy cập được qua CSDL).
+
+### Phục vụ file ảnh
+
+- **Dev** (`DEBUG = True`): `bookstore/urls.py` tự phục vụ `/media/`. Đã thử: ảnh trả `200 image/webp`; `/media/../.env` trả 404.
+- **Production (Nginx):** Django không phục vụ `/media/`. Cấu hình gợi ý:
+
+```nginx
+client_max_body_size 3m;
+
+location /media/covers/ {
+    alias /srv/secure-bookstore/media/covers/;
+    location ~* \.webp$ {
+        default_type image/webp;
+        add_header X-Content-Type-Options nosniff always;
+        add_header Content-Security-Policy "default-src 'none'" always;
+    }
+    location ~ { return 404; }       # chỉ file .webp, không gì khác
+}
+location /media/ { return 404; }
+```
+
+Thư mục `media/` đã có trong `.gitignore`, không commit ảnh người dùng.
+
+### Kiểm thử
+
+`catalog/tests/test_covers.py` (23 test): ảnh thật 3 định dạng, ảnh trong suốt, thu nhỏ, xóa EXIF/GPS, mã PHP/JS nối đuôi bị loại, file giả/SVG/GIF/BMP/cắt cụt/rỗng, quá 2 MB (kể cả khi `size` nói dối), ảnh bom 8000×8000, tên UUID và quyền 0644, `delete_cover` không xóa được file ngoài `covers/`, và thứ tự file ↔ CSDL khi thêm/sửa/bỏ/xóa thành công hoặc lỗi.

@@ -85,6 +85,9 @@ class BookProcedureTests(SimpleTestCase):
         patcher = mock.patch.object(staff_services, "connections", {"staff": self.conn})
         patcher.start()
         self.addCleanup(patcher.stop)
+        book_patcher = mock.patch("catalog.book_services.get_book", return_value=SimpleNamespace(cover_image=None))
+        book_patcher.start()
+        self.addCleanup(book_patcher.stop)
 
     def test_create_sends_clean_values_and_initial_stock(self):
         self.assertEqual(create_book(self.actor, stock="100", **VALID), 21)
