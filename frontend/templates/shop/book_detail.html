@@ -1,0 +1,111 @@
+{% extends "layouts/customer.html" %}
+{% load static bookstore %}
+{% block title %}{{ book.title }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/shop.css' %}">{% endblock %}
+
+{% block content %}
+  {# AI-TRACE#220 | Claude Opus 5.5 | Trang chi tiết sách: ảnh bìa lớn bên trái, thông tin theo hàng bên phải, nút đặt hàng mờ, danh sách và form đánh giá | CẤM XÓA CHÚ THÍCH NÀY #}
+  <a class="detail-back" href="{% url 'catalog:home' %}">{% include "components/icon.html" with name="chevron-left" %}<span>Tủ sách</span></a>
+
+  <article class="book-detail">
+    <div class="book-detail__cover">
+      <img src="{{ book.cover_url }}" alt="Bìa sách {{ book.title }}" width="420" height="630">
+      {% if not book.in_stock %}<span class="badge badge--muted book-detail__badge">Hết hàng</span>{% endif %}
+    </div>
+
+    <div class="book-detail__info">
+      <p class="label book-detail__category">{{ book.category_name }}</p>
+      <h1 class="book-detail__title">{{ book.title }}</h1>
+      <p class="book-detail__author">{{ book.author }}</p>
+
+      {% if book.review_count %}
+        <p class="rating book-detail__rating">
+          <span class="visually-hidden">Đánh giá {{ book.rating|floatformat:1 }} trên 5 sao,</span>
+          {% for icon_name in book.rating|stars %}{% include "components/icon.html" with name=icon_name size="sm" %}{% endfor %}
+          <span class="rating__count">{{ book.rating|floatformat:1 }} · {{ book.review_count }} đánh giá</span>
+        </p>
+      {% else %}
+        <p class="rating rating--none">Chưa có đánh giá</p>
+      {% endif %}
+
+      <p class="book-detail__price">{{ book.price|vnd }}</p>
+
+      <dl class="book-detail__facts">
+        <div><dt>Tác giả</dt><dd>{{ book.author }}</dd></div>
+        <div><dt>Thể loại</dt><dd>{{ book.category_name }}</dd></div>
+        <div><dt>ISBN</dt><dd>{{ book.isbn }}</dd></div>
+        <div><dt>Tình trạng</dt><dd>{% if book.in_stock %}<span class="book-detail__stock">Còn hàng</span>{% else %}Hết hàng{% endif %}</dd></div>
+      </dl>
+
+      {% if book.description %}
+        <div class="book-detail__description">
+          <h2>Giới thiệu</h2>
+          <p>{{ book.description|linebreaksbr }}</p>
+        </div>
+      {% endif %}
+
+      <div class="book-detail__actions">
+        <button class="btn book-detail__order" type="button" disabled aria-describedby="order-note">
+          {% include "components/icon.html" with name="shopping-bag" size="sm" %}<span>Đặt hàng</span>
+        </button>
+        <p class="book-detail__note" id="order-note">Chức năng đặt hàng sắp có.</p>
+      </div>
+    </div>
+  </article>
+
+  <section class="reviews" id="danh-gia" aria-labelledby="reviews-title">
+    <div class="reviews__header">
+      <h2 class="reviews__title" id="reviews-title">Đánh giá của bạn đọc</h2>
+      <p class="reviews__count">{{ reviews|length }} đánh giá</p>
+    </div>
+
+    {% if can_review %}
+      <details class="review-form"{% if open_form %} open{% endif %}>
+        <summary class="btn">{% if my_review %}Sửa đánh giá{% else %}Đánh giá{% endif %}</summary>
+        {% if my_review and not my_review.is_visible %}
+          <p class="review-form__notice" role="status">Đánh giá của bạn đang bị quản trị viên ẩn. Bạn vẫn có thể sửa, nhưng nó sẽ không hiện công khai.</p>
+        {% endif %}
+        <form method="post" action="{% url 'catalog:review_submit' book_id=book.id %}" novalidate>
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="review-form__alert" role="alert">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+          {% endif %}
+          <fieldset class="review-form__stars">
+            <legend>{{ form.rating.label }}</legend>
+            {% for radio in form.rating %}
+              <label class="star-choice" for="{{ radio.id_for_label }}">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
+            {% endfor %}
+            {% if form.rating.errors %}<p class="review-form__error">{{ form.rating.errors.0 }}</p>{% endif %}
+          </fieldset>
+          <div class="review-form__field">
+            <label for="{{ form.content.id_for_label }}">{{ form.content.label }}</label>
+            {{ form.content }}
+            {% if form.content.errors %}<p class="review-form__error">{{ form.content.errors.0 }}</p>{% endif %}
+          </div>
+          <button class="btn" type="submit">{% if my_review %}Lưu đánh giá{% else %}Gửi đánh giá{% endif %}</button>
+        </form>
+      </details>
+    {% elif not user.is_authenticated %}
+      <a class="btn" href="{{ login_url }}">Đăng nhập để đánh giá</a>
+    {% endif %}
+
+    {% if reviews %}
+      <ol class="review-list">
+        {% for review in reviews %}
+          <li class="review">
+            <div class="review__head">
+              <span class="review__name">{{ review.display_name }}</span>
+              <span class="rating review__stars" aria-label="{{ review.rating }} trên 5 sao">
+                {% for icon_name in review.rating|stars %}{% include "components/icon.html" with name=icon_name size="sm" %}{% endfor %}
+              </span>
+              <time class="review__time" datetime="{{ review.created_at|date:'c' }}">{{ review.created_at|date:"d/m/Y" }}{% if review.edited %} · đã sửa{% endif %}</time>
+            </div>
+            <p class="review__content">{{ review.content|linebreaksbr }}</p>
+          </li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <p class="reviews__empty">Chưa có đánh giá nào. Hãy là người đầu tiên.</p>
+    {% endif %}
+  </section>
+{% endblock %}

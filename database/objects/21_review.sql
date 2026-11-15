@@ -3,6 +3,7 @@
 --
 --   sp_review_save      gửi đánh giá; nếu đã có thì SỬA đánh giá cũ
 --   sp_review_get_mine  đánh giá của chính mình cho một sách (điền sẵn form sửa)
+--   sp_review_list      đánh giá đang hiện của một sách, tên người viết đã che
 --
 -- Ai được đánh giá (chốt 2026-11-15, cách b): khách đang hoạt động, đã xác
 -- nhận email, KHÔNG phải nhân viên. Sau này khi có đơn hàng sẽ siết lại thành
@@ -33,6 +34,7 @@
 
 DROP PROCEDURE IF EXISTS sp_review_save;
 DROP PROCEDURE IF EXISTS sp_review_get_mine;
+DROP PROCEDURE IF EXISTS sp_review_list;
 
 DELIMITER $$
 
@@ -115,6 +117,39 @@ BEGIN
     SELECT rating, content, is_visible, created_at, updated_at
       FROM catalog_review
      WHERE user_id = p_user_id AND book_id = p_book_id;
+END$$
+
+-- AI-TRACE#212 | Claude Opus 5.5 | Thủ tục trả đánh giá đang hiện của một sách đang bán, che username ngay trong CSDL, mới nhất trước | CẤM XÓA CHÚ THÍCH NÀY
+CREATE DEFINER = 'bookstore_definer'@'localhost' PROCEDURE sp_review_list(
+    IN p_book_id  BIGINT
+)
+SQL SECURITY DEFINER
+READS SQL DATA
+BEGIN
+    IF p_book_id IS NULL OR p_book_id <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'INVALID_INPUT';
+    END IF;
+
+    -- Username được che tại đây (ký tự đầu + dấu sao + ký tự cuối, chốt
+    -- 2026-11-15), nên tên thật không rời khỏi CSDL. Không trả user_id, email.
+    -- Chỉ đánh giá is_visible = 1 của sách đang hiện; tối đa 50 dòng.
+    SELECT CASE
+               WHEN CHAR_LENGTH(u.username) <= 1 THEN '*'
+               WHEN CHAR_LENGTH(u.username) = 2 THEN CONCAT(LEFT(u.username, 1), '*')
+               ELSE CONCAT(LEFT(u.username, 1),
+                           REPEAT('*', CHAR_LENGTH(u.username) - 2),
+                           RIGHT(u.username, 1))
+           END              AS display_name,
+           r.rating,
+           r.content,
+           r.created_at,
+           r.updated_at
+      FROM catalog_review r
+      JOIN catalog_book b  ON b.id = r.book_id AND b.is_active = 1
+      JOIN accounts_user u ON u.id = r.user_id
+     WHERE r.book_id = p_book_id AND r.is_visible = 1
+     ORDER BY r.created_at DESC, r.id DESC
+     LIMIT 50;
 END$$
 
 DELIMITER ;

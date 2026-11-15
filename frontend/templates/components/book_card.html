@@ -1,19 +1,7 @@
-{% load bookstore %}{% comment %}
-  Thẻ một cuốn sách. Dùng ở trang chủ, danh sách sách, kết quả tìm kiếm:
-      {% include "components/book_card.html" with book=book cart_add_url=cart_add_url %}
-
-  book – đối tượng có các thuộc tính (dữ liệu từ MySQL, view v_public_books):
-      id, title, author, price (VND, số nguyên), rating (0–5 hoặc None),
-      review_count, in_stock (True/False), cover_url (URL ảnh hoặc rỗng)
-  cart_add_url – URL thêm vào giỏ (orders:cart_add). Khi chưa có, nút giỏ bị vô hiệu.
-
-  Bảo mật:
-  - Mọi giá trị in bằng {{ }} đều được auto-escape (không dùng |safe).
-  - Form giỏ hàng chỉ gửi book_id và quantity, KHÔNG gửi giá: server tự lấy giá trong CSDL.
-  - cover_url phải là ảnh của chính site (MEDIA_URL); CSP chặn ảnh từ máy chủ ngoài.
-{% endcomment %}
+{% load bookstore %}
 <article class="book-card">
-  <div class="book-card__cover">
+  {# AI-TRACE#221 | Claude Opus 5.5 | Ảnh bìa và tên sách trong thẻ sách dẫn tới trang chi tiết | CẤM XÓA CHÚ THÍCH NÀY #}
+  <a class="book-card__cover" href="{% url 'catalog:book_detail' book_id=book.id %}" tabindex="-1" aria-hidden="true">
     {% if book.cover_url %}
       <img src="{{ book.cover_url }}" alt="Bìa sách {{ book.title }}" width="240" height="360" loading="lazy">
     {% else %}
@@ -23,11 +11,11 @@
       </div>
     {% endif %}
     {% if not book.in_stock %}<span class="badge badge--muted book-card__badge">Hết hàng</span>{% endif %}
-  </div>
+  </a>
 
   <div class="book-card__body">
     <p class="label book-card__author">{{ book.author }}</p>
-    <h3 class="book-card__title">{{ book.title }}</h3>
+    <h3 class="book-card__title"><a href="{% url 'catalog:book_detail' book_id=book.id %}">{{ book.title }}</a></h3>
 
     {% if book.review_count %}
       <p class="rating">

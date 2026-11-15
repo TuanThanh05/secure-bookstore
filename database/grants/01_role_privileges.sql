@@ -155,3 +155,13 @@ GRANT EXECUTE ON PROCEDURE sp_review_get_mine        TO 'bookstore_definer'@'loc
 
 GRANT EXECUTE ON PROCEDURE sp_review_save            TO 'r_customer';
 GRANT EXECUTE ON PROCEDURE sp_review_get_mine        TO 'r_customer';
+
+-- ---------------------------------------------------------------------
+-- Trang chi tiết sách (sp_public_book_get trong objects/20_..., sp_review_list
+-- trong objects/21_...). Definer đã có SELECT trên các bảng cần đọc.
+-- ---------------------------------------------------------------------
+GRANT EXECUTE ON PROCEDURE sp_public_book_get        TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_review_list            TO 'bookstore_definer'@'localhost';
+
+GRANT EXECUTE ON PROCEDURE sp_public_book_get        TO 'r_customer';
+GRANT EXECUTE ON PROCEDURE sp_review_list            TO 'r_customer';

@@ -10,9 +10,11 @@ from catalog.forms import ReviewForm
 from catalog.review_services import (
     REVIEW_ERROR_MESSAGES,
     MyReview,
+    PublicReview,
     ReviewError,
     clean_content,
     get_my_review,
+    list_reviews,
     mask_username,
     save_review,
 )
@@ -145,3 +147,16 @@ class SaveReviewTests(SimpleTestCase):
         self.assertIsNone(get_my_review(customer(), 7))
         self.assertIsNone(get_my_review(customer(), "abc"))
         self.assertIsNone(get_my_review(SimpleNamespace(is_authenticated=False, is_staff=False), 7))
+
+    def test_list_reviews_maps_masked_rows(self):
+        from datetime import datetime
+        created, edited = datetime(2026, 11, 15, 9), datetime(2026, 11, 15, 10)
+        self.cursor.fetchall.return_value = [("a*******n", 4, "Hay", created, edited)]
+        reviews = list_reviews("7")
+        self.cursor.callproc.assert_called_once_with("sp_review_list", [7])
+        self.assertEqual(reviews, [PublicReview("a*******n", 4, "Hay", created, edited)])
+        self.assertTrue(reviews[0].edited)
+
+    def test_list_reviews_bad_id_returns_empty_without_database(self):
+        self.assertEqual(list_reviews("abc"), [])
+        self.cursor.callproc.assert_not_called()
