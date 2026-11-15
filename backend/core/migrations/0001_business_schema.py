@@ -27,6 +27,7 @@ BUSINESS_TABLES = [
     "catalog_review",
     "catalog_book",
     "catalog_category",
+    "accounts_passwordhistory",
 ]
 
 

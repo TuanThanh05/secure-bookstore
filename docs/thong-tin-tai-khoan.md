@@ -74,3 +74,22 @@ Luồng: trang Thông tin tài khoản → nút **Cập nhật thông tin** → 
 - **Ngữ cảnh (associated data)** `accounts_user.phone_encrypted:<id>`: bản mã của người A chép sang dòng người B sẽ giải mã thất bại (chống tráo dữ liệu giữa các dòng).
 - Định dạng có tiền tố phiên bản `v1.` để sau này đổi thuật toán/khóa vẫn phân biệt được dữ liệu cũ.
 - **Mất khóa = mất SĐT đã lưu.** Khóa máy demo phải được sao lưu riêng, an toàn.
+
+## 8. Lịch sử mật khẩu – không dùng lại 5 mật khẩu gần nhất
+
+- **Quy tắc:** mật khẩu mới không được trùng với 5 mật khẩu gần nhất, **tính cả mật khẩu đang dùng**. Áp dụng cho mọi đường đặt mật khẩu: đổi mật khẩu, quên mật khẩu, lệnh `changepassword` (và lệnh đổi mật khẩu admin sau này). Lúc đăng ký thì chưa có lịch sử nên không kiểm tra.
+- **Bảng** `accounts_passwordhistory` (trong `database/schema/01_tables.sql`): `user_id`, `password_hash`, `created_at`, khóa ngoại tới `accounts_user` với `ON DELETE CASCADE`.
+- **Chia việc giữa CSDL và Django:**
+
+  | Việc | Ai làm | Vì sao |
+  | --- | --- | --- |
+  | Ghi mã băm mới, xóa bớt để còn 5 dòng | Trigger `trg_pwhist_after_insert` / `trg_pwhist_after_update` (`database/objects/11_...`), chạy bằng quyền `bookstore_definer` | Không sót đường nào, kể cả sửa thẳng bằng SQL. `app_customer` không cần quyền ghi bảng lịch sử |
+  | So sánh mật khẩu mới với 5 mã băm | `accounts/validators.PasswordHistoryValidator`, khai báo trong `AUTH_PASSWORD_VALIDATORS` | Mã băm có **muối ngẫu nhiên**: cùng một mật khẩu cho ra chuỗi khác nhau, nên không so chuỗi băm được. Phải gọi `check_password(mật khẩu mới, mã băm cũ)`, mà chỉ Django có mật khẩu gốc |
+
+- **Quyền tối thiểu:** `r_customer` chỉ có `SELECT` trên bảng lịch sử. Mức lộ không tăng vì `r_customer` vốn đã đọc được `accounts_user.password` để kiểm tra đăng nhập. Kẻ tấn công có SQL injection cũng không xóa được lịch sử để quay lại dùng mật khẩu cũ (thử INSERT/UPDATE/DELETE bằng `app_customer` đều bị MySQL từ chối, lỗi 1142).
+- **Thông báo lỗi chung:** "Mật khẩu này trùng với một trong 5 mật khẩu gần nhất…", không nói trùng lần thứ mấy.
+- **Dự phòng:** nếu bảng lịch sử chưa có dòng nào (ví dụ CSDL test không có trigger), validator vẫn so với mật khẩu đang dùng trong `accounts_user`.
+- **Thời gian:** mỗi lần đổi băm thử tối đa 5 lần (PBKDF2), khoảng nửa giây. Chấp nhận được vì chỉ người đã đăng nhập hoặc có link đặt lại mới tới bước này.
+- **Đánh đổi đã biết:** khi nâng cấp Django tăng số vòng băm, Django tự băm lại mật khẩu của khách lúc đăng nhập. Cột `password` đổi dù mật khẩu không đổi, trigger ghi thêm một dòng trùng, nên lịch sử thực tế ngắn đi một mật khẩu. Hiếm gặp, chấp nhận.
+- Số 5 xuất hiện ở hai chỗ phải khớp nhau: `OPTIONS history_count` trong `settings/base.py` và `OFFSET 4` trong trigger.
+- **Kiểm thử:** `accounts/tests/test_password_history.py` (7 test). Trigger chỉ kiểm tra được trên CSDL thật vì CSDL test không có trigger: đăng ký 1 dòng, đổi 6 lần còn 5 dòng, sửa cột khác không thêm dòng.

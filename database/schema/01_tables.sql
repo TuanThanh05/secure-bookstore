@@ -21,9 +21,35 @@
 -- accounts_user_user_permissions, django_session, django_content_type,
 -- django_migrations (sau này thêm axes_*, otp_*).
 --
--- Muốn sửa lược đồ: KHÔNG sửa file này sau khi nhóm đã migrate.
--- Tạo file mới (02_..., 03_...) và một migration mới đọc file đó.
+-- Muốn sửa lược đồ: thường tạo file mới (02_..., 03_...) và một migration
+-- mới đọc file đó. Chỉ sửa thẳng file này khi cả nhóm đã thống nhất và
+-- mọi máy dựng lại CSDL từ đầu (xem database/README.md, mục "Làm lại sạch").
 -- =====================================================================
+
+-- =====================================================================
+-- APP accounts
+-- =====================================================================
+
+-- Lịch sử mật khẩu: mã băm của tối đa 5 mật khẩu gần nhất (tính cả mật khẩu
+-- đang dùng) của mỗi tài khoản. Django dùng để chặn đặt lại mật khẩu cũ.
+--   - GHI: chỉ trigger trg_pwhist_* (database/objects/11_...) ghi và xóa bớt,
+--     chạy bằng quyền bookstore_definer. Tài khoản ứng dụng chỉ có SELECT.
+--   - SO SÁNH: chỉ làm được trong Django. Mã băm có muối ngẫu nhiên nên cùng
+--     một mật khẩu cho ra chuỗi khác nhau; phải gọi check_password(mật khẩu
+--     mới, mã băm cũ). CSDL không bao giờ thấy mật khẩu gốc.
+-- AI-TRACE#085 | Claude Opus 5.5 | Bảng lưu 5 mã băm mật khẩu gần nhất của mỗi tài khoản | CẤM XÓA CHÚ THÍCH NÀY
+CREATE TABLE accounts_passwordhistory (
+    id             BIGINT       NOT NULL AUTO_INCREMENT,
+    user_id        BIGINT       NOT NULL,
+    password_hash  VARCHAR(128) NOT NULL,                    -- cùng định dạng cột accounts_user.password
+    created_at     DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+
+    PRIMARY KEY (id),
+    INDEX ix_pwhist_user_id (user_id, id),                   -- lấy N dòng mới nhất của một user
+    CONSTRAINT fk_pwhist_user FOREIGN KEY (user_id)
+        REFERENCES accounts_user (id) ON DELETE CASCADE
+) ENGINE=InnoDB
+  COMMENT='Lịch sử mã băm mật khẩu (5 gần nhất)';
 
 -- =====================================================================
 -- APP catalog

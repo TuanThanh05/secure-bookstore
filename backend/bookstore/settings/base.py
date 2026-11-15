@@ -138,6 +138,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator","OPTIONS": {"min_length": 12},},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    {"NAME": "accounts.validators.PasswordHistoryValidator", "OPTIONS": {"history_count": 5}},
 ]
 
 PASSWORD_RESET_TIMEOUT = 5 * 60

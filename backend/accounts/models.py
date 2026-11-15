@@ -53,3 +53,14 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+
+
+# AI-TRACE#088 | Claude Opus 5.5 | Model chỉ đọc cho bảng lịch sử mã băm mật khẩu do trigger ghi | CẤM XÓA CHÚ THÍCH NÀY
+class PasswordHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name="+", db_constraint=False)
+    password_hash = models.CharField(max_length=128)
+    created_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = "accounts_passwordhistory"
