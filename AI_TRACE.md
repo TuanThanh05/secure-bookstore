@@ -112,13 +112,39 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 107 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `CategoryError` | 37 | Lỗi nghiệp vụ khi quản lý thể loại, mang mã lỗi và câu tiếng Việt | [ ] |
 | 108 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `clean_name` | 45 | Chuẩn hóa tên thể loại: bỏ khoảng trắng thừa, kiểm tra độ dài | [ ] |
 | 109 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `make_slug` | 53 | Tạo slug không dấu từ tên tiếng Việt, xử lý riêng chữ đ | [ ] |
-| 110 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `_call` | 63 | Gọi một thủ tục thể loại qua kết nối staff, đổi lỗi SIGNAL thành CategoryError | [ ] |
+| 110 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `_call` | 63 | Gọi một thủ tục qua kết nối staff, đổi lỗi SIGNAL thành exception nghiệp vụ tương ứng | [ ] |
 | 111 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `list_categories` | 92 | Danh sách thể loại cho nhân viên, gọi sp_category_list qua kết nối staff | [ ] |
 | 112 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `create_category` | 105 | Thêm thể loại bằng sp_category_create, trả id mới | [ ] |
 | 113 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `rename_category` | 111 | Sửa tên thể loại bằng sp_category_rename, slug đổi theo tên | [ ] |
 | 114 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `delete_category` | 117 | Xóa thể loại bằng sp_category_delete | [ ] |
 | 115 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `_category_id` | 84 | Đổi id thể loại nhận từ request thành số nguyên, sai kiểu thì coi như không tìm thấy | [ ] |
-| 116 | Claude Opus 5.5 |  | `backend/core/management/commands/db_check_grants.py` | `Command` | 23 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi | [ ] |
+| 116 | Claude Opus 5.5 |  | `backend/core/management/commands/db_check_grants.py` | `Command` | 30 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi | [ ] |
 | 117 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `SlugAndNameTests` | 22 | Test tạo slug và chuẩn hóa tên thể loại tiếng Việt | [ ] |
 | 118 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `CategoryProcedureTests` | 48 | Test gọi thủ tục thể loại bằng cursor giả qua kết nối staff, đổi lỗi SIGNAL | [ ] |
 | 119 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `CategoryListTests` | 101 | Test đọc danh sách thể loại qua sp_category_list và lệnh kiểm tra quyền từ chối settings.migrate | [ ] |
+| 120 | Claude Opus 5.5 |  | `database/objects/41_book.sql` | `CREATE DEFINER = 'bookstore_definer'@'localhost'` | 58 | View một bảng cho nhân viên xem mọi cột của sách, kể cả giá nhập và tồn kho | [ ] |
+| 121 | Claude Opus 5.5 |  | `database/objects/41_book.sql` | `PROCEDURE sp_book_create` | 68 | Thủ tục thêm sách: kiểm tra nhân viên, đầu vào, thể loại, chặn trùng ISBN, ghi nhật ký | [ ] |
+| 122 | Claude Opus 5.5 |  | `database/objects/41_book.sql` | `PROCEDURE sp_book_update` | 156 | Thủ tục sửa thông tin sách (không đụng tồn kho và ẩn/hiện), khóa dòng, ghi giá trị cũ/mới | [ ] |
+| 123 | Claude Opus 5.5 |  | `database/objects/41_book.sql` | `PROCEDURE sp_book_set_active` | 256 | Thủ tục ẩn hoặc hiện sách, khóa dòng, ghi nhật ký | [ ] |
+| 124 | Claude Opus 5.5 |  | `database/objects/41_book.sql` | `PROCEDURE sp_book_restock` | 310 | Thủ tục nhập thêm hàng: khóa dòng sách, chặn vượt 10.000 cuốn, ghi tồn kho trước và sau | [ ] |
+| 125 | Claude Opus 5.5 |  | `database/objects/41_book.sql` | `PROCEDURE sp_book_reduce_stock` | 367 | Thủ tục giảm kho ngoại lệ: khóa dòng sách, không cho âm, ghi tồn kho trước và sau | [ ] |
+| 126 | Claude Opus 5.5 |  | `database/objects/41_book.sql` | `PROCEDURE sp_book_delete` | 424 | Thủ tục xóa hẳn sách: khóa dòng, chỉ xóa sách đã ẩn và chưa từng có trong đơn, ghi nhật ký | [ ] |
+| 127 | Claude Opus 5.5 |  | `backend/catalog/models.py` | `StaffConnectionManager` | 12 | Manager luôn đọc qua kết nối staff, vì chỉ app_staff có quyền SELECT view của nhân viên | [ ] |
+| 128 | Claude Opus 5.5 |  | `backend/catalog/models.py` | `StaffBook` | 18 | Model chỉ đọc view một bảng v_staff_books, trả đường dẫn ảnh bìa hoặc ảnh mặc định | [ ] |
+| 129 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `BookError` | 27 | Lỗi nghiệp vụ khi quản lý sách, mang mã lỗi và câu tiếng Việt | [ ] |
+| 130 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `clean_isbn` | 35 | Chuẩn hóa ISBN (bỏ gạch, khoảng trắng) và kiểm tra chữ số kiểm tra ISBN-10/ISBN-13 | [ ] |
+| 131 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `_int_in_range` | 49 | Đổi giá trị từ form thành số nguyên trong khoảng cho phép, sai thì báo mã lỗi | [ ] |
+| 132 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `clean_book_fields` | 62 | Chuẩn hóa và kiểm tra các trường thông tin sách trước khi gọi thủ tục | [ ] |
+| 133 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `_book_id` | 86 | Đổi id sách nhận từ request thành số nguyên, sai kiểu thì coi như không tìm thấy | [ ] |
+| 134 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `_call_book` | 94 | Gọi thủ tục sách với bảng mã lỗi của sách | [ ] |
+| 135 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `list_books` | 99 | Danh sách sách cho nhân viên, lọc theo thể loại, tác giả, tên sách, trạng thái bằng ORM | [ ] |
+| 136 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `get_book` | 116 | Lấy một sách theo id cho form sửa, không có thì báo BOOK_NOT_FOUND | [ ] |
+| 137 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `create_book` | 124 | Thêm sách bằng sp_book_create kèm tồn kho ban đầu, trả id mới | [ ] |
+| 138 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `update_book` | 133 | Sửa thông tin sách bằng sp_book_update, mặc định giữ nguyên ảnh bìa đang có | [ ] |
+| 139 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `set_book_active` | 144 | Ẩn hoặc hiện sách bằng sp_book_set_active | [ ] |
+| 140 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `restock_book` | 149 | Nhập thêm hàng bằng sp_book_restock, trả tồn kho mới | [ ] |
+| 141 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `reduce_book_stock` | 155 | Giảm kho ngoại lệ bằng sp_book_reduce_stock, trả tồn kho mới | [ ] |
+| 142 | Claude Opus 5.5 |  | `backend/catalog/book_services.py` | `delete_book` | 161 | Xóa hẳn sách bằng sp_book_delete (sách phải đang ẩn và chưa có đơn) | [ ] |
+| 143 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_books.py` | `BookFieldTests` | 34 | Test chuẩn hóa ISBN, kiểm tra chữ số kiểm tra và các giới hạn thông tin sách | [ ] |
+| 144 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_books.py` | `BookProcedureTests` | 75 | Test gọi sáu thủ tục sách bằng cursor giả qua kết nối staff, đổi lỗi SIGNAL thành BookError | [ ] |
+| 145 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_books.py` | `StaffBookReadTests` | 162 | Test model sách đọc qua kết nối staff, lọc theo thể loại/tác giả/tên và đường dẫn ảnh bìa | [ ] |

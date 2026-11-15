@@ -1,6 +1,6 @@
 # Quản lý kho sách (backend)
 
-Phạm vi đợt này: **thể loại sách**. Sách, tồn kho, ẩn/hiện sách làm ở các bước sau. Chưa có URL, view hay template; frontend làm sau.
+Đã có: **thể loại sách** (mục 1) và **sách, tồn kho, ẩn/hiện** (mục 4). Upload ảnh bìa làm ở nhánh sau. Chưa có URL, view hay template; frontend làm sau.
 
 ## 1. Thể loại sách
 
@@ -58,7 +58,7 @@ cd backend
 python manage.py db_check_grants        # KHÔNG dùng --settings=bookstore.settings.migrate
 ```
 
-Chạy 12 câu bằng `app_customer` và `app_staff` thật, so mỗi câu với kết quả mong đợi (được phép, hoặc đúng mã lỗi 1142 / 1143 / 1370 / 1644). Câu ghi luôn có `WHERE 1 = 0` hoặc đầu vào sai nên không đổi dữ liệu. CI chạy lệnh này ngay sau `db_apply` trên MySQL 8.4. Đây cũng là bằng chứng phân quyền tốt để đưa vào báo cáo và demo.
+Chạy 19 câu bằng `app_customer` và `app_staff` thật, so mỗi câu với kết quả mong đợi (được phép, hoặc đúng mã lỗi 1142 / 1143 / 1370 / 1644). Câu ghi luôn có `WHERE 1 = 0` hoặc đầu vào sai nên không đổi dữ liệu. CI chạy lệnh này ngay sau `db_apply` trên MySQL 8.4. Đây cũng là bằng chứng phân quyền tốt để đưa vào báo cáo và demo.
 
 ## 3. Vì sao đọc danh sách bằng thủ tục, không bằng view
 
@@ -67,3 +67,80 @@ Ban đầu danh sách là view `v_staff_categories`. Kiểm tra bằng `db_check
 Thủ tục `SQL SECURITY DEFINER` không bị lỗi này, nên danh sách chuyển thành `sp_category_list()`. Về bảo mật hai cách tương đương: người gọi chỉ có EXECUTE, không chạm được bảng.
 
 **Quy ước cho các phần sau** (sách, kho, đơn hàng của admin, `v_public_books` cho khách): dữ liệu đọc cần **nhiều bảng hoặc gộp nhóm** thì dùng **thủ tục đọc**; view chỉ dùng cho truy vấn đơn giản trên **một bảng**. Mỗi đối tượng mới nên thêm một dòng vào `db_check_grants` để CI kiểm tra trên MySQL 8.4 thật.
+
+## 4. Sách, tồn kho, ẩn/hiện
+
+### Đối tượng trong CSDL (`database/objects/41_book.sql`)
+
+| Đối tượng | Việc | Mã lỗi chính |
+| --- | --- | --- |
+| `v_staff_books` | View **một bảng** `catalog_book`, mọi cột kể cả giá nhập (`cost_price`) và tồn kho. Chỉ `r_staff` được SELECT | – |
+| `sp_book_create` | Thêm sách, nhập luôn tồn kho ban đầu (0–10.000); sách mới ở trạng thái **hiện** | `INVALID_INPUT`, `ISBN_EXISTS`, `CATEGORY_NOT_FOUND` |
+| `sp_book_update` | Sửa thông tin: tên, tác giả, ISBN, thể loại, mô tả, ảnh, giá bán, giá nhập. **Không đụng tồn kho, không ẩn/hiện** | thêm `BOOK_NOT_FOUND` |
+| `sp_book_set_active` | Ẩn (0) hoặc hiện (1) | `BOOK_NOT_FOUND` |
+| `sp_book_restock` | Nhập thêm 1–10.000 cuốn, tổng tồn sau khi nhập ≤ 10.000; trả tồn kho mới | `INVALID_QUANTITY`, `STOCK_LIMIT` |
+| `sp_book_reduce_stock` | Giảm kho ngoại lệ (hỏng, thất lạc...), không cho âm; trả tồn kho mới | `INVALID_QUANTITY`, `INSUFFICIENT_STOCK` |
+| `sp_book_delete` | Xóa hẳn: sách **phải đang ẩn** và **chưa từng có trong đơn hàng** | `BOOK_ACTIVE`, `BOOK_HAS_ORDERS` |
+
+Tất cả theo cùng mẫu với thể loại: `SQL SECURITY DEFINER`, tự kiểm tra `NOT_STAFF`, ghi `core_auditlog` trong cùng giao dịch, lỗi thì `ROLLBACK`. Không tài khoản ứng dụng nào ghi thẳng được vào `catalog_book` (`app_staff` UPDATE thẳng → 1142).
+
+### Giới hạn nghiệp vụ
+
+| Trường | Giới hạn | Kiểm tra ở |
+| --- | --- | --- |
+| Tên sách, tác giả | 1–255 ký tự, gộp khoảng trắng thừa | Django + thủ tục |
+| ISBN | ISBN-10 hoặc ISBN-13; Django bỏ gạch/khoảng trắng, đổi `x` thành `X`, **kiểm tra chữ số kiểm tra** (`INVALID_ISBN`); thủ tục kiểm tra định dạng; UNIQUE chặn trùng | Django + thủ tục + bảng |
+| Mô tả | trống thì lưu NULL, tối đa 5.000 ký tự | Django + thủ tục |
+| Giá bán / giá nhập | 1–100.000.000 đ / 0–100.000.000 đ | Django + thủ tục + CHECK |
+| Tồn kho | 0–10.000 cuốn mỗi đầu sách, mọi lúc | Django + thủ tục + CHECK không âm |
+| Ảnh bìa | NULL hoặc `covers/<32 hex>.<jpg|png|webp>`; thủ tục chặn mọi đường dẫn khác (ví dụ `../../etc/passwd`) | thủ tục |
+
+### Nhật ký
+
+`core_auditlog` với `table_name = catalog_book`: thêm sách (mọi giá trị), sửa (giá trị cũ/mới; mô tả chỉ ghi độ dài), ẩn/hiện, nhập kho (`{"stock": cũ}` → `{"stock": mới, "restock": n}`), giảm kho (`"reduce": n`), xóa (giá trị cuối cùng). Đọc liên tiếp các dòng là dựng lại được lịch sử tồn kho.
+
+### Race condition
+
+Nhập kho, giảm kho, xóa và `sp_place_order` đều khóa dòng sách bằng `FOR UPDATE`, nên chạy cùng lúc thì xếp hàng. Đã thử trong sandbox: bốn yêu cầu cùng lúc (nhập 6.000, nhập 6.000, giảm 1, nhập 3.000) trên sách tồn 0 → ba yêu cầu thành công theo thứ tự, yêu cầu nhập 6.000 thứ hai bị `STOCK_LIMIT`, tồn cuối 8.999, nhật ký nối tiếp khớp từng bước. Xóa sách đúng lúc có đơn mới: khóa ngoại `RESTRICT` của `orders_orderitem` chặn → `BOOK_HAS_ORDERS`.
+
+### Xóa sách
+
+Phải ẩn trước (chống bấm nhầm), và chỉ xóa được sách chưa bán. Khi xóa, sách trong **giỏ hàng** và **đánh giá** của khách bị xóa theo (khóa ngoại `CASCADE`; MySQL không kiểm tra quyền của definer trên bảng con khi cascade). Sách đã bán chỉ ẩn, nên lịch sử đơn hàng luôn còn nguyên.
+
+### Đọc và lọc
+
+Một view `v_staff_books`; "theo thể loại", "theo tác giả", "theo tên sách" là ba cách lọc bằng ORM, tham số luôn được truyền riêng:
+
+```python
+from catalog.book_services import list_books, get_book
+
+list_books(category_id=4)          # theo thể loại
+list_books(author="coelho")        # theo tác giả, không phân biệt hoa/thường và dấu
+list_books(title="giả kim")        # theo tên sách
+list_books(is_active=False)        # sách đang ẩn
+book = get_book(9)                 # cho form sửa; book.cover_url luôn có giá trị
+```
+
+Tên thể loại để hiển thị: ghép với `list_categories()`.
+
+### Ghi dữ liệu
+
+```python
+from catalog.book_services import (BookError, create_book, delete_book, reduce_book_stock,
+                                   restock_book, set_book_active, update_book)
+
+book_id = create_book(request.user, title=..., author=..., isbn=..., category_id=..., description=...,
+                      price=..., cost_price=..., stock=...)
+update_book(request.user, book_id, title=..., author=..., isbn=..., category_id=..., description=...,
+            price=..., cost_price=...)          # giữ nguyên ảnh bìa đang có
+set_book_active(request.user, book_id, False)
+new_stock = restock_book(request.user, book_id, 50)
+new_stock = reduce_book_stock(request.user, book_id, 2)
+delete_book(request.user, book_id)
+```
+
+Mọi lỗi nghiệp vụ là `BookError` với `code` và `message` tiếng Việt.
+
+### Ảnh bìa
+
+Cột `cover_image` đã có sẵn trong `01_tables.sql`, mỗi sách đúng một ảnh. Sách chưa có ảnh: CSDL để **NULL**, `cover_url` trả ảnh mặc định `settings.BOOK_DEFAULT_COVER` (`frontend/static/img/book-cover-default.webp`). Ảnh mặc định không bao giờ bị xóa khi xóa sách hay thay ảnh. Upload ảnh (kiểm tra ảnh thật bằng Pillow, lưu lại thành file mới, đặt tên UUID, thư mục `media/covers/`) làm ở nhánh sau.

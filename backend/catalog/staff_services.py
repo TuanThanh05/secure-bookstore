@@ -60,8 +60,8 @@ def make_slug(name):
     return slug
 
 
-# AI-TRACE#110 | Claude Opus 5.5 | Gọi một thủ tục thể loại qua kết nối staff, đổi lỗi SIGNAL thành CategoryError | CẤM XÓA CHÚ THÍCH NÀY
-def _call(procedure, params, out_index=None):
+# AI-TRACE#110 | Claude Opus 5.5 | Gọi một thủ tục qua kết nối staff, đổi lỗi SIGNAL thành exception nghiệp vụ tương ứng | CẤM XÓA CHÚ THÍCH NÀY
+def _call(procedure, params, out_index=None, messages=CATEGORY_ERROR_MESSAGES, error_class=CategoryError):
     connection = connections[STAFF_DB]
     if connection.in_atomic_block:
         raise RuntimeError(f"{procedure} không được gọi bên trong transaction.atomic")
@@ -76,8 +76,8 @@ def _call(procedure, params, out_index=None):
             return cursor.fetchone()[0]
     except OperationalError as exc:
         args = exc.args
-        if len(args) >= 2 and args[0] == SIGNAL_ERROR_CODE and args[1] in CATEGORY_ERROR_MESSAGES:
-            raise CategoryError(args[1]) from exc
+        if len(args) >= 2 and args[0] == SIGNAL_ERROR_CODE and args[1] in messages:
+            raise error_class(args[1]) from exc
         raise
 
 
