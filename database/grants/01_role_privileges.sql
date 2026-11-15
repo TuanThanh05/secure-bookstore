@@ -76,7 +76,7 @@ GRANT SELECT (id), UPDATE (first_name, last_name, phone_encrypted) ON accounts_u
 -- ---------------------------------------------------------------------
 GRANT SELECT, UPDATE ON orders_cart      TO 'bookstore_definer'@'localhost';
 GRANT SELECT, DELETE ON orders_cartitem  TO 'bookstore_definer'@'localhost';
-GRANT SELECT, UPDATE ON catalog_book     TO 'bookstore_definer'@'localhost';
+GRANT SELECT, UPDATE ON catalog_book     TO 'bookstore_definer'@'localhost';   -- thêm INSERT, DELETE ở phần sách bên dưới
 GRANT SELECT, INSERT ON orders_order     TO 'bookstore_definer'@'localhost';
 GRANT INSERT         ON orders_orderitem TO 'bookstore_definer'@'localhost';
 
@@ -104,3 +104,27 @@ GRANT EXECUTE ON PROCEDURE sp_category_list    TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_category_create  TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_category_rename  TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_category_delete  TO 'r_staff';
+
+-- ---------------------------------------------------------------------
+-- Sách (database/objects/41_book.sql)
+-- Definer: thêm/sửa/xóa catalog_book, đọc orders_orderitem để biết sách đã bán chưa.
+-- r_staff: chỉ đọc view một bảng v_staff_books và gọi sáu thủ tục.
+-- r_customer: không có gì ở đây (giá nhập, tồn kho chi tiết là của nhân viên).
+-- ---------------------------------------------------------------------
+GRANT INSERT, DELETE ON catalog_book     TO 'bookstore_definer'@'localhost';
+GRANT SELECT ON orders_orderitem         TO 'bookstore_definer'@'localhost';
+
+GRANT EXECUTE ON PROCEDURE sp_book_create       TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_book_update       TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_book_set_active   TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_book_restock      TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_book_reduce_stock TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_book_delete       TO 'bookstore_definer'@'localhost';
+
+GRANT SELECT ON v_staff_books                   TO 'r_staff';
+GRANT EXECUTE ON PROCEDURE sp_book_create       TO 'r_staff';
+GRANT EXECUTE ON PROCEDURE sp_book_update       TO 'r_staff';
+GRANT EXECUTE ON PROCEDURE sp_book_set_active   TO 'r_staff';
+GRANT EXECUTE ON PROCEDURE sp_book_restock      TO 'r_staff';
+GRANT EXECUTE ON PROCEDURE sp_book_reduce_stock TO 'r_staff';
+GRANT EXECUTE ON PROCEDURE sp_book_delete       TO 'r_staff';
