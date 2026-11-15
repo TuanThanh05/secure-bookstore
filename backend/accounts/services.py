@@ -1,4 +1,6 @@
+from django.conf import settings
 from django.contrib.auth.hashers import make_password
+from django.core.cache import cache
 from django.db import IntegrityError, transaction
 
 from core.security_log import log_event
@@ -60,3 +62,23 @@ def resend_verification(request, email):
     if user is None:
         return
     send_verification_email(request, user)
+
+
+def _password_change_key(user):
+    return f"accounts:password-change-failures:{user.pk}"
+
+
+# AI-TRACE#058 | Claude Opus 5.5 | Đếm số lần nhập sai mật khẩu hiện tại khi đổi mật khẩu, trả về tổng số lần | CẤM XÓA CHÚ THÍCH NÀY
+def record_password_change_failure(user):
+    key = _password_change_key(user)
+    cache.add(key, 0, timeout=settings.PASSWORD_CHANGE_FAILURE_WINDOW)
+    try:
+        return cache.incr(key)
+    except ValueError:
+        cache.set(key, 1, timeout=settings.PASSWORD_CHANGE_FAILURE_WINDOW)
+        return 1
+
+
+# AI-TRACE#059 | Claude Opus 5.5 | Xóa bộ đếm nhập sai sau khi đổi mật khẩu thành công | CẤM XÓA CHÚ THÍCH NÀY
+def clear_password_change_failures(user):
+    cache.delete(_password_change_key(user))

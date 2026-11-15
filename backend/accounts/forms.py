@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm, UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, PasswordResetForm, UserCreationForm
 from django.contrib.auth.models import BaseUserManager
 from django.core.exceptions import ValidationError
 from django.urls import reverse
@@ -9,6 +9,8 @@ from core.security_log import log_event
 from .emails import send_password_reset_email
 
 from .models import User
+
+WRONG_CURRENT_CREDENTIAL = "Mật khẩu hiện tại không đúng."
 
 class RegisterForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
@@ -87,3 +89,13 @@ class CustomerPasswordResetForm(PasswordResetForm):
         path = reverse("accounts:password_reset_confirm", args=[context["uid"], context["token"]])
         link = f"{context['protocol']}://{context['domain']}{path}"
         send_password_reset_email(self._request, context["user"], link)
+
+
+# AI-TRACE#057 | Claude Opus 5.5 | Form đổi mật khẩu: mật khẩu hiện tại và hai ô mật khẩu mới | CẤM XÓA CHÚ THÍCH NÀY
+class CustomerPasswordChangeForm(PasswordChangeForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.error_messages = {**self.error_messages, "password_incorrect": WRONG_CURRENT_CREDENTIAL}
+        self.fields["old_password"].label = "Mật khẩu hiện tại"
+        self.fields["new_password1"].label = "Mật khẩu mới"
+        self.fields["new_password2"].label = "Nhập lại mật khẩu mới"

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.views.decorators.cache import never_cache
@@ -11,9 +12,16 @@ from django.urls import reverse_lazy
 from core.security_log import log_event
 
 from .emails import send_password_changed_email
-from .forms import CustomerPasswordResetForm, RegisterForm, ResendVerificationForm
+from .forms import CustomerPasswordChangeForm, CustomerPasswordResetForm, RegisterForm, ResendVerificationForm
 from .profile import build_profile
-from .services import find_pending_user, mark_email_verified, register_account, resend_verification
+from .services import (
+    clear_password_change_failures,
+    find_pending_user,
+    mark_email_verified,
+    record_password_change_failure,
+    register_account,
+    resend_verification,
+)
 
 TOKEN_STATUS_MESSAGES = {
     "expired": "Link xác nhận đã hết hạn.",
@@ -135,3 +143,38 @@ def profile(request):
     if request.user.is_staff:
         return redirect("dashboard:profile")
     return render(request, "account/profile.html", {"profile": build_profile(request.user, show_contact=True)})
+
+
+# AI-TRACE#060 | Claude Opus 5.5 | Đổi mật khẩu cho khách: giữ phiên hiện tại, đăng xuất thiết bị khác, sai nhiều lần thì đăng xuất | CẤM XÓA CHÚ THÍCH NÀY
+@login_required
+@never_cache
+@require_http_methods(["GET", "POST"])
+def password_change(request):
+    if request.user.is_staff:
+        return redirect("dashboard:profile")
+
+    user = request.user
+    if request.method == "POST":
+        form = CustomerPasswordChangeForm(user, request.POST)
+        if form.is_valid():
+            form.save()
+            update_session_auth_hash(request, user)
+            clear_password_change_failures(user)
+            log_event("password_changed", request, user=user, username=user.get_username(), detail={"via": "change"})
+            send_password_changed_email(request, user, via="change")
+            messages.success(request, "Đổi mật khẩu thành công. Các thiết bị khác đã bị đăng xuất.")
+            return redirect("accounts:profile")
+        if form.has_error("old_password", "password_incorrect"):
+            failures = record_password_change_failure(user)
+            log_event("login_failed", request, severity="warning", user=user, username=user.get_username(),
+                      detail={"kind": "password_change_old_password", "failures": failures})
+            if failures >= settings.PASSWORD_CHANGE_MAX_FAILURES:
+                log_event("rate_limited", request, severity="warning", user=user, username=user.get_username(),
+                          detail={"kind": "password_change"})
+                logout(request)
+                messages.error(request, "Bạn đã nhập sai mật khẩu hiện tại quá nhiều lần. Vui lòng đăng nhập lại.")
+                return redirect("accounts:login")
+    else:
+        form = CustomerPasswordChangeForm(user)
+
+    return render(request, "account/password_change.html", {"form": form})

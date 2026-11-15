@@ -16,8 +16,7 @@
     <div class="area-info__row"><dt>Số điện thoại</dt><dd>{{ profile.phone|default:"Chưa cập nhật" }}</dd></div>
     <div class="area-info__row"><dt>Ngày tham gia</dt><dd>{{ profile.date_joined|date:"d/m/Y" }}</dd></div>
   </dl>
-  <section class="area-empty">
-    {% include "components/icon.html" with name="person" size="lg" %}
-    <p>Sửa thông tin và đổi mật khẩu sẽ có ở bước sau.</p>
-  </section>
+  <div class="area-actions">
+    <a class="btn btn--secondary" href="{% url 'accounts:password_change' %}">Đổi mật khẩu</a>
+  </div>
 {% endblock %}
