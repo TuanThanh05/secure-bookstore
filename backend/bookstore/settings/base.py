@@ -209,6 +209,8 @@ REVIEW_RATE_LIMIT = 5                               # mỗi khách gửi/sửa t
 REVIEW_RATE_WINDOW = 60 * 60
 CART_ADD_RATE_LIMIT = 20                            # mỗi khách thêm vào giỏ tối đa 20 lần trong CART_ADD_RATE_WINDOW
 CART_ADD_RATE_WINDOW = 60
+CART_UPDATE_RATE_LIMIT = 60                         # đổi số lượng / gỡ khỏi giỏ: tối đa 60 lần trong CART_UPDATE_RATE_WINDOW
+CART_UPDATE_RATE_WINDOW = 60
 
 LOG_DIR = REPO_DIR / "logs"
 LOG_DIR.mkdir(exist_ok=True)

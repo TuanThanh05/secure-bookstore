@@ -177,3 +177,14 @@ GRANT INSERT, UPDATE ON orders_cartitem              TO 'bookstore_definer'@'loc
 
 GRANT EXECUTE ON PROCEDURE sp_cart_add               TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_cart_add               TO 'r_customer';
+
+-- Trang giỏ hàng: đọc, đổi số lượng, gỡ (database/objects/31_cart.sql)
+-- bookstore_definer đã có SELECT, UPDATE trên orders_cart và SELECT, INSERT,
+-- UPDATE, DELETE trên orders_cartitem (ở trên), không cần cấp thêm quyền bảng.
+-- r_customer: chỉ gọi thủ tục.
+GRANT EXECUTE ON PROCEDURE sp_cart_list              TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_cart_set_quantity      TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_cart_remove            TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_cart_list              TO 'r_customer';
+GRANT EXECUTE ON PROCEDURE sp_cart_set_quantity      TO 'r_customer';
+GRANT EXECUTE ON PROCEDURE sp_cart_remove            TO 'r_customer';
