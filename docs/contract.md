@@ -54,6 +54,43 @@ Chốt 2026-11-15, thay cho `v_public_books` / `v_public_categories` trong issue
 - **Django:** `catalog/services.py` giữ nguyên `list_categories()` và `list_public_books(category_id=None, q="")`; gọi `callproc` với tham số truyền riêng; `catalog/views.py` và template không đổi.
 - **Kiểm thử:** `catalog/tests/test_public_catalog.py`, `catalog/tests/test_home.py`; `db_check_grants` có 4 dòng cho phần này. Đã chạy trên CSDL thật: sách ẩn và thể loại chỉ có sách ẩn không lộ, đánh giá ẩn không được tính, `' OR 1=1 -- `, `%' UNION SELECT password FROM accounts_user -- `, `%`, `_` đều trả 0 kết quả, không lỗi 500.
 
+## Đánh giá sách: `sp_review_save`, `sp_review_get_mine`
+
+Chốt 2026-11-15. File: `database/objects/21_review.sql`, `catalog/review_services.py`, `catalog/forms.py`. Phần này chỉ có thủ tục và service; nút gửi và form trên trang làm cùng trang chi tiết sách.
+
+- **Ai được đánh giá:** khách đang hoạt động, đã xác nhận email, không phải nhân viên (cách b). Khi có đơn hàng sẽ siết lại thành "chỉ khách đã mua sách đó" (cách a).
+- **Mỗi khách một đánh giá cho mỗi sách.** Gửi lại là **sửa** đánh giá cũ (`INSERT ... ON DUPLICATE KEY UPDATE`): bấm hai lần cùng lúc vẫn chỉ một dòng. Sửa không đổi `is_visible`: đánh giá admin đã ẩn thì vẫn ẩn.
+- **Hiện ngay** sau khi gửi; admin ẩn sau nếu vi phạm.
+- **Tên hiển thị** (dùng khi làm danh sách đánh giá): `mask_username()` giữ ký tự đầu và cuối, giữa là dấu sao, ví dụ `an_nguyen` → `a*******n`.
+
+| Thủ tục | Tham số | Trả về / lỗi |
+| --- | --- | --- |
+| `sp_review_save` | `p_user_id`, `p_book_id`, `p_rating` (1–5), `p_content` (1–2000 ký tự sau khi bỏ khoảng trắng), `OUT p_created` | `p_created` = 1 đánh giá mới, 0 là sửa. Lỗi: `INVALID_INPUT`, `NOT_CUSTOMER`, `BOOK_NOT_FOUND` (sách không có hoặc đang ẩn) |
+| `sp_review_get_mine` | `p_user_id`, `p_book_id` | 0 hoặc 1 dòng: `rating`, `content`, `is_visible`, `created_at`, `updated_at` |
+
+`r_customer` chỉ có `EXECUTE`; ghi thẳng `catalog_review` → 1142. `app_staff` gọi `sp_review_save` → 1370.
+
+**Django:**
+
+```python
+from catalog.review_services import ReviewError, get_my_review, save_review
+
+created = save_review(request, book_id, rating, content)   # user lấy từ request.user, không từ form
+mine = get_my_review(request.user, book_id)                 # MyReview hoặc None
+```
+
+| Lớp bảo vệ | Cách làm |
+| --- | --- |
+| Giả mạo người gửi | `user_id` lấy từ `request.user` ở server; `ReviewForm` chỉ có `rating`, `content` (id sách nằm trên URL); thủ tục kiểm tra lại người đó là khách hợp lệ |
+| Đầu vào | Điểm là số nguyên 1–5 (form `TypedChoiceField`, service, thủ tục, CHECK); id sách sai kiểu → `BOOK_NOT_FOUND` không xuống CSDL |
+| XSS | Nội dung giữ nguyên chữ người gõ, chỉ hiển thị qua auto-escape, không `|safe` |
+| Ký tự lạ | Bỏ ký tự điều khiển, ký tự rộng 0 và ký tự đảo chiều văn bản (U+202E...) dùng để giả mạo hiển thị; gộp quá 2 dòng trống |
+| Spam | Tối đa `REVIEW_RATE_LIMIT` = 5 lần gửi/sửa mỗi `REVIEW_RATE_WINDOW` = 1 giờ cho mỗi khách; vượt → `RATE_LIMITED`, ghi log `rate_limited` |
+| Race condition | UNIQUE + `ON DUPLICATE KEY UPDATE`; khóa chia sẻ dòng sách trong lúc ghi |
+| CSRF, chỉ POST, bắt buộc đăng nhập | Áp dụng ở view khi làm trang chi tiết sách |
+
+Đã chạy trên CSDL thật: gửi mới, sửa, điểm 6, nội dung rỗng, admin gửi, sách không có, sách ẩn, `app_customer` INSERT/UPDATE/DELETE thẳng (1142), giả `user_id` của admin khi gọi thủ tục (`NOT_CUSTOMER`), hai lần bấm cùng lúc (1 dòng), lần thứ 6 trong giờ (`RATE_LIMITED`), sửa đánh giá đã bị ẩn (vẫn ẩn). Test: `catalog/tests/test_reviews.py`.
+
 ## Đặt đơn: `sp_place_order` và `orders.services.place_order`
 
 Chốt 2026-11-14. Đổi chữ ký thủ tục hoặc hàm thì sửa mục này trong cùng PR.

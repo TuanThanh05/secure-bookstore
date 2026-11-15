@@ -118,7 +118,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 113 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `rename_category` | 111 | Sửa tên thể loại bằng sp_category_rename, slug đổi theo tên | [ ] |
 | 114 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `delete_category` | 117 | Xóa thể loại bằng sp_category_delete | [ ] |
 | 115 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `_category_id` | 84 | Đổi id thể loại nhận từ request thành số nguyên, sai kiểu thì coi như không tìm thấy | [ ] |
-| 116 | Claude Opus 5.5 |  | `backend/core/management/commands/db_check_grants.py` | `Command` | 34 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi | [ ] |
+| 116 | Claude Opus 5.5 |  | `backend/core/management/commands/db_check_grants.py` | `Command` | 38 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi | [ ] |
 | 117 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `SlugAndNameTests` | 22 | Test tạo slug và chuẩn hóa tên thể loại tiếng Việt | [ ] |
 | 118 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `CategoryProcedureTests` | 48 | Test gọi thủ tục thể loại bằng cursor giả qua kết nối staff, đổi lỗi SIGNAL | [ ] |
 | 119 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `CategoryListTests` | 101 | Test đọc danh sách thể loại qua sp_category_list và lệnh kiểm tra quyền từ chối settings.migrate | [ ] |
@@ -200,3 +200,16 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 195 | Claude Opus 5.5 |  | `backend/catalog/services.py` | `list_public_books` | 57 | Sách đang bán cho khách, lọc thể loại và từ khóa, gọi sp_public_book_list với tham số truyền riêng | [ ] |
 | 196 | Claude Opus 5.5 |  | `backend/catalog/tests/test_home.py` | `HomePageTests` | 15 | Test trang chủ: hiển thị sách thật qua service, lọc thể loại, tìm kiếm, đầu vào độc hại, không script inline | [ ] |
 | 197 | Claude Opus 5.5 |  | `backend/catalog/tests/test_public_catalog.py` | `PublicCatalogServiceTests` | 14 | Test service danh mục cho khách: gọi đúng thủ tục bằng kết nối app_customer, tham số truyền riêng, đổi dòng thành BookCard | [ ] |
+| 198 | Claude Opus 5.5 |  | `database/objects/21_review.sql` | `PROCEDURE sp_review_save` | 39 | Thủ tục gửi hoặc sửa đánh giá: kiểm tra khách hợp lệ, sách đang hiện, điểm và nội dung, không tạo trùng | [ ] |
+| 199 | Claude Opus 5.5 |  | `database/objects/21_review.sql` | `PROCEDURE sp_review_get_mine` | 103 | Thủ tục trả đánh giá của chính khách cho một sách để điền sẵn form sửa | [ ] |
+| 200 | Claude Opus 5.5 |  | `backend/catalog/review_services.py` | `ReviewError` | 23 | Lỗi nghiệp vụ khi gửi đánh giá, mang mã lỗi và câu tiếng Việt | [ ] |
+| 201 | Claude Opus 5.5 |  | `backend/catalog/review_services.py` | `MyReview` | 31 | Đánh giá của chính khách cho một sách, dùng để điền sẵn form sửa | [ ] |
+| 202 | Claude Opus 5.5 |  | `backend/catalog/review_services.py` | `clean_content` | 41 | Chuẩn hóa nội dung đánh giá: thống nhất xuống dòng, bỏ ký tự điều khiển và ký tự đảo chiều văn bản, kiểm tra độ dài | [ ] |
+| 203 | Claude Opus 5.5 |  | `backend/catalog/review_services.py` | `_int_in_range` | 51 | Đổi điểm và id sách nhận từ request thành số nguyên trong khoảng cho phép | [ ] |
+| 204 | Claude Opus 5.5 |  | `backend/catalog/review_services.py` | `mask_username` | 64 | Che username khi hiển thị đánh giá: giữ ký tự đầu và cuối, giữa là dấu sao | [ ] |
+| 205 | Claude Opus 5.5 |  | `backend/catalog/review_services.py` | `_allow_review` | 74 | Giới hạn mỗi khách gửi/sửa tối đa REVIEW_RATE_LIMIT đánh giá trong REVIEW_RATE_WINDOW giây | [ ] |
+| 206 | Claude Opus 5.5 |  | `backend/catalog/review_services.py` | `save_review` | 88 | Gửi hoặc sửa đánh giá bằng sp_review_save; user lấy từ phiên đăng nhập, có giới hạn tần suất; trả True nếu là đánh giá mới | [ ] |
+| 207 | Claude Opus 5.5 |  | `backend/catalog/review_services.py` | `get_my_review` | 117 | Lấy đánh giá của chính khách cho một sách bằng sp_review_get_mine, chưa có thì trả None | [ ] |
+| 208 | Claude Opus 5.5 |  | `backend/catalog/forms.py` | `ReviewForm` | 9 | Form đánh giá sách: chọn 1–5 sao và nội dung tối đa 2000 ký tự; không có ô user hay sách | [ ] |
+| 209 | Claude Opus 5.5 |  | `backend/catalog/tests/test_reviews.py` | `ReviewInputTests` | 29 | Test chuẩn hóa nội dung đánh giá, che username và form đánh giá | [ ] |
+| 210 | Claude Opus 5.5 |  | `backend/catalog/tests/test_reviews.py` | `SaveReviewTests` | 62 | Test gửi đánh giá bằng cursor giả: user lấy từ phiên, chặn nhân viên, giới hạn tần suất, đổi lỗi SIGNAL | [ ] |
