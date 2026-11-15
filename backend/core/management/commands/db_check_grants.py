@@ -28,6 +28,8 @@ CHECKS = (
     ("default", "app_customer gọi sp_review_get_mine", "CALL sp_review_get_mine(1, 1)", ALLOWED),
     ("default", "app_customer INSERT thẳng catalog_review", "INSERT INTO catalog_review (user_id, book_id, rating, content) SELECT 1, 1, 5, 'x' FROM DUAL WHERE 1 = 0", 1142),
     ("staff", "app_staff gọi sp_review_save", "CALL sp_review_save(0, 0, 0, '', @o)", 1370),
+    ("default", "app_customer gọi sp_public_book_get", "CALL sp_public_book_get(1)", ALLOWED),
+    ("default", "app_customer gọi sp_review_list", "CALL sp_review_list(1)", ALLOWED),
     ("default", "app_customer đọc accounts_passwordhistory", "SELECT id FROM accounts_passwordhistory LIMIT 1", ALLOWED),
     ("default", "app_customer DELETE accounts_passwordhistory", "DELETE FROM accounts_passwordhistory WHERE 1 = 0", 1142),
     ("staff", "app_staff đổi email trong accounts_user", "UPDATE accounts_user SET email = email WHERE 1 = 0", 1143),

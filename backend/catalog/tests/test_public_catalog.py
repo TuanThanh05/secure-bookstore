@@ -5,7 +5,7 @@ from unittest import mock
 from django.test import SimpleTestCase, override_settings
 
 from catalog import services
-from catalog.services import BookCard, list_categories, list_public_books
+from catalog.services import BookCard, get_public_book, list_categories, list_public_books
 
 ROW = (7, "Nhà Giả Kim", "Paulo Coelho", "9780306406157", 4, "Hành trình", 79000, None,
        datetime(2026, 11, 15, 9, 0), 1, Decimal("4.5"), 2)
@@ -69,3 +69,24 @@ class PublicCatalogServiceTests(SimpleTestCase):
         self.assertTrue(list_public_books()[0].cover_url.endswith("img/book-cover-default.webp"))
         self.cursor.fetchall.return_value = [ROW[:7] + ("covers/" + "c" * 32 + ".webp",) + ROW[8:]]
         self.assertEqual(list_public_books()[0].cover_url, "/media/covers/" + "c" * 32 + ".webp")
+
+
+# AI-TRACE#224 | Claude Opus 5.5 | Test lấy một sách cho trang chi tiết: id sai không xuống CSDL, sách ẩn trả None, có tên thể loại | CẤM XÓA CHÚ THÍCH NÀY
+class PublicBookDetailServiceTests(SimpleTestCase):
+    setUp = PublicCatalogServiceTests.setUp
+
+    def test_get_book_returns_card_with_category_name(self):
+        self.cursor.fetchall.return_value = [ROW + ("Văn học",)]
+        book = get_public_book("7")
+        self.cursor.callproc.assert_called_once_with("sp_public_book_get", [7])
+        self.assertEqual((book.id, book.category_name), (7, "Văn học"))
+
+    def test_hidden_or_missing_book_is_none(self):
+        self.cursor.fetchall.return_value = []
+        self.assertIsNone(get_public_book(7))
+
+    def test_bad_id_never_reaches_database(self):
+        for bad in ("abc", "7 OR 1=1", 0, -1, None):
+            with self.subTest(bad=bad):
+                self.assertIsNone(get_public_book(bad))
+        self.cursor.callproc.assert_not_called()

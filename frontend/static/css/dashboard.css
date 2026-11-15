@@ -132,6 +132,43 @@
 .dash-cover-edit .dash-cover { width: 120px; height: 180px; flex: none; }
 .dash-cover-edit__fields { display: grid; gap: var(--space-md); flex: 1; }
 
+/* AI-TRACE#225 | Claude Opus 5.5 | Kiểu ô chọn ảnh bìa dạng vùng viền đứt có nút viên thuốc và khung xem ảnh bìa hiện tại | CẤM XÓA CHÚ THÍCH NÀY */
+.dash-field input[type="file"] {
+  min-height: 0; padding: var(--space-md);
+  border: 1.5px dashed var(--color-border); border-radius: var(--radius-md);
+  background: var(--color-surface-low); color: var(--color-muted); font-size: 14px;
+  cursor: pointer; transition: border-color 0.2s, background-color 0.2s;
+}
+.dash-field input[type="file"]:hover { border-color: var(--color-primary); background: var(--color-primary-soft); }
+.dash-field input[type="file"]:focus-visible { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-ring); }
+.dash-field.has-error input[type="file"] { border-color: var(--color-error); }
+.dash-field input[type="file"]::file-selector-button {
+  margin-right: var(--space-md); padding: 0.55rem 1.2rem;
+  border: 1px solid var(--color-primary); border-radius: var(--radius-full);
+  background: var(--color-primary); color: var(--color-on-primary);
+  font: inherit; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  cursor: pointer; transition: background-color 0.2s;
+}
+.dash-field input[type="file"]::file-selector-button:hover { background: var(--color-primary-strong); border-color: var(--color-primary-strong); }
+.dash-field__check input[type="checkbox"] { width: 18px; height: 18px; margin: 0; accent-color: var(--color-primary); cursor: pointer; }
+
+.dash-cover-edit {
+  align-items: center; padding: var(--space-md);
+  background: var(--color-surface-low); border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+}
+.dash-cover-edit .dash-cover {
+  border: 0; border-radius: var(--radius); background: var(--color-surface);
+  box-shadow: 0 12px 24px -10px rgba(28, 25, 23, 0.35), 0 2px 6px rgba(28, 25, 23, 0.08);
+}
+.dash-cover-edit .dash-field input[type="file"] { background: var(--color-surface); }
+.dash-cover-edit .dash-field input[type="file"]:hover { background: var(--color-primary-soft); }
+.dash-cover--sm { box-shadow: 0 2px 6px rgba(28, 25, 23, 0.12); }
+
+@media (max-width: 600px) {
+  .dash-cover-edit { flex-direction: column; align-items: stretch; }
+  .dash-cover-edit .dash-cover { align-self: center; }
+}
+
 .dash-panel { display: grid; gap: var(--space-md); align-content: start; padding: var(--space-lg); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); }
 .dash-panel + .dash-table-wrap { margin-top: var(--space-lg); }
 .dash-panel__title { margin: 0; font-size: 20px; }

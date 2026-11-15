@@ -38,6 +38,20 @@ class MyReview:
     updated_at: datetime | None = None
 
 
+# AI-TRACE#215 | Claude Opus 5.5 | Một đánh giá hiển thị công khai: tên đã che, số sao, nội dung, thời gian, cờ đã sửa | CẤM XÓA CHÚ THÍCH NÀY
+@dataclass(frozen=True)
+class PublicReview:
+    display_name: str
+    rating: int
+    content: str
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+    @property
+    def edited(self):
+        return bool(self.created_at and self.updated_at and self.updated_at > self.created_at)
+
+
 # AI-TRACE#202 | Claude Opus 5.5 | Chuẩn hóa nội dung đánh giá: thống nhất xuống dòng, bỏ ký tự điều khiển và ký tự đảo chiều văn bản, kiểm tra độ dài | CẤM XÓA CHÚ THÍCH NÀY
 def clean_content(value):
     text = str(value or "").replace("\r\n", "\n").replace("\r", "\n")
@@ -130,3 +144,17 @@ def get_my_review(user, book_id):
     if row is None:
         return None
     return MyReview(rating=int(row[0]), content=row[1], is_visible=bool(row[2]), created_at=row[3], updated_at=row[4])
+
+
+# AI-TRACE#216 | Claude Opus 5.5 | Danh sách đánh giá đang hiện của một sách bằng sp_review_list, tên đã được che trong CSDL | CẤM XÓA CHÚ THÍCH NÀY
+def list_reviews(book_id):
+    try:
+        book_pk = _int_in_range(book_id, 1, 2**63 - 1, "BOOK_NOT_FOUND")
+    except ReviewError:
+        return []
+    with connection.cursor() as cursor:
+        cursor.callproc("sp_review_list", [book_pk])
+        rows = cursor.fetchall()
+        while cursor.nextset():
+            pass
+    return [PublicReview(display_name=r[0], rating=int(r[1]), content=r[2], created_at=r[3], updated_at=r[4]) for r in rows]

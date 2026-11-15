@@ -3,6 +3,7 @@
 --
 --   sp_public_category_list   thể loại để hiện bộ lọc: id, name, slug
 --   sp_public_book_list       sách đang bán, lọc theo thể loại và từ khóa
+--   sp_public_book_get        một cuốn sách đang bán (trang chi tiết), kèm tên thể loại
 --
 -- Ban đầu (issue #9) định làm view v_public_books / v_public_categories.
 -- Đổi sang THỦ TỤC ĐỌC vì MySQL 8.0/8.4 từ chối view SQL SECURITY DEFINER có
@@ -34,6 +35,7 @@ DROP VIEW IF EXISTS v_public_books;
 DROP VIEW IF EXISTS v_public_categories;
 DROP PROCEDURE IF EXISTS sp_public_category_list;
 DROP PROCEDURE IF EXISTS sp_public_book_list;
+DROP PROCEDURE IF EXISTS sp_public_book_get;
 
 DELIMITER $$
 
@@ -96,6 +98,40 @@ BEGIN
      GROUP BY b.id
      ORDER BY b.created_at DESC, b.id DESC
      LIMIT 200;
+END$$
+
+-- AI-TRACE#211 | Claude Opus 5.5 | Thủ tục trả một sách đang bán cho trang chi tiết, kèm tên thể loại và điểm đánh giá; sách ẩn trả rỗng | CẤM XÓA CHÚ THÍCH NÀY
+CREATE DEFINER = 'bookstore_definer'@'localhost' PROCEDURE sp_public_book_get(
+    IN p_book_id  BIGINT
+)
+SQL SECURITY DEFINER
+READS SQL DATA
+BEGIN
+    IF p_book_id IS NULL OR p_book_id <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'INVALID_INPUT';
+    END IF;
+
+    -- Cùng bộ cột với sp_public_book_list, thêm category_name ở cuối.
+    -- Sách ẩn hoặc không tồn tại: 0 dòng như nhau, không phân biệt được.
+    SELECT b.id,
+           b.title,
+           b.author,
+           b.isbn,
+           b.category_id,
+           b.description,
+           b.price,
+           b.cover_image,
+           b.created_at,
+           (b.stock > 0)            AS in_stock,
+           ROUND(AVG(r.rating), 1)  AS rating,
+           COUNT(r.id)              AS review_count,
+           c.name                   AS category_name
+      FROM catalog_book b
+      JOIN catalog_category c ON c.id = b.category_id
+      LEFT JOIN catalog_review r
+             ON r.book_id = b.id AND r.is_visible = 1
+     WHERE b.id = p_book_id AND b.is_active = 1
+     GROUP BY b.id, c.name;
 END$$
 
 DELIMITER ;

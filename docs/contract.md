@@ -12,6 +12,8 @@ Quy ước:
 | --- | --- | --- | --- | --- | --- |
 | `catalog:home` | `/` | `shop/home.html` | Mọi người | `categories` (list: `id`, `name`), `books` (list sách, mỗi cuốn có các trường ở mục *BookCard* bên dưới), `current_category` (int hoặc `None`), `q` (chuỗi đã làm sạch), `cart_add_url` (`None` cho tới khi app orders có URL thêm vào giỏ) | – (chỉ GET: `?q=` tối đa 100 ký tự, `?category=` số nguyên dương) |
 | `catalog:about` | `/gioi-thieu/` | `shop/about.html` | Mọi người | – | – |
+| `catalog:book_detail` | `/sach/<id>/` | `shop/book_detail.html` | Mọi người (sách ẩn/không có → 404) | `book` (BookCard + `isbn`, `description`, `category_name`), `reviews` (list `PublicReview`), `form` (`ReviewForm` hoặc `None`), `my_review` (`MyReview` hoặc `None`), `can_review`, `open_form`, `login_url` | – (chỉ GET) |
+| `catalog:review_submit` | `/sach/<id>/danh-gia/` | – (redirect về `book_detail#danh-gia`; lỗi → hiện lại `book_detail` mã 400) | Khách đã đăng nhập (ẩn danh → đăng nhập rồi quay lại trang sách; nhân viên bị từ chối) | – | `rating` (1–5), `content` (chỉ POST + CSRF) |
 | `accounts:register` | `/account/register/` | `account/register.html` | Chưa đăng nhập | `form` | `username`, `email`, `password1`, `password2` |
 | `accounts:login` | `/account/login/` | `account/login.html` | Chưa đăng nhập | `form`, `next` | `username`, `password`, `next` |
 | `accounts:logout` | `/account/logout/` | – (redirect) | Đã đăng nhập | – | (chỉ POST + CSRF) |
@@ -90,6 +92,28 @@ mine = get_my_review(request.user, book_id)                 # MyReview hoặc No
 | CSRF, chỉ POST, bắt buộc đăng nhập | Áp dụng ở view khi làm trang chi tiết sách |
 
 Đã chạy trên CSDL thật: gửi mới, sửa, điểm 6, nội dung rỗng, admin gửi, sách không có, sách ẩn, `app_customer` INSERT/UPDATE/DELETE thẳng (1142), giả `user_id` của admin khi gọi thủ tục (`NOT_CUSTOMER`), hai lần bấm cùng lúc (1 dòng), lần thứ 6 trong giờ (`RATE_LIMITED`), sửa đánh giá đã bị ẩn (vẫn ẩn). Test: `catalog/tests/test_reviews.py`.
+
+## Trang chi tiết sách: `sp_public_book_get`, `sp_review_list`
+
+Chốt 2026-11-15. Bố cục: ảnh bìa lớn bên trái; bên phải thể loại, tên, tác giả, sao, giá, bảng thông tin (tác giả, thể loại, ISBN, tình trạng), giới thiệu; nút **Đặt hàng** hiện nhưng bị làm mờ ("sắp có"); bên dưới là danh sách đánh giá và nút **Đánh giá** mở form bằng thẻ `<details>` (không cần JS, CSP giữ chặt). Ảnh bìa và tên sách trên trang chủ dẫn tới trang này.
+
+| Thủ tục | Tham số | Trả về |
+| --- | --- | --- |
+| `sp_public_book_get` (`objects/20_...`) | `p_book_id` | 0 hoặc 1 dòng: cùng cột với `sp_public_book_list` + `category_name`. Sách ẩn hoặc không có → 0 dòng như nhau |
+| `sp_review_list` (`objects/21_...`) | `p_book_id` | Tối đa 50 đánh giá `is_visible = 1` của sách đang hiện, mới nhất trước: `display_name` (**username đã che ngay trong CSDL**: ký tự đầu + dấu sao + ký tự cuối), `rating`, `content`, `created_at`, `updated_at`. Không trả `user_id`, email |
+
+`r_customer` chỉ có `EXECUTE`. Django: `catalog.services.get_public_book(id)` (id sai kiểu → `None`, không xuống CSDL), `catalog.review_services.list_reviews(id)` trả `PublicReview` (thuộc tính `edited` khi `updated_at > created_at`, hiện chữ "đã sửa").
+
+Form đánh giá theo người xem:
+
+| Người xem | Hiển thị |
+| --- | --- |
+| Chưa đăng nhập | Nút "Đăng nhập để đánh giá" → `login?next=/sach/<id>/`; POST thẳng cũng bị chuyển về đăng nhập |
+| Nhân viên | Không có form; POST bị từ chối |
+| Khách chưa đánh giá | Nút "Đánh giá" |
+| Khách đã đánh giá | Nút "Sửa đánh giá", form điền sẵn; nếu đánh giá bị ẩn thì báo "đang bị quản trị viên ẩn" |
+
+Bảo mật đã kiểm tra (test `catalog/tests/test_book_detail.py` + chạy thật trong sandbox): sách ẩn → 404 cả trang lẫn POST; `user_id` gửi kèm form bị bỏ qua; thiếu CSRF → 403; GET `/danh-gia/` → 405; nội dung `<script>` hiện ra như chữ (`linebreaksbr` escape trước rồi mới thêm `<br>`); tên thật không có trong HTML; lỗi form hiện lại trang với mã 400 và form đang mở.
 
 ## Đặt đơn: `sp_place_order` và `orders.services.place_order`
 
