@@ -1,0 +1,35 @@
+{% extends "layouts/admin.html" %}
+{% load static %}
+{% block title %}Cập nhật thông tin{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
+{% block content %}
+  {# AI-TRACE#097 | Claude Opus 5.5 | Form sửa họ, tên, SĐT của nhân viên; không hiện email và SĐT hiện tại | CẤM XÓA CHÚ THÍCH NÀY #}
+  <header class="dash-header">
+    <h1 class="dash-header__title">Cập nhật thông tin</h1>
+    <p class="dash-header__desc">Bạn được sửa họ, tên và số điện thoại. Số điện thoại được mã hóa trước khi lưu.</p>
+  </header>
+
+  <dl class="dash-info">
+    <div class="dash-info__row"><dt>Tên đăng nhập</dt><dd>{{ user.get_username }}</dd></div>
+  </dl>
+
+  <form method="post" class="dash-form" novalidate>
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="reauth__field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<p class="dash-form__help">{{ field.help_text }}</p>{% endif %}
+        {% if field.errors %}
+          <ul class="reauth__errors" id="{{ field.auto_id }}_error">
+            {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+    {% endfor %}
+    <div class="dash-actions">
+      <button type="submit" class="btn">Lưu thay đổi</button>
+      <a class="btn btn--secondary" href="{% url 'dashboard:profile' %}">Hủy</a>
+    </div>
+  </form>
+{% endblock %}

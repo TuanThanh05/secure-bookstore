@@ -113,3 +113,20 @@ python manage.py doi_mat_khau_admin <tên đăng nhập> --settings=bookstore.se
 - **Email gốc phải là email thật**: kiểm tra email của tài khoản admin sau `createsuperuser`.
 - Trang thông tin quản trị ghi "Không thể đổi mật khẩu". Đây chỉ là lớp gây nhiễu, **không tính là biện pháp bảo mật**; biện pháp thật là không có đường đổi trên web.
 - **Kiểm thử:** `accounts/tests/test_admin_password_command.py` (9 test).
+
+## 10. Cập nhật thông tin của quản trị viên (họ, tên, SĐT)
+
+- **Luồng:** trang Thông tin tài khoản → nút "Cập nhật thông tin" (`/dashboard/thong-tin/cap-nhat/`) → xác thực lại loại của admin (`dashboard:reauth`, 2 phút) → sửa → lưu. Cả GET lẫn POST đều cần xác thực lại còn hạn.
+- **Chỉ sửa họ, tên, SĐT**, giống khách (`dashboard/forms.StaffProfileUpdateForm` kế thừa form của khách, cùng quy tắc kiểm tra). Gửi thêm `email`, `username`, `is_superuser` trong request đều bị bỏ qua.
+- **Không bao giờ hiện SĐT hiện tại:** ô SĐT luôn trống, để trống nghĩa là giữ số cũ. Trang sửa cũng không hiện email. Khớp với việc email/SĐT của admin luôn bị ẩn và chỉ hiện qua trang xem có ghi log `sensitive_data_viewed`.
+- **Ghi bằng kết nối `staff` (`app_staff`), không phải `default`:** trigger `trg_user_guard_update` chặn `app_customer` sửa dòng nhân viên. Hai lớp ở CSDL:
+
+  | Lớp | Cách làm | Chặn được |
+  | --- | --- | --- |
+  | Quyền theo cột (`grants/01_...`) | `GRANT SELECT (id), UPDATE (first_name, last_name, phone_encrypted) ON accounts_user TO r_staff` | `app_staff` đổi mật khẩu, email, `is_staff`, `is_superuser`, hay đọc email: MySQL từ chối, lỗi 1143 |
+  | Trigger (`objects/10_...`) | `app_staff` sửa dòng có `is_staff = 0` → `SIGNAL` | `app_staff` sửa tên/SĐT của khách: lỗi 1644 |
+
+  Django lưu bằng `save(using="staff", update_fields=[...])` nên câu UPDATE chỉ chứa đúng các cột đã đổi.
+- **Đánh đổi đã biết:** ở lớp CSDL, `app_staff` vẫn sửa được tên/SĐT của admin khác (MySQL không biết admin nào đang dùng web). Lớp Django chặn việc này: view chỉ sửa `request.user`, không nhận id từ request.
+- **Log** `profile_updated` chỉ ghi tên cột, không ghi giá trị. Không đổi gì thì không ghi.
+- **Kiểm thử:** `dashboard/tests/test_profile_update.py` (10 test). Trong test, kết nối `staff` là kết nối riêng nên sẽ chờ khóa của transaction test; test kiểm tra code gọi `using="staff"` rồi cho ghi qua `default`. Quyền theo cột và trigger được kiểm tra trên CSDL thật (bảng trên).

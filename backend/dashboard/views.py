@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -9,7 +10,8 @@ from core.decorators import mark_recent_auth, recent_auth_required, staff_requir
 from accounts.profile import build_profile
 from core.security_log import log_event
 
-from .forms import ReauthForm
+from .forms import ReauthForm, StaffProfileUpdateForm
+from .services import update_staff_profile
 
 
 @staff_required
@@ -64,6 +66,24 @@ def profile_contact(request):
         "reauth_minutes": settings.REAUTH_MAX_AGE // 60,
     }
     return render(request, "dashboard/profile.html", context)
+
+
+# AI-TRACE#096 | Claude Opus 5.5 | Nhân viên sửa họ, tên, SĐT của chính mình sau khi xác thực lại, không hiện SĐT cũ | CẤM XÓA CHÚ THÍCH NÀY
+@staff_required
+@recent_auth_required
+@never_cache
+@require_http_methods(["GET", "POST"])
+def profile_update(request):
+    user = request.user
+    if request.method == "POST":
+        form = StaffProfileUpdateForm(request.POST)
+        if form.is_valid():
+            changed = update_staff_profile(request, user, form.cleaned_data)
+            messages.success(request, "Đã cập nhật thông tin." if changed else "Không có thay đổi nào.")
+            return redirect("dashboard:profile")
+    else:
+        form = StaffProfileUpdateForm(initial={"last_name": user.last_name, "first_name": user.first_name})
+    return render(request, "dashboard/profile_update.html", {"form": form})
 
 
 def _safe_next(request, value):
