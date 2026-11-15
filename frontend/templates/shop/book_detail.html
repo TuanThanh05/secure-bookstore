@@ -45,10 +45,23 @@
       {% endif %}
 
       <div class="book-detail__actions">
+        {# AI-TRACE#234 | Claude Opus 5.5 | Form thêm vào giỏ cạnh nút đặt hàng: ô số lượng 1–5, khóa khi hết hàng | CẤM XÓA CHÚ THÍCH NÀY #}
+        {% if book.in_stock and not user.is_staff %}
+          <form class="cart-add" method="post" action="{{ cart_add_url }}">
+            {% csrf_token %}
+            <input type="hidden" name="book_id" value="{{ book.id }}">
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <label class="visually-hidden" for="so-luong">Số lượng</label>
+            <input class="cart-add__qty" id="so-luong" type="number" name="quantity" value="1" min="1" max="{{ cart_max }}" required>
+            <button class="btn btn--secondary" type="submit">Thêm vào giỏ</button>
+          </form>
+        {% else %}
+          <button class="btn btn--secondary" type="button" disabled>{% if book.in_stock %}Thêm vào giỏ{% else %}Hết hàng{% endif %}</button>
+        {% endif %}
         <button class="btn book-detail__order" type="button" disabled aria-describedby="order-note">
           {% include "components/icon.html" with name="shopping-bag" size="sm" %}<span>Đặt hàng</span>
         </button>
-        <p class="book-detail__note" id="order-note">Chức năng đặt hàng sắp có.</p>
+        <p class="book-detail__note" id="order-note">Mỗi sách tối đa {{ cart_max }} cuốn trong giỏ. Chức năng đặt hàng sắp có.</p>
       </div>
     </div>
   </article>

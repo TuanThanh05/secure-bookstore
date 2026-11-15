@@ -118,7 +118,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 113 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `rename_category` | 111 | Sửa tên thể loại bằng sp_category_rename, slug đổi theo tên | [ ] |
 | 114 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `delete_category` | 117 | Xóa thể loại bằng sp_category_delete | [ ] |
 | 115 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `_category_id` | 84 | Đổi id thể loại nhận từ request thành số nguyên, sai kiểu thì coi như không tìm thấy | [ ] |
-| 116 | Claude Opus 5.5 |  | `backend/core/management/commands/db_check_grants.py` | `Command` | 40 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi | [ ] |
+| 116 | Claude Opus 5.5 |  | `backend/core/management/commands/db_check_grants.py` | `Command` | 44 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi | [ ] |
 | 117 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `SlugAndNameTests` | 22 | Test tạo slug và chuẩn hóa tên thể loại tiếng Việt | [ ] |
 | 118 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `CategoryProcedureTests` | 48 | Test gọi thủ tục thể loại bằng cursor giả qua kết nối staff, đổi lỗi SIGNAL | [ ] |
 | 119 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `CategoryListTests` | 101 | Test đọc danh sách thể loại qua sp_category_list và lệnh kiểm tra quyền từ chối settings.migrate | [ ] |
@@ -219,11 +219,24 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 214 | Claude Opus 5.5 |  | `backend/catalog/services.py` | `get_public_book` | 75 | Một sách đang bán cho trang chi tiết bằng sp_public_book_get; id sai hoặc sách ẩn trả None | [ ] |
 | 215 | Claude Opus 5.5 |  | `backend/catalog/review_services.py` | `PublicReview` | 41 | Một đánh giá hiển thị công khai: tên đã che, số sao, nội dung, thời gian, cờ đã sửa | [ ] |
 | 216 | Claude Opus 5.5 |  | `backend/catalog/review_services.py` | `list_reviews` | 149 | Danh sách đánh giá đang hiện của một sách bằng sp_review_list, tên đã được che trong CSDL | [ ] |
-| 217 | Claude Opus 5.5 |  | `backend/catalog/views.py` | `_render_detail` | 38 | Dựng trang chi tiết sách: thông tin sách, danh sách đánh giá, form đánh giá theo từng loại người xem | [ ] |
-| 218 | Claude Opus 5.5 |  | `backend/catalog/views.py` | `book_detail` | 57 | Trang chi tiết sách cho mọi người xem; sách ẩn hoặc không tồn tại trả 404 | [ ] |
-| 219 | Claude Opus 5.5 |  | `backend/catalog/views.py` | `review_submit` | 66 | Nhận form gửi/sửa đánh giá (chỉ POST, CSRF, khách đã đăng nhập); lỗi thì hiện lại form, thành công thì quay về trang sách | [ ] |
+| 217 | Claude Opus 5.5 |  | `backend/catalog/views.py` | `_render_detail` | 40 | Dựng trang chi tiết sách: thông tin sách, danh sách đánh giá, form đánh giá theo từng loại người xem | [ ] |
+| 218 | Claude Opus 5.5 |  | `backend/catalog/views.py` | `book_detail` | 61 | Trang chi tiết sách cho mọi người xem; sách ẩn hoặc không tồn tại trả 404 | [ ] |
+| 219 | Claude Opus 5.5 |  | `backend/catalog/views.py` | `review_submit` | 70 | Nhận form gửi/sửa đánh giá (chỉ POST, CSRF, khách đã đăng nhập); lỗi thì hiện lại form, thành công thì quay về trang sách | [ ] |
 | 220 | Claude Opus 5.5 |  | `frontend/templates/shop/book_detail.html` | `<a class="detail-back" href="{% url 'catalog:home' %}">{% in` | 7 | Trang chi tiết sách: ảnh bìa lớn bên trái, thông tin theo hàng bên phải, nút đặt hàng mờ, danh sách và form đánh giá | [ ] |
 | 221 | Claude Opus 5.5 |  | `frontend/templates/components/book_card.html` | `<a class="book-card__cover" href="{% url 'catalog:book_detai` | 3 | Ảnh bìa và tên sách trong thẻ sách dẫn tới trang chi tiết | [ ] |
 | 222 | Claude Opus 5.5 |  | `frontend/static/css/shop.css` | `.book-card__cover { display: block; }` | 200 | Kiểu trang chi tiết sách: ảnh lớn, thông tin, nút đặt hàng mờ, danh sách và form đánh giá | [ ] |
 | 223 | Claude Opus 5.5 |  | `backend/catalog/tests/test_book_detail.py` | `BookDetailViewTests` | 21 | Test trang chi tiết sách và gửi đánh giá: 404 sách ẩn, form theo loại người xem, CSRF, chỉ POST, escape nội dung | [ ] |
 | 224 | Claude Opus 5.5 |  | `backend/catalog/tests/test_public_catalog.py` | `PublicBookDetailServiceTests` | 74 | Test lấy một sách cho trang chi tiết: id sai không xuống CSDL, sách ẩn trả None, có tên thể loại | [ ] |
+| 225 | Claude Opus 5.5 |  | `frontend/static/css/dashboard.css` | `.dash-field input[type="file"]` | 135 | Kiểu ô chọn ảnh bìa dạng vùng viền đứt có nút viên thuốc và khung xem ảnh bìa hiện tại | [ ] |
+| 226 | Claude Opus 5.5 |  | `database/objects/31_cart.sql` | `PROCEDURE sp_cart_add` | 39 | Thủ tục thêm sách vào giỏ: kiểm tra khách, sách còn hàng, cộng dồn tối đa 5 cuốn, tối đa 30 đầu sách, khóa giỏ chống bấm trùng | [ ] |
+| 227 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `CartError` | 21 | Lỗi nghiệp vụ khi thêm vào giỏ, mang mã lỗi và câu tiếng Việt | [ ] |
+| 228 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `_int_in_range` | 29 | Đổi id sách và số lượng nhận từ request thành số nguyên trong khoảng cho phép | [ ] |
+| 229 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `_allow_cart_add` | 42 | Giới hạn mỗi khách thêm vào giỏ tối đa CART_ADD_RATE_LIMIT lần trong CART_ADD_RATE_WINDOW giây | [ ] |
+| 230 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `add_to_cart` | 56 | Thêm sách vào giỏ bằng sp_cart_add; user lấy từ phiên đăng nhập, có giới hạn tần suất; trả số cuốn của sách đó trong giỏ sau khi thêm | [ ] |
+| 231 | Claude Opus 5.5 |  | `backend/orders/forms.py` | `CartAddForm` | 6 | Form thêm vào giỏ: chỉ id sách và số lượng 1–5, không có giá hay user | [ ] |
+| 232 | Claude Opus 5.5 |  | `backend/orders/views.py` | `_safe_back_url` | 33 | Chỉ quay lại địa chỉ nội bộ an toàn sau khi thêm vào giỏ, chặn open redirect | [ ] |
+| 233 | Claude Opus 5.5 |  | `backend/orders/views.py` | `cart_add` | 44 | Nhận form thêm vào giỏ (chỉ POST, CSRF): ẩn danh đi đăng nhập, nhân viên bị từ chối, xong thì ở lại trang đang xem kèm thông báo | [ ] |
+| 234 | Claude Opus 5.5 |  | `frontend/templates/shop/book_detail.html` | `{% if book.in_stock and not user.is_staff %}` | 48 | Form thêm vào giỏ cạnh nút đặt hàng: ô số lượng 1–5, khóa khi hết hàng | [ ] |
+| 235 | Claude Opus 5.5 |  | `frontend/static/css/shop.css` | `.cart-add { display: flex; align-items: center; gap: var(--s` | 274 | Kiểu form thêm vào giỏ ở trang chi tiết: ô số lượng gọn cạnh nút | [ ] |
+| 236 | Claude Opus 5.5 |  | `backend/orders/tests/test_cart_add.py` | `AddToCartServiceTests` | 25 | Test service thêm vào giỏ bằng cursor giả: user lấy từ phiên, số lượng 1–5, chặn nhân viên, giới hạn tần suất, đổi lỗi SIGNAL | [ ] |
+| 237 | Claude Opus 5.5 |  | `backend/orders/tests/test_cart_add.py` | `CartAddViewTests` | 99 | Test view thêm vào giỏ: chỉ POST, CSRF, ẩn danh đi đăng nhập, nhân viên bị từ chối, chặn open redirect, ở lại trang đang xem | [ ] |

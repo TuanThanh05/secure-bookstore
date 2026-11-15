@@ -29,11 +29,12 @@
 
     <div class="book-card__footer">
       <span class="book-card__price">{{ book.price|vnd }}</span>
-      {% if cart_add_url and book.in_stock %}
+      {% if cart_add_url and book.in_stock and not user.is_staff %}
         <form class="book-card__cart" method="post" action="{{ cart_add_url }}">
           {% csrf_token %}
           <input type="hidden" name="book_id" value="{{ book.id }}">
           <input type="hidden" name="quantity" value="1">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
           <button class="icon-btn icon-btn--primary" type="submit" aria-label="Thêm “{{ book.title }}” vào giỏ">
             {% include "components/icon.html" with name="shopping-bag" size="sm" %}
           </button>

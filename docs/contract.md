@@ -10,10 +10,11 @@ Quy ước:
 
 | URL name | Đường dẫn | Template | Quyền | Biến trong template | Trường gửi lên (POST) |
 | --- | --- | --- | --- | --- | --- |
-| `catalog:home` | `/` | `shop/home.html` | Mọi người | `categories` (list: `id`, `name`), `books` (list sách, mỗi cuốn có các trường ở mục *BookCard* bên dưới), `current_category` (int hoặc `None`), `q` (chuỗi đã làm sạch), `cart_add_url` (`None` cho tới khi app orders có URL thêm vào giỏ) | – (chỉ GET: `?q=` tối đa 100 ký tự, `?category=` số nguyên dương) |
+| `catalog:home` | `/` | `shop/home.html` | Mọi người | `categories` (list: `id`, `name`), `books` (list sách, mỗi cuốn có các trường ở mục *BookCard* bên dưới), `current_category` (int hoặc `None`), `q` (chuỗi đã làm sạch), `cart_add_url` (URL của `orders:cart_add`) | – (chỉ GET: `?q=` tối đa 100 ký tự, `?category=` số nguyên dương) |
 | `catalog:about` | `/gioi-thieu/` | `shop/about.html` | Mọi người | – | – |
-| `catalog:book_detail` | `/sach/<id>/` | `shop/book_detail.html` | Mọi người (sách ẩn/không có → 404) | `book` (BookCard + `isbn`, `description`, `category_name`), `reviews` (list `PublicReview`), `form` (`ReviewForm` hoặc `None`), `my_review` (`MyReview` hoặc `None`), `can_review`, `open_form`, `login_url` | – (chỉ GET) |
+| `catalog:book_detail` | `/sach/<id>/` | `shop/book_detail.html` | Mọi người (sách ẩn/không có → 404) | `book` (BookCard + `isbn`, `description`, `category_name`), `reviews` (list `PublicReview`), `form` (`ReviewForm` hoặc `None`), `my_review` (`MyReview` hoặc `None`), `can_review`, `open_form`, `login_url`, `cart_add_url`, `cart_max` (= 5) | – (chỉ GET) |
 | `catalog:review_submit` | `/sach/<id>/danh-gia/` | – (redirect về `book_detail#danh-gia`; lỗi → hiện lại `book_detail` mã 400) | Khách đã đăng nhập (ẩn danh → đăng nhập rồi quay lại trang sách; nhân viên bị từ chối) | – | `rating` (1–5), `content` (chỉ POST + CSRF) |
+| `orders:cart_add` | `/orders/cart/them/` | – (redirect về trang đang xem kèm thông báo) | Khách đã đăng nhập, đã xác nhận email (ẩn danh → đăng nhập rồi quay lại; nhân viên bị từ chối) | – | `book_id`, `quantity` (1–5), `next` (chỉ đường dẫn trong site; chỉ POST + CSRF) |
 | `accounts:register` | `/account/register/` | `account/register.html` | Chưa đăng nhập | `form` | `username`, `email`, `password1`, `password2` |
 | `accounts:login` | `/account/login/` | `account/login.html` | Chưa đăng nhập | `form`, `next` | `username`, `password`, `next` |
 | `accounts:logout` | `/account/logout/` | – (redirect) | Đã đăng nhập | – | (chỉ POST + CSRF) |
@@ -40,7 +41,7 @@ Component `components/book_card.html` nhận biến `book` có đúng các thu�
 | `cover_url` | str | **Luôn có giá trị**: ảnh đã upload, hoặc ảnh mặc định `img/book-cover-default.webp` khi sách chưa có ảnh |
 | `isbn`, `description`, `created_at` | str / str hoặc `None` / datetime | Có sẵn cho trang chi tiết sách sau này |
 
-Khi thêm vào giỏ, form chỉ gửi `book_id` và `quantity`. **Không gửi giá**: giá luôn lấy lại từ CSDL ở phía server.
+Khi thêm vào giỏ, form chỉ gửi `book_id`, `quantity` và `next` (trang đang xem). **Không gửi giá**: giá luôn lấy lại từ CSDL ở phía server. Nút giỏ chỉ hiện khi sách còn hàng và người xem không phải nhân viên.
 
 ## Danh mục sách cho khách: `sp_public_book_list` và `sp_public_category_list`
 
@@ -114,6 +115,32 @@ Form đánh giá theo người xem:
 | Khách đã đánh giá | Nút "Sửa đánh giá", form điền sẵn; nếu đánh giá bị ẩn thì báo "đang bị quản trị viên ẩn" |
 
 Bảo mật đã kiểm tra (test `catalog/tests/test_book_detail.py` + chạy thật trong sandbox): sách ẩn → 404 cả trang lẫn POST; `user_id` gửi kèm form bị bỏ qua; thiếu CSRF → 403; GET `/danh-gia/` → 405; nội dung `<script>` hiện ra như chữ (`linebreaksbr` escape trước rồi mới thêm `<br>`); tên thật không có trong HTML; lỗi form hiện lại trang với mã 400 và form đang mở.
+
+## Thêm vào giỏ hàng: `sp_cart_add`
+
+Chốt 2026-11-15. Cạnh nút **Đặt hàng** (trang chi tiết) có ô số lượng (1–5, mặc định 1) và nút **Thêm vào giỏ**; thẻ sách ở trang chủ có nút giỏ thêm 1 cuốn. Thêm xong ở lại trang đang xem và hiện "Đã thêm vào giỏ. Trong giỏ đang có N cuốn sách này."
+
+| Thủ tục | Tham số | Kết quả |
+| --- | --- | --- |
+| `sp_cart_add` (`objects/31_cart.sql`) | `p_user_id`, `p_book_id`, `p_quantity`, OUT `p_new_quantity` | Tạo giỏ nếu chưa có (UNIQUE `user_id`), cộng dồn số lượng, trả tổng số cuốn sách đó trong giỏ |
+
+Quy tắc (kiểm tra trong thủ tục, trong một transaction, khóa dòng giỏ `FOR UPDATE` và dòng sách `FOR SHARE`):
+
+| Mã lỗi | Khi nào | Thông báo |
+| --- | --- | --- |
+| `INVALID_INPUT` | `quantity` ngoài 1–5 | Số lượng phải từ 1 đến 5. |
+| `NOT_CUSTOMER` | Người gọi là nhân viên, bị khóa hoặc chưa xác nhận email | Chỉ khách đã đăng nhập và xác nhận email mới thêm vào giỏ được. |
+| `BOOK_NOT_FOUND` | Sách không có hoặc đang ẩn (như nhau) | Không tìm thấy sách. |
+| `OUT_OF_STOCK` | Tồn kho = 0 | Sách đã hết hàng. |
+| `CART_LIMIT` | Tổng trong giỏ vượt 5 cuốn/sách (báo lỗi, không tự cắt) | Mỗi sách tối đa 5 cuốn trong giỏ hàng. |
+| `CART_FULL` | Giỏ đã có 30 đầu sách khác nhau | Giỏ hàng đã có 30 đầu sách. Hãy đặt hàng hoặc bớt sách trước. |
+| `RATE_LIMITED` | Quá 20 lần/60 giây (Django, theo `user.pk`) | Bạn thao tác quá nhanh. Hãy thử lại sau ít phút. |
+
+Không so số lượng với tồn kho chính xác (chỉ chặn khi hết hàng) để không lộ tồn kho qua thông báo lỗi; tồn kho thật được kiểm tra lại khi đặt đơn (`sp_place_order`).
+
+`r_customer` chỉ có `EXECUTE sp_cart_add`, không đọc/ghi thẳng `orders_cart`, `orders_cartitem`. Django: `orders.cart_services.add_to_cart(request, book_id, quantity)` lấy user từ phiên (không nhận `user_id` từ form); `book_id` sai kiểu → `BOOK_NOT_FOUND` không xuống CSDL. `next` qua `url_has_allowed_host_and_scheme`, link ngoài site → về trang chi tiết sách.
+
+Bảo mật đã kiểm tra (test `orders/tests/test_cart_add.py`, `db_check_grants` + chạy thật trong sandbox): open redirect (`https://evil.example`, `//evil.example`, `javascript:`) bị chặn; thiếu CSRF → 403; GET → 405; giá gửi kèm bị bỏ qua; `app_customer` INSERT/UPDATE/SELECT thẳng `orders_cartitem` → 1142; gọi thủ tục bằng id quản trị → `NOT_CUSTOMER`; 3 lần thêm 2 cuốn cùng lúc → 2, 4, `CART_LIMIT` và chỉ một giỏ.
 
 ## Đặt đơn: `sp_place_order` và `orders.services.place_order`
 

@@ -270,3 +270,12 @@
   .book-detail__cover { max-width: 360px; }
   .book-detail__title { font-size: 30px; }
 }
+
+/* AI-TRACE#235 | Claude Opus 5.5 | Kiểu form thêm vào giỏ ở trang chi tiết: ô số lượng gọn cạnh nút | CẤM XÓA CHÚ THÍCH NÀY */
+.cart-add { display: flex; align-items: center; gap: var(--space-sm); margin: 0; }
+.cart-add__qty {
+  width: 4.5rem; min-height: 44px; padding: 0.5rem 0.6rem; font: inherit; text-align: center;
+  color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-full);
+}
+.cart-add__qty:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-ring); }
+.book-detail__note { flex-basis: 100%; }

@@ -7,6 +7,8 @@ from django.views.decorators.http import require_POST, require_safe
 
 from core.validators import clean_search_query, parse_positive_int
 
+from orders.cart_services import CART_MAX_PER_BOOK
+
 from . import services
 from .forms import ReviewForm
 from .review_services import ReviewError, get_my_review, list_reviews, save_review
@@ -25,7 +27,7 @@ def home(request):
         "books": services.list_public_books(category_id=category_id, q=q),
         "current_category": category_id,
         "q": q,
-        "cart_add_url": None,
+        "cart_add_url": reverse("orders:cart_add"),
     }
     return render(request, "shop/home.html", context)
 
@@ -50,6 +52,8 @@ def _render_detail(request, book, form=None, open_form=False, status=200):
         "my_review": my_review,
         "can_review": can_review,
         "open_form": open_form,
+        "cart_add_url": reverse("orders:cart_add"),
+        "cart_max": CART_MAX_PER_BOOK,
         "login_url": f"{reverse('accounts:login')}?next={reverse('catalog:book_detail', args=[book.id])}",
     }, status=status)
 
