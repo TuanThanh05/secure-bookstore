@@ -61,4 +61,7 @@
     <div class="dash-info__row"><dt>Ngày tham gia</dt><dd>{{ profile.date_joined|date:"d/m/Y" }}</dd></div>
     <div class="dash-info__row"><dt>Mật khẩu</dt><dd>Không thể đổi mật khẩu</dd></div>
   </dl>
+  <div class="dash-actions">
+    <a class="btn" href="{% url 'dashboard:profile_update' %}">Cập nhật thông tin</a>
+  </div>
 {% endblock %}

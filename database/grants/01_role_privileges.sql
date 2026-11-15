@@ -63,6 +63,12 @@ GRANT SELECT, INSERT, UPDATE         ON axes_accesslog               TO 'r_custo
 -- ---------------------------------------------------------------------
 GRANT INSERT ON core_securityevent             TO 'r_staff';
 
+-- Nhân viên sửa họ, tên, SĐT của chính mình (dashboard:profile_update).
+-- Quyền THEO CỘT: chỉ 3 cột được UPDATE, chỉ đọc được cột id (cho WHERE id = ...).
+-- app_staff không đụng được password, email, is_staff, is_superuser.
+-- Trigger trg_user_guard_update chặn thêm: app_staff chỉ sửa được dòng nhân viên.
+GRANT SELECT (id), UPDATE (first_name, last_name, phone_encrypted) ON accounts_user TO 'r_staff';
+
 -- ---------------------------------------------------------------------
 -- sp_place_order (database/objects/30_sp_place_order.sql)
 -- Definer đọc/ghi đúng các bảng thủ tục cần. Từ MySQL 8.0.22, câu khóa dòng

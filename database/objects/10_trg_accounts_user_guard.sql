@@ -15,6 +15,11 @@
 --     mật khẩu/email của admin rồi chiếm tài khoản.
 -- Ghi lại đúng giá trị cũ (như user.save() bình thường) vẫn được phép.
 --
+-- Với app_staff (kết nối "staff" của dashboard): quyền theo cột chỉ cho sửa
+-- first_name, last_name, phone_encrypted; trigger chặn thêm việc sửa dòng
+-- của KHÁCH (is_staff = 0). Kết nối staff bị lạm dụng cũng không sửa được
+-- tên/SĐT của khách hàng.
+--
 -- Hệ quả cho code:
 --   - Tạo tài khoản admin: chạy createsuperuser bằng settings.migrate.
 --   - Đổi mật khẩu nhân viên: chỉ bằng lệnh trên máy chủ
@@ -70,6 +75,12 @@ BEGIN
             SIGNAL SQLSTATE '45000'
                 SET MESSAGE_TEXT = 'app_customer chi duoc cap nhat last_login cua nhan vien';
         END IF;
+    END IF;
+    -- app_staff: chỉ được sửa dòng của nhân viên (cột nào thì quyền theo cột đã giới hạn).
+    -- AI-TRACE#099 | Claude Opus 5.5 | Chặn app_staff sửa dòng của khách hàng | CẤM XÓA CHÚ THÍCH NÀY
+    IF SUBSTRING_INDEX(USER(), '@', 1) = 'app_staff' AND OLD.is_staff <> 1 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'app_staff khong duoc sua thong tin cua khach hang';
     END IF;
 END$$
 
