@@ -1,4 +1,7 @@
+import re
+
 from django import forms
+from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, PasswordResetForm, UserCreationForm
 from django.contrib.auth.models import BaseUserManager
 from django.core.exceptions import ValidationError
@@ -99,3 +102,67 @@ class CustomerPasswordChangeForm(PasswordChangeForm):
         self.fields["old_password"].label = "Mật khẩu hiện tại"
         self.fields["new_password1"].label = "Mật khẩu mới"
         self.fields["new_password2"].label = "Nhập lại mật khẩu mới"
+
+
+NAME_RE = re.compile(r"^[^\W\d_]+(?:[ '\-][^\W\d_]+)*$")
+PHONE_SEPARATORS_RE = re.compile(r"[\s.\-()]")
+PHONE_RE = re.compile(r"^0[35789][0-9]{8}$")
+
+
+# AI-TRACE#073 | Claude Opus 5.5 | Form xác thực lại của khách, nhận tên đăng nhập hoặc email và mật khẩu | CẤM XÓA CHÚ THÍCH NÀY
+class CustomerReauthForm(forms.Form):
+    error_messages = {"invalid": "Tên đăng nhập hoặc mật khẩu không đúng."}
+
+    username = forms.CharField(label="Tên đăng nhập hoặc email", max_length=254)
+    password = forms.CharField(label="Mật khẩu", strip=False,
+                               widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}))
+
+    def __init__(self, request, *args, **kwargs):
+        self.request = request
+        self.user_mismatch = False
+        super().__init__(*args, **kwargs)
+        self.fields["username"].widget.attrs["autocomplete"] = "username"
+
+    def clean(self):
+        cleaned = super().clean()
+        username = cleaned.get("username")
+        password = cleaned.get("password")
+        if username and password:
+            if "@" in username:
+                username = (
+                    User.objects.filter(email__iexact=username).values_list("username", flat=True).first()
+                    or username
+                )
+            user = authenticate(self.request, username=username, password=password)
+            if user is None or user.pk != self.request.user.pk:
+                self.user_mismatch = user is not None
+                raise ValidationError(self.error_messages["invalid"], code="invalid")
+        return cleaned
+
+
+# AI-TRACE#074 | Claude Opus 5.5 | Form cập nhật họ, tên, SĐT của khách; không có ô username hay email | CẤM XÓA CHÚ THÍCH NÀY
+class ProfileUpdateForm(forms.Form):
+    last_name = forms.CharField(label="Họ", max_length=50, required=False)
+    first_name = forms.CharField(label="Tên", max_length=50, required=False)
+    phone = forms.CharField(label="Số điện thoại", max_length=20, required=False,
+                            widget=forms.TextInput(attrs={"type": "tel", "autocomplete": "tel", "inputmode": "tel"}))
+
+    def _clean_name(self, field):
+        value = " ".join(self.cleaned_data[field].split())
+        if value and not NAME_RE.match(value):
+            raise ValidationError("Chỉ được dùng chữ cái, khoảng trắng, dấu gạch ngang hoặc dấu nháy đơn.", code="invalid_name")
+        return value
+
+    def clean_last_name(self):
+        return self._clean_name("last_name")
+
+    def clean_first_name(self):
+        return self._clean_name("first_name")
+
+    def clean_phone(self):
+        value = PHONE_SEPARATORS_RE.sub("", self.cleaned_data["phone"])
+        if value.startswith("+84"):
+            value = "0" + value[3:]
+        if value and not PHONE_RE.match(value):
+            raise ValidationError("Số điện thoại Việt Nam gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08 hoặc 09.", code="invalid_phone")
+        return value

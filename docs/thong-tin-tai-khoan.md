@@ -41,7 +41,7 @@ Rủi ro thực tế là **phiên đăng nhập bị chiếm**: quản trị vi�
 
 - **Một lần xác thực lại dùng chung 2 phút** cho mọi khu vực nhạy cảm (Quản lý tài khoản, xem email/SĐT). Mục đích của xác thực lại là chứng minh "đúng người đang ngồi trước máy", nên dùng chung là hợp lý và đỡ phiền.
 - Quản trị viên phải nhập lại mật khẩu mỗi khi muốn xem email của chính mình. Nhóm chấp nhận sự phiền này, vì đây là dữ liệu nhạy cảm của tài khoản quyền cao nhất.
-- **Số điện thoại** lưu ở cột `phone_encrypted` (mã hóa AES-GCM). Hàm giải mã (`core/crypto.py`) làm ở đợt 2, nên hiện tại trang chỉ ghi "Chưa cập nhật" (chưa có dữ liệu) hoặc "Đã lưu (giải mã ở bước sau)".
+- Số điện thoại được giải mã bằng `core/crypto.py` (xem mục 6). Dữ liệu hỏng hoặc sai khóa thì trang ghi "Không đọc được…" thay vì báo lỗi 500.
 - Thanh menu trái tô sáng "Quản lý tài khoản" khi đang ở trang xác thực lại, kể cả khi xác thực lại để xem thông tin cá nhân.
 
 ## 5. Kiểm thử
@@ -54,3 +54,23 @@ Rủi ro thực tế là **phiên đăng nhập bị chiếm**: quản trị vi�
   - xác thực đúng → hiện email + ghi `sensitive_data_viewed`;
   - quá 2 phút, sai mật khẩu, hoặc xác thực bằng tài khoản người khác → không hiện;
   - trang xác thực lại ghi thời hạn lấy từ settings.
+
+## 6. Cập nhật thông tin của khách (họ, tên, SĐT)
+
+Luồng: trang Thông tin tài khoản → nút **Cập nhật thông tin** → nếu chưa xác thực lại trong `REAUTH_MAX_AGE` (2 phút) thì chuyển tới **trang xác thực lại riêng của khách** `accounts:reauth` (`/account/xac-thuc-lai/`) → nhập tên đăng nhập (hoặc email) + mật khẩu → quay về form `accounts:profile_update` (`/account/cap-nhat/`).
+
+- **Trang xác thực lại tách riêng khỏi trang của admin** (`accounts/decorators.customer_recent_auth_required`, view `accounts.views.reauth`), cùng cơ chế lưu mốc thời gian trong session của `core/decorators.py`. Bên dưới nút "Xác thực" có link **Quên mật khẩu?**. Nhập sai bị axes đếm; nhập đúng tài khoản người khác bị từ chối và ghi `access_denied`. Tham số `next` chỉ được trỏ trong site.
+- **Chỉ sửa được họ, tên, SĐT.** Form là `forms.Form` liệt kê 3 ô (không phải `ModelForm`), service `update_profile` chỉ gán đúng 3 cột và lưu bằng `save(update_fields=...)`. Gửi thêm `username`, `email`, `is_staff` trong request cũng bị bỏ qua (chống mass assignment).
+- **Kiểm tra đầu vào ở server:** họ/tên tối đa 50 ký tự, chỉ chữ cái (có dấu), khoảng trắng, `-`, `'`; SĐT Việt Nam 10 số bắt đầu 03/05/07/08/09, chấp nhận dấu cách, dấu chấm, `+84` rồi chuẩn hóa về dạng `09xxxxxxxx`.
+- **Cả GET lẫn POST** đều cần xác thực lại còn hạn: để quá 2 phút rồi mới bấm Lưu thì bị chuyển sang trang xác thực lại, dữ liệu không được lưu.
+- **Log** `profile_updated` chỉ ghi tên cột thay đổi (`detail.fields`), không ghi giá trị (không lộ SĐT trong log). Không thay đổi gì thì không ghi log. Loại sự kiện mới được thêm vào CHECK bằng `database/schema/04_...` + migration `core/0005`.
+- Nhân viên vào 2 trang này bị chuyển sang trang thông tin quản trị (luồng sửa thông tin admin làm riêng).
+
+## 7. Mã hóa SĐT (`core/crypto.py`) – lỗ hổng CSDL số 10
+
+- **AES-256-GCM** (thư viện `cryptography`): vừa mã hóa vừa có thẻ xác thực, nên dữ liệu bị sửa trong CSDL sẽ bị phát hiện khi giải mã (không trả ra chuỗi rác).
+- **Khóa** `FIELD_ENCRYPTION_KEY` (32 byte, base64) trong `.env`, không nằm trong CSDL và không commit. Kẻ lấy được bản sao CSDL (SQL injection, file backup lộ) chỉ thấy chuỗi `v1.<base64>`. Thiếu khóa hoặc khóa sai độ dài → `ImproperlyConfigured`. CI sinh khóa ngẫu nhiên cho mỗi lần chạy.
+- **Nonce ngẫu nhiên 12 byte mỗi lần** (`os.urandom`): cùng một số điện thoại mã hóa 2 lần ra 2 chuỗi khác nhau, không so sánh/đoán được.
+- **Ngữ cảnh (associated data)** `accounts_user.phone_encrypted:<id>`: bản mã của người A chép sang dòng người B sẽ giải mã thất bại (chống tráo dữ liệu giữa các dòng).
+- Định dạng có tiền tố phiên bản `v1.` để sau này đổi thuật toán/khóa vẫn phân biệt được dữ liệu cũ.
+- **Mất khóa = mất SĐT đã lưu.** Khóa máy demo phải được sao lưu riêng, an toàn.

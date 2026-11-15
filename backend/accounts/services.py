@@ -7,6 +7,7 @@ from core.security_log import log_event
 
 from .emails import send_existing_account_email, send_verification_email
 from .models import User
+from .profile import decrypt_phone, encrypt_phone
 from .tokens import read_email_token
 
 
@@ -82,3 +83,21 @@ def record_password_change_failure(user):
 # AI-TRACE#059 | Claude Opus 5.5 | Xóa bộ đếm nhập sai sau khi đổi mật khẩu thành công | CẤM XÓA CHÚ THÍCH NÀY
 def clear_password_change_failures(user):
     cache.delete(_password_change_key(user))
+
+
+# AI-TRACE#075 | Claude Opus 5.5 | Lưu họ, tên, SĐT đã mã hóa; chỉ ghi cột thay đổi và log tên cột, không log giá trị | CẤM XÓA CHÚ THÍCH NÀY
+def update_profile(request, user, data):
+    changed = []
+    if data["last_name"] != user.last_name:
+        user.last_name = data["last_name"]
+        changed.append("last_name")
+    if data["first_name"] != user.first_name:
+        user.first_name = data["first_name"]
+        changed.append("first_name")
+    if data["phone"] != (decrypt_phone(user) or ""):
+        user.phone_encrypted = encrypt_phone(user, data["phone"])
+        changed.append("phone_encrypted")
+    if changed:
+        user.save(update_fields=changed)
+        log_event("profile_updated", request, user=user, username=user.get_username(), detail={"fields": changed})
+    return changed

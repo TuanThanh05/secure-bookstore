@@ -1,0 +1,35 @@
+{% extends "layouts/account.html" %}
+{% load static %}
+{% block title %}Cập nhật thông tin{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/account-area.css' %}"><link rel="stylesheet" href="{% static 'css/account.css' %}">{% endblock %}
+{% block account_content %}
+  {# AI-TRACE#081 | Claude Opus 5.5 | Form sửa họ, tên, SĐT; tên đăng nhập và email chỉ hiển thị, không sửa | CẤM XÓA CHÚ THÍCH NÀY #}
+  <header class="area-header">
+    <h1 class="area-header__title">Cập nhật thông tin</h1>
+    <p class="area-header__desc">Bạn được sửa họ, tên và số điện thoại. Số điện thoại được mã hóa trước khi lưu.</p>
+  </header>
+
+  <dl class="area-info area-info--compact">
+    <div class="area-info__row"><dt>Tên đăng nhập</dt><dd>{{ user.get_username }}</dd></div>
+    <div class="area-info__row"><dt>Email</dt><dd>{{ user.email }}</dd></div>
+  </dl>
+
+  <div class="area-form">
+    <form method="post" class="auth-form" novalidate>
+      {% csrf_token %}
+      {% for field in form %}
+        <div class="auth-form__field{% if field.errors %} auth-form__field--error{% endif %}">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}
+            <ul class="auth-form__errors" id="{{ field.auto_id }}_error">
+              {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      {% endfor %}
+      <button type="submit" class="btn auth-form__submit">Lưu thay đổi</button>
+    </form>
+    <p class="area-form__links"><a href="{% url 'accounts:profile' %}">Hủy, quay lại thông tin tài khoản</a></p>
+  </div>
+{% endblock %}
