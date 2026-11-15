@@ -1,6 +1,9 @@
+from dataclasses import dataclass
+
 from django.conf import settings
 from django.core.cache import cache
 from django.db import OperationalError, connection
+from django.templatetags.static import static
 
 from core.security_log import log_event
 
@@ -14,6 +17,8 @@ CART_ERROR_MESSAGES = {
     "OUT_OF_STOCK": "Sách đã hết hàng.",
     "CART_LIMIT": f"Mỗi sách tối đa {CART_MAX_PER_BOOK} cuốn trong giỏ hàng.",
     "CART_FULL": "Giỏ hàng đã có 30 đầu sách. Hãy đặt hàng hoặc bớt sách trước.",
+    "NOT_IN_CART": "Sách này không có trong giỏ hàng.",
+    "BOOK_UNAVAILABLE": "Sách đã ngừng bán, chỉ có thể gỡ khỏi giỏ.",
     "RATE_LIMITED": "Bạn thao tác quá nhanh. Hãy thử lại sau ít phút.",
 }
 
@@ -39,10 +44,9 @@ def _int_in_range(value, low, high, code):
     return number
 
 
-# AI-TRACE#229 | Claude Opus 5.5 | Giới hạn mỗi khách thêm vào giỏ tối đa CART_ADD_RATE_LIMIT lần trong CART_ADD_RATE_WINDOW giây | CẤM XÓA CHÚ THÍCH NÀY
-def _allow_cart_add(user):
-    key = f"cart-add-rate:{user.pk}"
-    window = settings.CART_ADD_RATE_WINDOW
+# AI-TRACE#229 | Claude Opus 5.5 | Giới hạn tần suất thao tác giỏ hàng theo từng khách: thêm vào giỏ (CART_ADD_RATE_*) và đổi số lượng/gỡ (CART_UPDATE_RATE_*) | CẤM XÓA CHÚ THÍCH NÀY
+def _allow_cart_action(user, action, limit, window):
+    key = f"cart-{action}-rate:{user.pk}"
     if cache.add(key, 1, window):
         return True
     try:
@@ -50,32 +54,143 @@ def _allow_cart_add(user):
     except ValueError:
         cache.set(key, 1, window)
         return True
-    return count <= settings.CART_ADD_RATE_LIMIT
+    return count <= limit
 
 
-# AI-TRACE#230 | Claude Opus 5.5 | Thêm sách vào giỏ bằng sp_cart_add; user lấy từ phiên đăng nhập, có giới hạn tần suất; trả số cuốn của sách đó trong giỏ sau khi thêm | CẤM XÓA CHÚ THÍCH NÀY
-def add_to_cart(request, book_id, quantity):
+# AI-TRACE#241 | Claude Opus 5.5 | Kiểm tra chung trước khi gọi thủ tục giỏ hàng: chỉ khách, không trong transaction.atomic, giới hạn tần suất có ghi log | CẤM XÓA CHÚ THÍCH NÀY
+def _guard_cart_write(request, proc, action, limit, window, book_pk):
     user = request.user
-    if not user.is_authenticated or user.is_staff:
-        raise CartError("NOT_CUSTOMER")
-    book_pk = _int_in_range(book_id, 1, 2**63 - 1, "BOOK_NOT_FOUND")
-    amount = _int_in_range(quantity, 1, CART_MAX_PER_BOOK, "INVALID_INPUT")
     if connection.in_atomic_block:
-        raise RuntimeError("sp_cart_add không được gọi bên trong transaction.atomic")
-    if not _allow_cart_add(user):
+        raise RuntimeError(f"{proc} không được gọi bên trong transaction.atomic")
+    if not _allow_cart_action(user, action, limit, window):
         log_event("rate_limited", request, severity="warning", user=user, username=user.get_username(),
-                  detail={"action": "cart_add", "book_id": book_pk})
+                  detail={"action": f"cart_{action}", "book_id": book_pk})
         raise CartError("RATE_LIMITED")
+
+
+# AI-TRACE#242 | Claude Opus 5.5 | Gọi thủ tục giỏ hàng với tham số truyền riêng, đổi lỗi SIGNAL thành CartError; lỗi khác (thiếu quyền...) để nguyên | CẤM XÓA CHÚ THÍCH NÀY
+def _call_cart_proc(proc, params, out_index=None):
     try:
         with connection.cursor() as cursor:
-            cursor.callproc("sp_cart_add", [user.pk, book_pk, amount, None])
+            cursor.callproc(proc, params)
+            rows = cursor.fetchall() if cursor.description else []
             while cursor.nextset():
                 pass
-            cursor.execute("SELECT @_sp_cart_add_3")
-            new_quantity = cursor.fetchone()[0]
+            if out_index is not None:
+                cursor.execute(f"SELECT @_{proc}_{out_index}")
+                return cursor.fetchone()[0]
+            return rows
     except OperationalError as exc:
         args = exc.args
         if len(args) >= 2 and args[0] == SIGNAL_ERROR_CODE and args[1] in CART_ERROR_MESSAGES:
             raise CartError(args[1]) from exc
         raise
+
+
+def _require_customer(request):
+    user = request.user
+    if not user.is_authenticated or user.is_staff:
+        raise CartError("NOT_CUSTOMER")
+    return user
+
+
+# AI-TRACE#230 | Claude Opus 5.5 | Thêm sách vào giỏ bằng sp_cart_add; user lấy từ phiên đăng nhập, có giới hạn tần suất; trả số cuốn của sách đó trong giỏ sau khi thêm | CẤM XÓA CHÚ THÍCH NÀY
+def add_to_cart(request, book_id, quantity):
+    user = _require_customer(request)
+    book_pk = _int_in_range(book_id, 1, 2**63 - 1, "BOOK_NOT_FOUND")
+    amount = _int_in_range(quantity, 1, CART_MAX_PER_BOOK, "INVALID_INPUT")
+    _guard_cart_write(request, "sp_cart_add", "add", settings.CART_ADD_RATE_LIMIT, settings.CART_ADD_RATE_WINDOW, book_pk)
+    new_quantity = _call_cart_proc("sp_cart_add", [user.pk, book_pk, amount, None], out_index=3)
     return int(new_quantity)
+
+
+# AI-TRACE#243 | Claude Opus 5.5 | Một dòng trong giỏ cho template: giá hiện tại, thành tiền, tình trạng và nút nào được bấm (tăng/giảm/gỡ) | CẤM XÓA CHÚ THÍCH NÀY
+@dataclass(frozen=True)
+class CartLine:
+    book_id: int
+    title: str
+    author: str
+    cover_image: str | None
+    price: int
+    quantity: int
+    is_active: bool
+    in_stock: bool
+
+    @property
+    def cover_url(self):
+        if self.cover_image:
+            return f"{settings.MEDIA_URL}{self.cover_image}"
+        return static(settings.BOOK_DEFAULT_COVER)
+
+    @property
+    def available(self):
+        return self.is_active and self.in_stock
+
+    @property
+    def status_label(self):
+        if not self.is_active:
+            return "Ngừng bán"
+        if not self.in_stock:
+            return "Hết hàng"
+        return ""
+
+    @property
+    def line_total(self):
+        return self.price * self.quantity
+
+    @property
+    def can_increase(self):
+        return self.available and self.quantity < CART_MAX_PER_BOOK
+
+    @property
+    def can_decrease(self):
+        return self.available and self.quantity > 1
+
+
+# AI-TRACE#244 | Claude Opus 5.5 | Cả giỏ hàng: các dòng, tạm tính và số cuốn chỉ tính sách còn bán và còn hàng | CẤM XÓA CHÚ THÍCH NÀY
+@dataclass(frozen=True)
+class Cart:
+    lines: tuple
+
+    @property
+    def subtotal(self):
+        return sum(line.line_total for line in self.lines if line.available)
+
+    @property
+    def item_count(self):
+        return sum(line.quantity for line in self.lines if line.available)
+
+    @property
+    def has_unavailable(self):
+        return any(not line.available for line in self.lines)
+
+
+# AI-TRACE#245 | Claude Opus 5.5 | Đọc giỏ của khách đang đăng nhập bằng sp_cart_list | CẤM XÓA CHÚ THÍCH NÀY
+def get_cart(request):
+    user = _require_customer(request)
+    rows = _call_cart_proc("sp_cart_list", [user.pk])
+    return Cart(lines=tuple(
+        CartLine(book_id=int(r[0]), title=r[1], author=r[2], cover_image=r[3] or None, price=int(r[4]),
+                 quantity=int(r[5]), is_active=bool(r[6]), in_stock=bool(r[7]))
+        for r in rows
+    ))
+
+
+# AI-TRACE#246 | Claude Opus 5.5 | Đặt số lượng mới (1–5) cho sách trong giỏ bằng sp_cart_set_quantity, dùng cho nút tăng và giảm | CẤM XÓA CHÚ THÍCH NÀY
+def set_cart_quantity(request, book_id, quantity):
+    user = _require_customer(request)
+    book_pk = _int_in_range(book_id, 1, 2**63 - 1, "NOT_IN_CART")
+    amount = _int_in_range(quantity, 1, CART_MAX_PER_BOOK, "INVALID_INPUT")
+    _guard_cart_write(request, "sp_cart_set_quantity", "update",
+                      settings.CART_UPDATE_RATE_LIMIT, settings.CART_UPDATE_RATE_WINDOW, book_pk)
+    _call_cart_proc("sp_cart_set_quantity", [user.pk, book_pk, amount])
+    return amount
+
+
+# AI-TRACE#247 | Claude Opus 5.5 | Gỡ một sách khỏi giỏ bằng sp_cart_remove | CẤM XÓA CHÚ THÍCH NÀY
+def remove_from_cart(request, book_id):
+    user = _require_customer(request)
+    book_pk = _int_in_range(book_id, 1, 2**63 - 1, "NOT_IN_CART")
+    _guard_cart_write(request, "sp_cart_remove", "update",
+                      settings.CART_UPDATE_RATE_LIMIT, settings.CART_UPDATE_RATE_WINDOW, book_pk)
+    _call_cart_proc("sp_cart_remove", [user.pk, book_pk])

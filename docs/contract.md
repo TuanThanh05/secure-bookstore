@@ -15,6 +15,9 @@ Quy ước:
 | `catalog:book_detail` | `/sach/<id>/` | `shop/book_detail.html` | Mọi người (sách ẩn/không có → 404) | `book` (BookCard + `isbn`, `description`, `category_name`), `reviews` (list `PublicReview`), `form` (`ReviewForm` hoặc `None`), `my_review` (`MyReview` hoặc `None`), `can_review`, `open_form`, `login_url`, `cart_add_url`, `cart_max` (= 5) | – (chỉ GET) |
 | `catalog:review_submit` | `/sach/<id>/danh-gia/` | – (redirect về `book_detail#danh-gia`; lỗi → hiện lại `book_detail` mã 400) | Khách đã đăng nhập (ẩn danh → đăng nhập rồi quay lại trang sách; nhân viên bị từ chối) | – | `rating` (1–5), `content` (chỉ POST + CSRF) |
 | `orders:cart_add` | `/orders/cart/them/` | – (redirect về trang đang xem kèm thông báo) | Khách đã đăng nhập, đã xác nhận email (ẩn danh → đăng nhập rồi quay lại; nhân viên bị từ chối) | – | `book_id`, `quantity` (1–5), `next` (chỉ đường dẫn trong site; chỉ POST + CSRF) |
+| `orders:cart` | `/orders/cart/` | `shop/cart.html` | Khách đã đăng nhập (ẩn danh → đăng nhập; nhân viên → về dashboard); không lưu cache | `cart` (`Cart`: `lines` là list `CartLine`, `subtotal`, `item_count`, `has_unavailable`), `cart_max` (= 5), `cart_update_url`, `cart_remove_url` | – (chỉ GET) |
+| `orders:cart_update` | `/orders/cart/cap-nhat/` | – (redirect về `orders:cart` kèm thông báo) | Như `orders:cart` | – | `book_id`, `quantity` (**số lượng cuối cùng** 1–5; chỉ POST + CSRF) |
+| `orders:cart_remove` | `/orders/cart/go/` | – (redirect về `orders:cart` kèm thông báo) | Như `orders:cart` | – | `book_id` (chỉ POST + CSRF) |
 | `accounts:register` | `/account/register/` | `account/register.html` | Chưa đăng nhập | `form` | `username`, `email`, `password1`, `password2` |
 | `accounts:login` | `/account/login/` | `account/login.html` | Chưa đăng nhập | `form`, `next` | `username`, `password`, `next` |
 | `accounts:logout` | `/account/logout/` | – (redirect) | Đã đăng nhập | – | (chỉ POST + CSRF) |
@@ -141,6 +144,37 @@ Không so số lượng với tồn kho chính xác (chỉ chặn khi hết hàn
 `r_customer` chỉ có `EXECUTE sp_cart_add`, không đọc/ghi thẳng `orders_cart`, `orders_cartitem`. Django: `orders.cart_services.add_to_cart(request, book_id, quantity)` lấy user từ phiên (không nhận `user_id` từ form); `book_id` sai kiểu → `BOOK_NOT_FOUND` không xuống CSDL. `next` qua `url_has_allowed_host_and_scheme`, link ngoài site → về trang chi tiết sách.
 
 Bảo mật đã kiểm tra (test `orders/tests/test_cart_add.py`, `db_check_grants` + chạy thật trong sandbox): open redirect (`https://evil.example`, `//evil.example`, `javascript:`) bị chặn; thiếu CSRF → 403; GET → 405; giá gửi kèm bị bỏ qua; `app_customer` INSERT/UPDATE/SELECT thẳng `orders_cartitem` → 1142; gọi thủ tục bằng id quản trị → `NOT_CUSTOMER`; 3 lần thêm 2 cuốn cùng lúc → 2, 4, `CART_LIMIT` và chỉ một giỏ.
+
+## Trang giỏ hàng: `sp_cart_list`, `sp_cart_set_quantity`, `sp_cart_remove`
+
+Chốt 2026-11-15. Mỗi sách một dòng: ảnh, tên (dẫn tới trang chi tiết nếu còn bán), tác giả, giá hiện tại, nút **−** / số lượng / **+**, thành tiền, nút **Gỡ**. Bên phải là ô **Tạm tính** ("Giá chốt khi đặt hàng") và nút **Đặt hàng** làm mờ (sắp có).
+
+| Thủ tục | Tham số | Kết quả |
+| --- | --- | --- |
+| `sp_cart_list` | `p_user_id` | Tối đa 30 dòng, theo thứ tự thêm vào: `id` sách, `title`, `author`, `cover_image`, `price` (giá hiện tại), `quantity`, `is_active`, `in_stock` (0/1). Không trả số tồn kho, giá nhập |
+| `sp_cart_set_quantity` | `p_user_id`, `p_book_id`, `p_quantity` | Đặt số lượng mới 1–5 (dùng cho cả tăng và giảm) |
+| `sp_cart_remove` | `p_user_id`, `p_book_id` | Gỡ sách khỏi giỏ, không hỏi xác nhận |
+
+**Vì sao tăng/giảm gửi số lượng cuối cùng chứ không gửi "+1":** nút "+" của dòng đang có 2 cuốn gửi `quantity=3`. Bấm đúp, mở hai tab hay gửi lại form thì kết quả vẫn là 3, không bị cộng dồn ngoài ý muốn.
+
+| Tình huống | Hiển thị / kết quả |
+| --- | --- |
+| Đang 1 cuốn | Nút "−" bị khóa; muốn bỏ thì bấm Gỡ |
+| Đang 5 cuốn | Nút "+" bị khóa; gửi thẳng `quantity=6` → `INVALID_INPUT` |
+| Sách bị admin ẩn | Mờ, nhãn "Ngừng bán", không có link, chỉ còn Gỡ; đổi số lượng → `BOOK_UNAVAILABLE` |
+| Sách hết hàng | Mờ, nhãn "Hết hàng", chỉ còn Gỡ; thủ tục chặn tăng (`OUT_OF_STOCK`), giảm vẫn cho vì vô hại |
+| Tạm tính | Chỉ cộng sách còn bán và còn hàng, có ghi chú khi có sách bị loại |
+
+| Mã lỗi mới | Thông báo |
+| --- | --- |
+| `NOT_IN_CART` | Sách này không có trong giỏ hàng. |
+| `BOOK_UNAVAILABLE` | Sách đã ngừng bán, chỉ có thể gỡ khỏi giỏ. |
+
+Sách không có trong giỏ luôn trả `NOT_IN_CART`, dù sách có tồn tại hay đang ẩn, nên không dò được sách ẩn qua các URL này. Hai thủ tục ghi khóa dòng giỏ `FOR UPDATE` (cùng thứ tự khóa với `sp_cart_add`, `sp_place_order`) nên chạy đồng thời không deadlock, không sai số.
+
+`r_customer` chỉ có `EXECUTE`. Django: `orders.cart_services.get_cart(request)`, `set_cart_quantity(request, book_id, quantity)`, `remove_from_cart(request, book_id)` lấy user từ phiên; id/số lượng sai kiểu bị chặn trước khi xuống CSDL; đổi số lượng và gỡ chung giới hạn 60 lần/60 giây (`CART_UPDATE_RATE_*`). Các form trên trang giỏ luôn quay về `/orders/cart/`, không nhận `next`.
+
+Bảo mật đã kiểm tra (test `orders/tests/test_cart_page.py`, `db_check_grants` tổng 39 + chạy thật trong sandbox): `user_id`, giá, `next` gửi kèm bị bỏ qua; thiếu CSRF → 403; GET các URL ghi → 405; `app_customer` SELECT/UPDATE/DELETE thẳng `orders_cartitem` → 1142; gọi 3 thủ tục bằng id quản trị → `NOT_CUSTOMER`; 5 vòng chạy đồng thời đổi số lượng, gỡ và thêm vào giỏ cùng lúc → không lỗi lạ, một giỏ, số lượng luôn 1–5.
 
 ## Đặt đơn: `sp_place_order` và `orders.services.place_order`
 

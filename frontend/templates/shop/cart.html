@@ -1,5 +1,5 @@
 {% extends "layouts/account.html" %}
-{% load static %}
+{% load static bookstore %}
 {% block title %}Giỏ hàng{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/account-area.css' %}">{% endblock %}
 {% block account_content %}
@@ -7,9 +7,61 @@
     <h1 class="area-header__title">Giỏ hàng</h1>
     <p class="area-header__desc">Sách bạn đã chọn, chưa đặt hàng.</p>
   </header>
-  <section class="area-empty">
-    {% include "components/icon.html" with name="shopping-bag" size="lg" %}
-    <p>Giỏ hàng đang trống.</p>
-    <a class="btn" href="{% url 'catalog:home' %}">Xem sách</a>
-  </section>
+  {% if cart.lines %}
+    {# AI-TRACE#254 | Claude Opus 5.5 | Danh sách sách trong giỏ: nút −/+ gửi số lượng cuối cùng, nút Gỡ, sách ngừng bán/hết hàng hiện mờ chỉ gỡ được, tạm tính và nút đặt hàng mờ | CẤM XÓA CHÚ THÍCH NÀY #}
+    <div class="cart">
+      <ul class="cart__list">
+        {% for line in cart.lines %}
+          <li class="cart-line{% if not line.available %} is-unavailable{% endif %}">
+            {% if line.is_active %}
+              <a class="cart-line__cover" href="{% url 'catalog:book_detail' line.book_id %}"><img src="{{ line.cover_url }}" alt="Bìa sách {{ line.title }}" width="72" height="108" loading="lazy"></a>
+            {% else %}
+              <span class="cart-line__cover"><img src="{{ line.cover_url }}" alt="Bìa sách {{ line.title }}" width="72" height="108" loading="lazy"></span>
+            {% endif %}
+            <div class="cart-line__info">
+              <p class="cart-line__title">
+                {% if line.is_active %}<a href="{% url 'catalog:book_detail' line.book_id %}">{{ line.title }}</a>{% else %}{{ line.title }}{% endif %}
+              </p>
+              <p class="cart-line__author">{{ line.author }}</p>
+              <p class="cart-line__price">{{ line.price|vnd }}{% if line.status_label %} <span class="cart-line__status">{{ line.status_label }}</span>{% endif %}</p>
+            </div>
+            <div class="cart-line__qty" role="group" aria-label="Số lượng {{ line.title }}">
+              <form method="post" action="{{ cart_update_url }}">
+                {% csrf_token %}
+                <input type="hidden" name="book_id" value="{{ line.book_id }}">
+                <input type="hidden" name="quantity" value="{{ line.quantity|add:'-1' }}">
+                <button class="icon-btn" type="submit" aria-label="Giảm một cuốn {{ line.title }}"{% if not line.can_decrease %} disabled{% endif %}>&minus;</button>
+              </form>
+              <span class="cart-line__count">{{ line.quantity }}</span>
+              <form method="post" action="{{ cart_update_url }}">
+                {% csrf_token %}
+                <input type="hidden" name="book_id" value="{{ line.book_id }}">
+                <input type="hidden" name="quantity" value="{{ line.quantity|add:'1' }}">
+                <button class="icon-btn" type="submit" aria-label="Thêm một cuốn {{ line.title }}"{% if not line.can_increase %} disabled{% endif %}>+</button>
+              </form>
+            </div>
+            <p class="cart-line__total">{% if line.available %}{{ line.line_total|vnd }}{% else %}&ndash;{% endif %}</p>
+            <form class="cart-line__remove" method="post" action="{{ cart_remove_url }}">
+              {% csrf_token %}
+              <input type="hidden" name="book_id" value="{{ line.book_id }}">
+              <button class="btn btn--link" type="submit" aria-label="Gỡ {{ line.title }} khỏi giỏ">Gỡ</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+      <aside class="cart__summary" aria-label="Tạm tính">
+        <p class="cart__row"><span>Tạm tính ({{ cart.item_count }} cuốn)</span><strong>{{ cart.subtotal|vnd }}</strong></p>
+        <p class="cart__note">Giá chốt khi đặt hàng. Mỗi sách tối đa {{ cart_max }} cuốn.{% if cart.has_unavailable %} Sách ngừng bán hoặc hết hàng không được tính.{% endif %}</p>
+        <button class="btn cart__order" type="button" disabled>Đặt hàng</button>
+        <p class="cart__note">Chức năng đặt hàng sắp có.</p>
+        <a class="btn btn--secondary cart__more" href="{% url 'catalog:home' %}">Xem thêm sách</a>
+      </aside>
+    </div>
+  {% else %}
+    <section class="area-empty">
+      {% include "components/icon.html" with name="shopping-bag" size="lg" %}
+      <p>Giỏ hàng đang trống.</p>
+      <a class="btn" href="{% url 'catalog:home' %}">Xem sách</a>
+    </section>
+  {% endif %}
 {% endblock %}

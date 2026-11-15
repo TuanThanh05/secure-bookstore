@@ -118,7 +118,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 113 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `rename_category` | 111 | Sửa tên thể loại bằng sp_category_rename, slug đổi theo tên | [ ] |
 | 114 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `delete_category` | 117 | Xóa thể loại bằng sp_category_delete | [ ] |
 | 115 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `_category_id` | 84 | Đổi id thể loại nhận từ request thành số nguyên, sai kiểu thì coi như không tìm thấy | [ ] |
-| 116 | Claude Opus 5.5 |  | `backend/core/management/commands/db_check_grants.py` | `Command` | 44 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi | [ ] |
+| 116 | Claude Opus 5.5 |  | `backend/core/management/commands/db_check_grants.py` | `Command` | 50 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi | [ ] |
 | 117 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `SlugAndNameTests` | 22 | Test tạo slug và chuẩn hóa tên thể loại tiếng Việt | [ ] |
 | 118 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `CategoryProcedureTests` | 48 | Test gọi thủ tục thể loại bằng cursor giả qua kết nối staff, đổi lỗi SIGNAL | [ ] |
 | 119 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `CategoryListTests` | 101 | Test đọc danh sách thể loại qua sp_category_list và lệnh kiểm tra quyền từ chối settings.migrate | [ ] |
@@ -228,15 +228,36 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 223 | Claude Opus 5.5 |  | `backend/catalog/tests/test_book_detail.py` | `BookDetailViewTests` | 21 | Test trang chi tiết sách và gửi đánh giá: 404 sách ẩn, form theo loại người xem, CSRF, chỉ POST, escape nội dung | [ ] |
 | 224 | Claude Opus 5.5 |  | `backend/catalog/tests/test_public_catalog.py` | `PublicBookDetailServiceTests` | 74 | Test lấy một sách cho trang chi tiết: id sai không xuống CSDL, sách ẩn trả None, có tên thể loại | [ ] |
 | 225 | Claude Opus 5.5 |  | `frontend/static/css/dashboard.css` | `.dash-field input[type="file"]` | 135 | Kiểu ô chọn ảnh bìa dạng vùng viền đứt có nút viên thuốc và khung xem ảnh bìa hiện tại | [ ] |
-| 226 | Claude Opus 5.5 |  | `database/objects/31_cart.sql` | `PROCEDURE sp_cart_add` | 39 | Thủ tục thêm sách vào giỏ: kiểm tra khách, sách còn hàng, cộng dồn tối đa 5 cuốn, tối đa 30 đầu sách, khóa giỏ chống bấm trùng | [ ] |
-| 227 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `CartError` | 21 | Lỗi nghiệp vụ khi thêm vào giỏ, mang mã lỗi và câu tiếng Việt | [ ] |
-| 228 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `_int_in_range` | 29 | Đổi id sách và số lượng nhận từ request thành số nguyên trong khoảng cho phép | [ ] |
-| 229 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `_allow_cart_add` | 42 | Giới hạn mỗi khách thêm vào giỏ tối đa CART_ADD_RATE_LIMIT lần trong CART_ADD_RATE_WINDOW giây | [ ] |
-| 230 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `add_to_cart` | 56 | Thêm sách vào giỏ bằng sp_cart_add; user lấy từ phiên đăng nhập, có giới hạn tần suất; trả số cuốn của sách đó trong giỏ sau khi thêm | [ ] |
+| 226 | Claude Opus 5.5 |  | `database/objects/31_cart.sql` | `PROCEDURE sp_cart_add` | 59 | Thủ tục thêm sách vào giỏ: kiểm tra khách, sách còn hàng, cộng dồn tối đa 5 cuốn, tối đa 30 đầu sách, khóa giỏ chống bấm trùng | [ ] |
+| 227 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `CartError` | 26 | Lỗi nghiệp vụ khi thêm vào giỏ, mang mã lỗi và câu tiếng Việt | [ ] |
+| 228 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `_int_in_range` | 34 | Đổi id sách và số lượng nhận từ request thành số nguyên trong khoảng cho phép | [ ] |
+| 229 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `_allow_cart_action` | 47 | Giới hạn tần suất thao tác giỏ hàng theo từng khách: thêm vào giỏ (CART_ADD_RATE_*) và đổi số lượng/gỡ (CART_UPDATE_RATE_*) | [ ] |
+| 230 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `add_to_cart` | 97 | Thêm sách vào giỏ bằng sp_cart_add; user lấy từ phiên đăng nhập, có giới hạn tần suất; trả số cuốn của sách đó trong giỏ sau khi thêm | [ ] |
 | 231 | Claude Opus 5.5 |  | `backend/orders/forms.py` | `CartAddForm` | 6 | Form thêm vào giỏ: chỉ id sách và số lượng 1–5, không có giá hay user | [ ] |
-| 232 | Claude Opus 5.5 |  | `backend/orders/views.py` | `_safe_back_url` | 33 | Chỉ quay lại địa chỉ nội bộ an toàn sau khi thêm vào giỏ, chặn open redirect | [ ] |
-| 233 | Claude Opus 5.5 |  | `backend/orders/views.py` | `cart_add` | 44 | Nhận form thêm vào giỏ (chỉ POST, CSRF): ẩn danh đi đăng nhập, nhân viên bị từ chối, xong thì ở lại trang đang xem kèm thông báo | [ ] |
+| 232 | Claude Opus 5.5 |  | `backend/orders/views.py` | `_safe_back_url` | 94 | Chỉ quay lại địa chỉ nội bộ an toàn sau khi thêm vào giỏ, chặn open redirect | [ ] |
+| 233 | Claude Opus 5.5 |  | `backend/orders/views.py` | `cart_add` | 105 | Nhận form thêm vào giỏ (chỉ POST, CSRF): ẩn danh đi đăng nhập, nhân viên bị từ chối, xong thì ở lại trang đang xem kèm thông báo | [ ] |
 | 234 | Claude Opus 5.5 |  | `frontend/templates/shop/book_detail.html` | `{% if book.in_stock and not user.is_staff %}` | 48 | Form thêm vào giỏ cạnh nút đặt hàng: ô số lượng 1–5, khóa khi hết hàng | [ ] |
 | 235 | Claude Opus 5.5 |  | `frontend/static/css/shop.css` | `.cart-add { display: flex; align-items: center; gap: var(--s` | 274 | Kiểu form thêm vào giỏ ở trang chi tiết: ô số lượng gọn cạnh nút | [ ] |
 | 236 | Claude Opus 5.5 |  | `backend/orders/tests/test_cart_add.py` | `AddToCartServiceTests` | 25 | Test service thêm vào giỏ bằng cursor giả: user lấy từ phiên, số lượng 1–5, chặn nhân viên, giới hạn tần suất, đổi lỗi SIGNAL | [ ] |
 | 237 | Claude Opus 5.5 |  | `backend/orders/tests/test_cart_add.py` | `CartAddViewTests` | 99 | Test view thêm vào giỏ: chỉ POST, CSRF, ẩn danh đi đăng nhập, nhân viên bị từ chối, chặn open redirect, ở lại trang đang xem | [ ] |
+| 238 | Claude Opus 5.5 |  | `database/objects/31_cart.sql` | `PROCEDURE sp_cart_list` | 144 | Thủ tục đọc giỏ của khách: sách, giá hiện tại, số lượng, tình trạng còn bán/còn hàng, không trả số tồn kho | [ ] |
+| 239 | Claude Opus 5.5 |  | `database/objects/31_cart.sql` | `PROCEDURE sp_cart_set_quantity` | 174 | Thủ tục đặt số lượng mới (1–5) cho sách trong giỏ: dùng cho cả tăng và giảm, khóa giỏ chống bấm trùng, sách ẩn không đổi được, hết hàng không tăng được | [ ] |
+| 240 | Claude Opus 5.5 |  | `database/objects/31_cart.sql` | `PROCEDURE sp_cart_remove` | 242 | Thủ tục gỡ một sách khỏi giỏ của khách; gỡ được cả sách đã ngừng bán hoặc hết hàng | [ ] |
+| 241 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `_guard_cart_write` | 60 | Kiểm tra chung trước khi gọi thủ tục giỏ hàng: chỉ khách, không trong transaction.atomic, giới hạn tần suất có ghi log | [ ] |
+| 242 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `_call_cart_proc` | 71 | Gọi thủ tục giỏ hàng với tham số truyền riêng, đổi lỗi SIGNAL thành CartError; lỗi khác (thiếu quyền...) để nguyên | [ ] |
+| 243 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `CartLine` | 107 | Một dòng trong giỏ cho template: giá hiện tại, thành tiền, tình trạng và nút nào được bấm (tăng/giảm/gỡ) | [ ] |
+| 244 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `Cart` | 150 | Cả giỏ hàng: các dòng, tạm tính và số cuốn chỉ tính sách còn bán và còn hàng | [ ] |
+| 245 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `get_cart` | 168 | Đọc giỏ của khách đang đăng nhập bằng sp_cart_list | [ ] |
+| 246 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `set_cart_quantity` | 179 | Đặt số lượng mới (1–5) cho sách trong giỏ bằng sp_cart_set_quantity, dùng cho nút tăng và giảm | [ ] |
+| 247 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `remove_from_cart` | 190 | Gỡ một sách khỏi giỏ bằng sp_cart_remove | [ ] |
+| 248 | Claude Opus 5.5 |  | `backend/orders/forms.py` | `CartQuantityForm` | 12 | Form đổi số lượng trong giỏ: id sách và số lượng cuối cùng 1–5 | [ ] |
+| 249 | Claude Opus 5.5 |  | `backend/orders/forms.py` | `CartRemoveForm` | 18 | Form gỡ sách khỏi giỏ: chỉ id sách | [ ] |
+| 250 | Claude Opus 5.5 |  | `backend/orders/views.py` | `cart` | 20 | Trang giỏ hàng của khách: đọc bằng sp_cart_list, không lưu cache; nhân viên không có giỏ | [ ] |
+| 251 | Claude Opus 5.5 |  | `backend/orders/views.py` | `_cart_page_guard` | 36 | Kiểm tra chung cho form trên trang giỏ: ẩn danh đi đăng nhập rồi quay lại giỏ, nhân viên bị từ chối | [ ] |
+| 252 | Claude Opus 5.5 |  | `backend/orders/views.py` | `cart_update` | 47 | Nhận nút tăng/giảm trên trang giỏ (chỉ POST, CSRF): gửi số lượng cuối cùng, xong quay về giỏ | [ ] |
+| 253 | Claude Opus 5.5 |  | `backend/orders/views.py` | `cart_remove` | 66 | Nhận nút gỡ sách trên trang giỏ (chỉ POST, CSRF), không hỏi xác nhận, xong quay về giỏ | [ ] |
+| 254 | Claude Opus 5.5 |  | `frontend/templates/shop/cart.html` | `<div class="cart">` | 11 | Danh sách sách trong giỏ: nút −/+ gửi số lượng cuối cùng, nút Gỡ, sách ngừng bán/hết hàng hiện mờ chỉ gỡ được, tạm tính và nút đặt hàng mờ | [ ] |
+| 255 | Claude Opus 5.5 |  | `frontend/static/css/account-area.css` | `.cart { display: grid; grid-template-columns: minmax(0, 1fr)` | 48 | Kiểu trang giỏ hàng: danh sách sách bên trái, ô tạm tính bên phải, sách không bán được hiện mờ, xếp dọc trên màn hình hẹp | [ ] |
+| 256 | Claude Opus 5.5 |  | `backend/orders/tests/test_cart_page.py` | `CartDataTests` | 30 | Test dữ liệu giỏ: tạm tính chỉ tính sách còn bán, nút tăng/giảm khóa đúng lúc, nhãn ngừng bán/hết hàng | [ ] |
+| 257 | Claude Opus 5.5 |  | `backend/orders/tests/test_cart_page.py` | `CartPageServiceTests` | 53 | Test service trang giỏ bằng cursor giả: user lấy từ phiên, id/số lượng kiểm tra trước khi xuống CSDL, giới hạn tần suất, đổi lỗi SIGNAL | [ ] |
+| 258 | Claude Opus 5.5 |  | `backend/orders/tests/test_cart_page.py` | `CartPageViewTests` | 131 | Test view trang giỏ: hiển thị dòng, nút khóa, không cache; form chỉ POST + CSRF, ẩn danh đi đăng nhập, nhân viên bị từ chối, luôn quay về giỏ | [ ] |
