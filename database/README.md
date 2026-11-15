@@ -61,15 +61,24 @@ sudo systemctl stop docker.socket docker                # tắt luôn dịch v�
 | Đổi mật khẩu trong `.env` hoặc `database/.env.db` (`DB_MIGRATE_PASSWORD`) | `db_setup` |
 | `git pull` có migration mới | `migrate --settings=bookstore.settings.migrate` |
 | Thêm/sửa file trong `objects/` hoặc `grants/` | `db_apply` |
-| Muốn làm lại sạch từ đầu (Docker) | `docker compose down -v`, `up -d`, rồi cả Bước B |
+| Muốn làm lại sạch từ đầu, hoặc `git pull` có sửa `schema/01_tables.sql` | Xem mục "Làm lại sạch" ngay dưới |
 
 Các lệnh đều chạy lại nhiều lần được, không hỏng dữ liệu.
+
+## Làm lại sạch
+
+Cần khi `01_tables.sql` bị sửa: migration `core/0001` đã đánh dấu "đã chạy" trên máy bạn nên `migrate` sẽ không đọc lại file đó. Cách này **xóa toàn bộ dữ liệu** trong CSDL `bookstore` (tài khoản, sách thử, đơn hàng).
+
+- **Docker:** `docker compose down -v`, `docker compose up -d`, đợi `(healthy)`, rồi làm lại cả Bước B.
+- **MySQL cài thường (Windows):** mở MySQL bằng root (`mysql -u root -p`), gõ `DROP DATABASE bookstore;`, thoát, rồi làm lại cả Bước B. Bước B tự tạo lại CSDL, role và tài khoản.
+
+Sau đó nạp lại dữ liệu thử nếu có (file seed cục bộ của bạn).
 
 ## Quy ước khi viết thêm
 
 - Trigger/view/thủ tục: file mới trong `objects/`, tên bắt đầu bằng số theo thứ tự phụ thuộc (`1x_` trigger, `2x_` view, `3x_` thủ tục). Mỗi file tự `DROP ... IF EXISTS` trước khi tạo; được dùng `DELIMITER`. Luôn ghi `DEFINER = 'bookstore_definer'@'localhost'`.
 - Đối tượng mới cần quyền: thêm `GRANT ... TO 'r_customer'` (hoặc `r_staff`) vào `grants/`, rồi chạy `db_apply`.
-- Không sửa `schema/01_tables.sql` sau khi cả nhóm đã migrate. Đổi lược đồ: thêm `schema/02_...sql` và một migration mới đọc file đó.
+- Đổi lược đồ: thường thêm `schema/0N_...sql` và một migration mới đọc file đó. Chỉ sửa thẳng `schema/01_tables.sql` khi cả nhóm đã thống nhất, và ghi rõ trong PR là mọi người phải "Làm lại sạch".
 - `manage.py test` tạo CSDL tạm `test_bookstore` **không có** trigger và phân quyền. Kiểm tra phân quyền thì thử trên CSDL thật.
 
 ## Lỗi hay gặp

@@ -22,6 +22,10 @@
 -- ---------------------------------------------------------------------
 GRANT SELECT, TRIGGER ON accounts_user TO 'bookstore_definer'@'localhost';
 
+-- Trigger trg_pwhist_* (objects/11_...): thêm mã băm mới, đọc để tìm dòng
+-- thứ 5, xóa các dòng cũ hơn. Chỉ definer có INSERT/DELETE trên bảng này.
+GRANT SELECT, INSERT, DELETE ON accounts_passwordhistory TO 'bookstore_definer'@'localhost';
+
 -- ---------------------------------------------------------------------
 -- r_customer: kết nối "default" của Django (app_customer)
 -- ---------------------------------------------------------------------
@@ -38,6 +42,11 @@ GRANT SELECT ON accounts_user_user_permissions TO 'r_customer';
 
 -- Đăng ký, đăng nhập, đổi mật khẩu. Trigger trg_user_guard_* chặn leo thang quyền.
 GRANT SELECT, INSERT, UPDATE ON accounts_user  TO 'r_customer';
+
+-- Lịch sử mật khẩu: chỉ ĐỌC để so sánh mật khẩu mới với 5 mã băm gần nhất.
+-- Không cấp INSERT/UPDATE/DELETE: việc ghi do trigger làm, nên dù có lỗi
+-- SQL injection, kẻ tấn công cũng không xóa được lịch sử để dùng lại mật khẩu cũ.
+GRANT SELECT ON accounts_passwordhistory       TO 'r_customer';
 
 -- Phiên đăng nhập (SESSION_ENGINE mặc định lưu trong CSDL)
 GRANT SELECT, INSERT, UPDATE, DELETE ON django_session TO 'r_customer';

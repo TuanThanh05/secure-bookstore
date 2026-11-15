@@ -87,3 +87,10 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 081 | Claude Opus 5.5 |  | `frontend/templates/account/profile_update.html` | `<header class="area-header">` | 6 | Form sửa họ, tên, SĐT; tên đăng nhập và email chỉ hiển thị, không sửa | [ ] |
 | 082 | Claude Opus 5.5 |  | `backend/core/tests/test_crypto.py` | `FieldCryptoTests` | 13 | Test mã hóa AES-GCM: giải mã đúng, nonce ngẫu nhiên, chặn sửa dữ liệu, sai khóa, sai ngữ cảnh | [ ] |
 | 083 | Claude Opus 5.5 |  | `backend/accounts/tests/test_profile_update.py` | `ProfileUpdateTests` | 17 | Test xác thực lại của khách và cập nhật họ, tên, SĐT mã hóa | [ ] |
+| 084 | Claude Opus 5.5 |  | `frontend/static/css/account-area.css` | `.area-form--center { margin-left: auto; margin-right: auto; ` | 44 | Căn giữa form xác thực lại và đổi mật khẩu theo chiều ngang vùng nội dung tài khoản | [ ] |
+| 085 | Claude Opus 5.5 |  | `database/schema/01_tables.sql` | `TABLE accounts_passwordhistory` | 40 | Bảng lưu 5 mã băm mật khẩu gần nhất của mỗi tài khoản | [ ] |
+| 086 | Claude Opus 5.5 |  | `database/objects/11_trg_accounts_password_history.sql` | `CREATE DEFINER = 'bookstore_definer'@'localhost'` | 28 | Trigger lưu mật khẩu đầu tiên của tài khoản mới vào lịch sử | [ ] |
+| 087 | Claude Opus 5.5 |  | `database/objects/11_trg_accounts_password_history.sql` | `CREATE DEFINER = 'bookstore_definer'@'localhost'` | 40 | Trigger lưu mật khẩu mới vào lịch sử khi đổi và chỉ giữ 5 dòng mới nhất | [ ] |
+| 088 | Claude Opus 5.5 |  | `backend/accounts/models.py` | `PasswordHistory` | 58 | Model chỉ đọc cho bảng lịch sử mã băm mật khẩu do trigger ghi | [ ] |
+| 089 | Claude Opus 5.5 |  | `backend/accounts/validators.py` | `PasswordHistoryValidator` | 7 | Chặn mật khẩu mới trùng một trong N mật khẩu gần nhất, tính cả mật khẩu đang dùng | [ ] |
+| 090 | Claude Opus 5.5 |  | `backend/accounts/tests/test_password_history.py` | `PasswordHistoryTests` | 18 | Test chặn dùng lại 5 mật khẩu gần nhất, tính cả mật khẩu hiện tại, qua validator và trang đổi mật khẩu | [ ] |
