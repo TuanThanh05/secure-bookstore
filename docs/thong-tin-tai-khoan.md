@@ -93,3 +93,23 @@ Luồng: trang Thông tin tài khoản → nút **Cập nhật thông tin** → 
 - **Đánh đổi đã biết:** khi nâng cấp Django tăng số vòng băm, Django tự băm lại mật khẩu của khách lúc đăng nhập. Cột `password` đổi dù mật khẩu không đổi, trigger ghi thêm một dòng trùng, nên lịch sử thực tế ngắn đi một mật khẩu. Hiếm gặp, chấp nhận.
 - Số 5 xuất hiện ở hai chỗ phải khớp nhau: `OPTIONS history_count` trong `settings/base.py` và `OFFSET 4` trong trigger.
 - **Kiểm thử:** `accounts/tests/test_password_history.py` (7 test). Trigger chỉ kiểm tra được trên CSDL thật vì CSDL test không có trigger: đăng ký 1 dòng, đổi 6 lần còn 5 dòng, sửa cột khác không thêm dòng.
+
+## 9. Đổi mật khẩu quản trị viên – chỉ trên máy chủ
+
+```bash
+cd backend
+python manage.py doi_mat_khau_admin <tên đăng nhập> --settings=bookstore.settings.migrate
+```
+
+- **Trên web không có đường nào đổi được mật khẩu nhân viên.** Không có nút đổi, không có quên mật khẩu (trang quên mật khẩu và đổi mật khẩu của khách đều loại nhân viên), project không bật `django.contrib.admin`. Kẻ chiếm được phiên, biết mật khẩu hoặc đọc trộm được hộp thư cũng không đổi được mật khẩu admin qua web. Đây là nguyên tắc **khôi phục tài khoản quyền cao qua kênh ngoài**: chỉ người vào được máy chủ và có mật khẩu tài khoản `bookstore_migrate` mới làm được.
+- **Lệnh làm gì** (`accounts/management/commands/doi_mat_khau_admin.py`):
+  1. Từ chối nếu đang chạy bằng tài khoản web (`app_customer`/`app_staff`), trước khi hỏi mật khẩu.
+  2. Chỉ nhận tài khoản `is_staff`; tên khách hoặc tên không tồn tại đều bị từ chối.
+  3. Hỏi mật khẩu 2 lần bằng `getpass` (không hiện trên màn hình, không lưu vào lịch sử terminal), kiểm tra đủ `AUTH_PASSWORD_VALIDATORS`, kể cả **không trùng 5 mật khẩu gần nhất**. Sai 3 lần thì dừng, mật khẩu giữ nguyên.
+  4. Lưu bằng `save(update_fields=["password"])`; trigger ghi lịch sử mật khẩu như mọi lần đổi khác.
+  5. **Xóa mọi phiên đang mở của nhân viên đó** ngay lập tức (phiên của người khác giữ nguyên). Kể cả không xóa, Django cũng tự hủy phiên cũ ở request tiếp theo vì mã băm mật khẩu lưu trong phiên không còn khớp.
+  6. Ghi log `password_changed` với `ip_address = cli`, `detail = {"via": "cli", "sessions_ended": n}`.
+  7. Gửi thư báo tới email gốc, **không kèm link nào** (không có gì để bấm vào trên web).
+- **Email gốc phải là email thật**: kiểm tra email của tài khoản admin sau `createsuperuser`.
+- Trang thông tin quản trị ghi "Không thể đổi mật khẩu". Đây chỉ là lớp gây nhiễu, **không tính là biện pháp bảo mật**; biện pháp thật là không có đường đổi trên web.
+- **Kiểm thử:** `accounts/tests/test_admin_password_command.py` (9 test).
