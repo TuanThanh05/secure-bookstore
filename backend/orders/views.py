@@ -2,12 +2,13 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
+from django.core.paginator import Paginator
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.cache import never_cache
 from django.http import Http404
-from django.views.decorators.http import require_GET, require_http_methods, require_POST, require_safe
+from django.views.decorators.http import require_http_methods, require_POST, require_safe
 
 from accounts.profile import decrypt_phone
 from core.security_log import log_event
@@ -15,13 +16,8 @@ from core.security_log import log_event
 from .cart_services import (CART_MAX_PER_BOOK, CartError, add_to_cart, get_cart, remove_from_cart,
                             set_cart_quantity)
 from .forms import CartAddForm, CartQuantityForm, CartRemoveForm, CheckoutForm
-from .services import (ORDER_CODE_RE, SHIPPING_FEE, OrderError, cancel_order, get_order, new_idempotency_key,
-                       place_order)
-
-ORDER_TABS = {
-    "active": "Đang xử lý",
-    "history": "Lịch sử",
-}
+from .services import (ORDER_CODE_RE, ORDER_GROUPS, ORDER_LIST_MAX_OFFSET, ORDER_LIST_PAGE_SIZE, SHIPPING_FEE,
+                       OrderError, cancel_order, get_order, list_my_orders, new_idempotency_key, place_order)
 
 
 # AI-TRACE#250 | Claude Opus 5.5 | Trang giỏ hàng của khách: đọc bằng sp_cart_list, không lưu cache; nhân viên không có giỏ | CẤM XÓA CHÚ THÍCH NÀY
@@ -89,13 +85,30 @@ def cart_remove(request):
     return redirect("orders:cart")
 
 
+def _page_number(request):
+    try:
+        return min(max(1, int(request.GET.get("trang", 1))), ORDER_LIST_MAX_OFFSET // ORDER_LIST_PAGE_SIZE + 1)
+    except (TypeError, ValueError):
+        return 1
+
+
+# AI-TRACE#367 | Claude Opus 5.5 | Trang Đơn hàng của tôi: hai tab Đang xử lý/Lịch sử đọc bằng sp_order_list_mine, phân trang, không lưu cache; nhân viên không có đơn | CẤM XÓA CHÚ THÍCH NÀY
 @login_required
-@require_GET
+@never_cache
+@require_safe
 def order_list(request):
+    if request.user.is_staff:
+        messages.error(request, "Tài khoản quản trị không có đơn hàng.")
+        return redirect("dashboard:index")
     status = request.GET.get("status", "active")
-    if status not in ORDER_TABS:
+    if status not in ORDER_GROUPS:
         status = "active"
-    return render(request, "account/orders.html", {"status": status, "tabs": ORDER_TABS})
+    page = _page_number(request)
+    total, orders = list_my_orders(request, status, page)
+    pager = Paginator(range(total), ORDER_LIST_PAGE_SIZE).get_page(page)
+    return render(request, "account/orders.html", {
+        "status": status, "tabs": ORDER_GROUPS, "orders": orders, "total": total, "pager": pager,
+    })
 
 
 # AI-TRACE#232 | Claude Opus 5.5 | Chỉ quay lại địa chỉ nội bộ an toàn sau khi thêm vào giỏ, chặn open redirect | CẤM XÓA CHÚ THÍCH NÀY

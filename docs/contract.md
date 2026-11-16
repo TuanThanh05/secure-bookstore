@@ -277,3 +277,29 @@ Chốt 2026-11-16, tạm thời khi chưa có cổng thật. Chi tiết: `docs/t
 - `POST /payments/mo-phong/<mã đơn>/` (`payments:simulate`) → `payments.services.simulate_payment(request, code)` → `sp_payment_simulate(user_id, code, client_ip, OUT transaction_id)`.
 - Thủ tục khóa dòng đơn của chính khách, chỉ nhận đơn `pending` còn hạn, ghi một dòng `payments_payment` (`provider = 'simulated'`, số tiền lấy từ `total` của đơn) rồi đổi đơn sang `paid` trong cùng giao dịch. Mã lỗi: `ORDER_NOT_FOUND` (→ 404 + `idor_attempt`), `ORDER_ALREADY_PAID`, `ORDER_NOT_PAYABLE`, `ORDER_EXPIRED`, `NOT_CUSTOMER`, `INVALID_INPUT`; service thêm `NOT_CONFIGURED`, `RATE_LIMITED`.
 - Giao dịch đã ghi không sửa/xóa được (trigger `PAYMENT_LOCKED`); một đơn tối đa một giao dịch thành công (UNIQUE `uq_payment_success_order`).
+
+## Luồng trạng thái đơn sau khi thanh toán (chốt 2026-11-16)
+
+```
+pending → paid → confirmed → packed → shipped → delivered
+Chờ thanh toán → Đã thanh toán → Đã tiếp nhận → Đã đóng gói → Đang giao → Đã giao
+pending → cancelled (khách hủy hoặc quá hạn)
+```
+
+- Lược đồ `database/schema/07_order_status_flow.sql` (migration `core/0008_order_status_flow`): thêm `confirmed`, `packed` vào CHECK `ck_order_status`; `ck_order_paid_has_time` bắt buộc `paid_at` với mọi trạng thái từ `paid` trở đi.
+- Trigger `32_trg_orders_guard.sql` chỉ cho đi tới **đúng một bước**, không nhảy cóc, không quay lại (kể cả root sửa tay → `ORDER_LOCKED`). Đơn từ `paid` trở đi không hủy được. `sp_payment_simulate` coi mọi trạng thái từ `paid` trở đi là `ORDER_ALREADY_PAID`.
+- Bốn bước sau `paid` do admin bấm (gói "Quản lý đơn hàng", nhánh sau). Trigger 34 tự ghi nhật ký từng bước.
+
+## Đơn hàng của tôi: `sp_order_list_mine`
+
+Trang `/orders/` (`orders:list`), hai tab:
+
+| Tab | `status=` | Trạng thái |
+| --- | --- | --- |
+| Đang xử lý | `active` (mặc định) | pending, paid, confirmed, packed, shipped |
+| Lịch sử | `history` | delivered, cancelled (trạng thái cuối) |
+
+- **Không dùng view**: mọi khách vào CSDL bằng cùng tài khoản `app_customer`, MySQL không biết ai đang xem, nên view "đơn của khách" sẽ trả đơn của mọi người. Thủ tục `sp_order_list_mine(user_id, group, offset, limit)` nhận `user_id` do Django lấy từ phiên và lọc `WHERE user_id` trong CSDL. Chỉ `r_customer` được gọi; `app_staff` gọi → 1370; id quản trị → `NOT_CUSTOMER`.
+- Trả 2 bộ kết quả: tổng số + một trang (mới nhất trước): mã đơn, trạng thái, tổng tiền, các mốc thời gian, số cuốn, số đầu sách, tên cuốn đầu. **Không trả SĐT/địa chỉ** (xem ở trang chi tiết đơn). Kiểm tra: nhóm chỉ `active`/`history`, `limit` 1–50, `offset` 0–100000 → sai là `INVALID_INPUT`.
+- Django: `orders.services.list_my_orders(request, group, page)` (nhóm sai không xuống CSDL, 10 đơn mỗi trang, `OrderSummary` chỉ đọc), view `order_list` (`login_required`, `never_cache`, `require_safe`, nhân viên → dashboard, tab sai → Đang xử lý, `trang` sai → 1). Mỗi đơn là một thẻ bấm sang `/orders/don/<mã đơn>/`; đơn chờ thanh toán đã quá hạn hiện "Quá hạn thanh toán".
+- Đã kiểm tra trên CSDL thật: tổng số mỗi tab khớp với đếm trực tiếp; khách B không thấy đơn khách A; phân trang đúng; nhóm/limit/offset sai bị từ chối; trigger chặn paid → shipped, packed → delivered (nhảy cóc), confirmed → paid, packed → confirmed, delivered → shipped/cancelled (quay lại) và trạng thái lạ; nhật ký đơn ghi đủ pending, paid, confirmed, packed, shipped, delivered.

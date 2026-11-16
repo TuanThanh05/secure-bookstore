@@ -19,7 +19,9 @@
 --     - Không bao giờ đổi: mã đơn, người đặt, tiền sách, phí ship, tổng tiền,
 --       thông tin giao hàng, mã chống trùng, ngày tạo, hạn thanh toán.
 --     - Chỉ đổi trạng thái theo đúng chiều:
---         pending → paid, pending → cancelled, paid → shipped, shipped → delivered
+--         pending → paid, pending → cancelled,
+--         paid → confirmed → packed → shipped → delivered (từng bước một,
+--         không nhảy cóc, không quay lại – chốt 2026-11-16)
 --       paid_at chỉ được ghi một lần lúc chuyển sang 'paid',
 --       cancelled_at chỉ được ghi một lần lúc chuyển sang 'cancelled'.
 --     - Không bao giờ xóa đơn (giữ lịch sử).
@@ -79,7 +81,7 @@ BEGIN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ORDER_LOCKED';
 END$$
 
--- AI-TRACE#264 | Claude Opus 5.5 | Trigger cấm đổi tiền, thông tin giao hàng của đơn; trạng thái chỉ đi đúng chiều, mốc thanh toán/hủy ghi một lần | CẤM XÓA CHÚ THÍCH NÀY
+-- AI-TRACE#264 | Claude Opus 5.5 | Trigger cấm đổi tiền, thông tin giao hàng của đơn; trạng thái chỉ đi tới đúng một bước (đã thanh toán → tiếp nhận → đóng gói → đang giao → đã giao), không quay lại; mốc thanh toán/hủy ghi một lần | CẤM XÓA CHÚ THÍCH NÀY
 CREATE DEFINER = 'bookstore_definer'@'localhost'
 TRIGGER trg_order_guard_update
 BEFORE UPDATE ON orders_order
@@ -98,8 +100,10 @@ BEGIN
 
     IF NOT (NEW.status <=> OLD.status) AND NOT (
            (OLD.status = 'pending' AND NEW.status IN ('paid', 'cancelled'))
-        OR (OLD.status = 'paid'    AND NEW.status = 'shipped')
-        OR (OLD.status = 'shipped' AND NEW.status = 'delivered')) THEN
+        OR (OLD.status = 'paid'      AND NEW.status = 'confirmed')
+        OR (OLD.status = 'confirmed' AND NEW.status = 'packed')
+        OR (OLD.status = 'packed'    AND NEW.status = 'shipped')
+        OR (OLD.status = 'shipped'   AND NEW.status = 'delivered')) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ORDER_LOCKED';
     END IF;
 

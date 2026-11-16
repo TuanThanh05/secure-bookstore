@@ -59,10 +59,19 @@
     {% elif order.expired %}
       <p class="cart__note">Đơn đã quá hạn thanh toán và sẽ được hệ thống tự hủy trong ít phút, sách được trả lại kho.</p>
     {% elif order.status == "paid" %}
-      <p class="cart__note">Đơn đã thanh toán, đang chờ cửa hàng giao hàng.</p>
+      <p class="cart__note">Đơn đã thanh toán, đang chờ cửa hàng tiếp nhận.</p>
+    {% elif order.status == "confirmed" %}
+      <p class="cart__note">Cửa hàng đã tiếp nhận đơn và đang chuẩn bị sách.</p>
+    {% elif order.status == "packed" %}
+      <p class="cart__note">Đơn đã đóng gói, sắp được giao.</p>
+    {% elif order.status == "shipped" %}
+      <p class="cart__note">Đơn đang được giao tới bạn.</p>
+    {% elif order.status == "delivered" %}
+      <p class="cart__note">Đơn đã giao thành công. Cảm ơn bạn đã mua sách!</p>
     {% elif order.status == "cancelled" %}
       <p class="cart__note">Đơn đã hủy, sách trong đơn đã được trả lại kho.</p>
     {% endif %}
+    <a class="btn btn--secondary" href="{% url 'orders:list' %}">Đơn hàng của tôi</a>
     <a class="btn btn--secondary" href="{% url 'catalog:home' %}">Tiếp tục xem sách</a>
   </div>
 

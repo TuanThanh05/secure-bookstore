@@ -255,3 +255,12 @@ GRANT SELECT, INSERT ON payments_payment             TO 'bookstore_definer'@'loc
 GRANT TRIGGER        ON payments_payment             TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_payment_simulate       TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_payment_simulate       TO 'r_customer';
+
+-- ---------------------------------------------------------------------
+-- Đơn hàng của tôi (database/objects/36_order_list.sql)
+-- Definer: đọc orders_order, orders_orderitem (đã có).
+-- r_customer: chỉ gọi sp_order_list_mine (thủ tục tự lọc theo user_id).
+-- r_staff: không có gì ở đây.
+-- ---------------------------------------------------------------------
+GRANT EXECUTE ON PROCEDURE sp_order_list_mine        TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_order_list_mine        TO 'r_customer';
