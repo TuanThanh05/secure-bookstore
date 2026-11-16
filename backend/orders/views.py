@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
@@ -212,7 +213,7 @@ def checkout(request):
     }, status=status)
 
 
-# AI-TRACE#274 | Claude Opus 5.5 | Trang chi tiết đơn của chính khách theo mã đơn; mã sai hoặc đơn người khác đều trả 404 như nhau | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#274 | Claude Opus 5.5 | Trang chi tiết đơn của chính khách theo mã đơn (kèm cờ bật thanh toán mô phỏng); mã sai hoặc đơn người khác đều trả 404 như nhau | CẤM XÓA CHÚ THÍCH NÀY
 @login_required
 @never_cache
 @require_safe
@@ -225,7 +226,7 @@ def order_detail(request, code):
     except OrderError as exc:
         _log_order_probe(request, code, exc)
         raise Http404 from None
-    return render(request, "shop/order_detail.html", {"order": order})
+    return render(request, "shop/order_detail.html", {"order": order, "payment_simulation": settings.PAYMENT_SIMULATION})
 
 
 # AI-TRACE#288 | Claude Opus 5.5 | Nhận nút hủy đơn (chỉ POST, CSRF, sau bước xác nhận trên trang đơn): đơn người khác/mã sai trả 404, xong quay về trang đơn | CẤM XÓA CHÚ THÍCH NÀY

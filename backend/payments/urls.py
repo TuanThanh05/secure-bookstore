@@ -1,10 +1,9 @@
-"""URL của app payments. Dùng trong template: {% url 'payments:<tên>' %}"""
-from django.urls import path  # noqa: F401  (dùng khi thêm URL)
+from django.urls import path
 
-from . import views  # noqa: F401
+from . import views
 
 app_name = "payments"
 
 urlpatterns = [
-    # Ví dụ: path("", views.index, name="index"),
+    path("mo-phong/<str:code>/", views.simulate, name="simulate"),
 ]

@@ -216,6 +216,9 @@ ORDER_PLACE_RATE_LIMIT = 5                          # đặt hàng: tối đa 5 
 ORDER_PLACE_RATE_WINDOW = 600
 ORDER_CANCEL_RATE_LIMIT = 10                        # hủy đơn: tối đa 10 lần trong ORDER_CANCEL_RATE_WINDOW
 ORDER_CANCEL_RATE_WINDOW = 600
+PAYMENT_SIMULATION = env.bool("PAYMENT_SIMULATION", default=False)   # nút "Thanh toán (mô phỏng)", tạm thời khi chưa có cổng thật
+PAYMENT_SIMULATE_RATE_LIMIT = 10                    # bấm thanh toán mô phỏng: tối đa 10 lần trong PAYMENT_SIMULATE_RATE_WINDOW
+PAYMENT_SIMULATE_RATE_WINDOW = 600
 
 LOG_DIR = REPO_DIR / "logs"
 LOG_DIR.mkdir(exist_ok=True)

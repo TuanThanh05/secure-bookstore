@@ -242,3 +242,16 @@ GRANT EXECUTE ON PROCEDURE sp_staff_audit_log        TO 'bookstore_definer'@'loc
 GRANT EXECUTE ON PROCEDURE sp_purge_old_logs         TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_staff_security_events  TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_staff_audit_log        TO 'r_staff';
+
+-- ---------------------------------------------------------------------
+-- Thanh toán mô phỏng (database/objects/35_payment_simulate.sql)
+-- Definer: ghi giao dịch vào payments_payment (trigger cấm sửa/xóa), đổi đơn
+-- sang 'paid' (đã có UPDATE orders_order, trigger 32 chỉ cho pending → paid).
+-- r_customer: chỉ gọi sp_payment_simulate; không có quyền nào trên
+-- payments_payment. Django chỉ gọi khi PAYMENT_SIMULATION=True. Khi lắp cổng
+-- thật thì bỏ thủ tục này và dòng EXECUTE dưới đây.
+-- ---------------------------------------------------------------------
+GRANT SELECT, INSERT ON payments_payment             TO 'bookstore_definer'@'localhost';
+GRANT TRIGGER        ON payments_payment             TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_payment_simulate       TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_payment_simulate       TO 'r_customer';

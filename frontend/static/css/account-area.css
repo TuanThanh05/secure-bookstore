@@ -129,3 +129,10 @@
 .order__cancel-box { margin-top: var(--space-sm); padding: var(--space-md); border: 1px solid var(--color-error); border-radius: var(--radius-md); background: rgba(160, 30, 40, 0.05); max-width: 520px; }
 .order__cancel-box p { margin: 0 0 var(--space-sm); }
 .order__cancel-confirm { background: var(--color-error); border-color: var(--color-error); }
+
+/* AI-TRACE#359 | Claude Opus 5.5 | Kiểu khối thanh toán mô phỏng hai bước trên trang đơn | CẤM XÓA CHÚ THÍCH NÀY */
+.order__pay summary { display: inline-flex; cursor: pointer; list-style: none; }
+.order__pay summary::-webkit-details-marker { display: none; }
+.order__pay[open] summary { opacity: 0.7; }
+.order__pay-box { margin-top: var(--space-sm); padding: var(--space-md); border: 1px solid var(--color-border); border-radius: var(--radius-md); max-width: 520px; }
+.order__pay-box p { margin: 0 0 var(--space-sm); }
