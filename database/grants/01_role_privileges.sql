@@ -211,3 +211,20 @@ GRANT EXECUTE ON PROCEDURE sp_cart_remove            TO 'bookstore_definer'@'loc
 GRANT EXECUTE ON PROCEDURE sp_cart_list              TO 'r_customer';
 GRANT EXECUTE ON PROCEDURE sp_cart_set_quantity      TO 'r_customer';
 GRANT EXECUTE ON PROCEDURE sp_cart_remove            TO 'r_customer';
+
+-- ---------------------------------------------------------------------
+-- Quản lý tài khoản khách (database/objects/42_account.sql)
+-- Definer: đổi is_active của khách (trigger chỉ cho đúng cột này), đọc bảng
+-- axes để biết tài khoản "Tạm khóa", ghi core_auditlog (đã có INSERT).
+-- r_staff: chỉ gọi bốn thủ tục; không có quyền UPDATE(is_active) trực tiếp.
+-- ---------------------------------------------------------------------
+GRANT UPDATE (is_active) ON accounts_user            TO 'bookstore_definer'@'localhost';
+GRANT SELECT             ON axes_accessattempt       TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_staff_account_list     TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_staff_account_get      TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_staff_account_lock     TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_staff_account_unlock   TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_staff_account_list     TO 'r_staff';
+GRANT EXECUTE ON PROCEDURE sp_staff_account_get      TO 'r_staff';
+GRANT EXECUTE ON PROCEDURE sp_staff_account_lock     TO 'r_staff';
+GRANT EXECUTE ON PROCEDURE sp_staff_account_unlock   TO 'r_staff';

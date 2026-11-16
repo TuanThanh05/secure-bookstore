@@ -3,12 +3,92 @@
 {% block title %}Quản lý tài khoản{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
 {% block content %}
-  <header class="dash-header">
-    <h1 class="dash-header__title">Quản lý tài khoản</h1>
-    <p class="dash-header__desc">Xem danh sách tài khoản, khóa hoặc mở khóa.</p>
+  {# AI-TRACE#310 | Claude Opus 5.5 | Trang quản lý tài khoản: lọc theo trạng thái và username, bảng khách hàng với email/SĐT che bớt (bản đầy đủ cần xác thực lại), nút khóa/mở khóa | CẤM XÓA CHÚ THÍCH NÀY #}
+  <header class="dash-header dash-header--row">
+    <div>
+      <h1 class="dash-header__title">Quản lý tài khoản</h1>
+      <p class="dash-header__desc">{{ total }} tài khoản khách hàng{% if filtered %} khớp bộ lọc{% endif %}{% if total >= 200 %} (hiện tối đa 200, hãy lọc thêm){% endif %}.</p>
+    </div>
+    {% if show_full %}
+      <a class="btn btn--secondary" href="{% url 'dashboard:accounts' %}{% if querystring %}?{{ querystring }}{% endif %}">Che email, SĐT</a>
+    {% else %}
+      <a class="btn btn--secondary" href="{% url 'dashboard:accounts_full' %}{% if querystring %}?{{ querystring }}{% endif %}">
+        {% include "components/icon.html" with name="visibility" size="sm" %}<span>Xem email, SĐT đầy đủ</span>
+      </a>
+    {% endif %}
   </header>
-  <section class="dash-empty">
-    {% include "components/icon.html" with name="group" size="lg" %}
-    <p>Chưa có dữ liệu. Phần này nối với cơ sở dữ liệu ở đợt 2.</p>
-  </section>
+
+  <form class="dash-filters" method="get" role="search" aria-label="Lọc tài khoản">
+    <div class="dash-field">
+      <label for="{{ form.ten.id_for_label }}">Username</label>
+      <input id="{{ form.ten.id_for_label }}" type="search" name="ten" value="{{ form.ten.value|default:'' }}" maxlength="150">
+    </div>
+    <div class="dash-field">
+      <label for="{{ form.trang_thai.id_for_label }}">Trạng thái</label>
+      {{ form.trang_thai }}
+    </div>
+    <div class="dash-filters__actions">
+      <button class="btn" type="submit">Lọc</button>
+      {% if filtered %}<a class="btn btn--link" href="{% if show_full %}{% url 'dashboard:accounts_full' %}{% else %}{% url 'dashboard:accounts' %}{% endif %}">Bỏ lọc</a>{% endif %}
+    </div>
+  </form>
+
+  {% if show_full %}
+    <p class="dash-note" role="status">Đang hiện email và SĐT đầy đủ. Lần xem này đã được ghi vào nhật ký hệ thống.</p>
+  {% endif %}
+
+  {% if page.object_list %}
+    <div class="dash-table-wrap">
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th scope="col">Username</th>
+            <th scope="col">Email</th>
+            <th scope="col">Số điện thoại</th>
+            <th scope="col">Trạng thái</th>
+            <th scope="col">Ngày tạo</th>
+            <th scope="col">Đăng nhập gần nhất</th>
+            <th scope="col"><span class="visually-hidden">Thao tác</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for account in page.object_list %}
+            <tr>
+              <td><span class="dash-table__title">{{ account.username }}</span></td>
+              <td>{% if show_full %}{{ account.email }}{% else %}{{ account.masked_email }}{% endif %}</td>
+              <td>{% if account.phone %}{% if show_full %}{{ account.phone }}{% else %}{{ account.masked_phone }}{% endif %}{% else %}—{% endif %}</td>
+              <td>
+                {% if account.status == "active" %}<span class="dash-badge dash-badge--success">{{ account.status_label }}</span>
+                {% elif account.status == "locked" %}<span class="dash-badge dash-badge--error">{{ account.status_label }}</span>
+                {% elif account.status == "temp_locked" %}<span class="dash-badge dash-badge--warning">{{ account.status_label }}</span>
+                {% else %}<span class="dash-badge">{{ account.status_label }}</span>{% endif %}
+              </td>
+              <td>{{ account.date_joined|date:"d/m/Y" }}</td>
+              <td>{% if account.last_login %}{{ account.last_login|date:"H:i d/m/Y" }}{% else %}Chưa đăng nhập{% endif %}</td>
+              <td class="is-num">
+                {% if account.is_locked %}
+                  <a class="btn btn--secondary btn--sm" href="{% url 'dashboard:account_unlock' user_id=account.id %}">Mở khóa</a>
+                {% else %}
+                  <a class="btn btn--danger btn--sm" href="{% url 'dashboard:account_lock' user_id=account.id %}">Khóa</a>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if page.has_other_pages %}
+      <nav class="dash-pager" aria-label="Phân trang">
+        {% if page.has_previous %}<a class="btn btn--secondary" href="?{% if querystring %}{{ querystring }}&amp;{% endif %}trang={{ page.previous_page_number }}">Trang trước</a>{% endif %}
+        <span>Trang {{ page.number }} / {{ page.paginator.num_pages }}</span>
+        {% if page.has_next %}<a class="btn btn--secondary" href="?{% if querystring %}{{ querystring }}&amp;{% endif %}trang={{ page.next_page_number }}">Trang sau</a>{% endif %}
+      </nav>
+    {% endif %}
+  {% else %}
+    <section class="dash-empty">
+      {% include "components/icon.html" with name="group" size="lg" %}
+      <p>{% if filtered %}Không có tài khoản nào khớp bộ lọc.{% else %}Chưa có tài khoản khách hàng nào.{% endif %}</p>
+    </section>
+  {% endif %}
 {% endblock %}
