@@ -3,12 +3,130 @@
 {% block title %}Nhật ký hệ thống{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
 {% block content %}
+  {# AI-TRACE#342 | Claude Opus 5.5 | Trang nhật ký hệ thống: hai tab bảo mật/thay đổi dữ liệu, bộ lọc GET, bảng mới nhất trước, mức độ tô màu, chi tiết mở bằng details, phân trang | CẤM XÓA CHÚ THÍCH NÀY #}
   <header class="dash-header">
     <h1 class="dash-header__title">Nhật ký hệ thống</h1>
-    <p class="dash-header__desc">Nhật ký bảo mật và nhật ký thay đổi dữ liệu. Chỉ xem.</p>
+    <p class="dash-header__desc">{{ total }} dòng{% if filtered %} khớp bộ lọc{% endif %}. Chỉ xem; mỗi lần xem được ghi lại. Nhật ký được giữ 1 năm.</p>
   </header>
-  <section class="dash-empty">
-    {% include "components/icon.html" with name="list" size="lg" %}
-    <p>Chưa có dữ liệu. Phần này nối với cơ sở dữ liệu ở đợt 2.</p>
-  </section>
+
+  <nav class="dash-tabs" aria-label="Loại nhật ký">
+    <a class="dash-tabs__tab{% if tab == 'security' %} is-active{% endif %}" href="{% url 'dashboard:logs' %}"{% if tab == 'security' %} aria-current="page"{% endif %}>Bảo mật</a>
+    <a class="dash-tabs__tab{% if tab == 'audit' %} is-active{% endif %}" href="{% url 'dashboard:logs_audit' %}"{% if tab == 'audit' %} aria-current="page"{% endif %}>Thay đổi dữ liệu</a>
+  </nav>
+
+  <form class="dash-filters" method="get" role="search" aria-label="Lọc nhật ký">
+    {% for field in form %}
+      <div class="dash-field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+      </div>
+    {% endfor %}
+    <div class="dash-filters__actions">
+      <button class="btn" type="submit">Lọc</button>
+      {% if filtered %}<a class="btn btn--link" href="{% if tab == 'security' %}{% url 'dashboard:logs' %}{% else %}{% url 'dashboard:logs_audit' %}{% endif %}">Bỏ lọc</a>{% endif %}
+    </div>
+    {% if form.non_field_errors %}<ul class="dash-field__errors">{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+  </form>
+
+  {% if tab == "security" %}
+    {% if events %}
+      <div class="dash-table-wrap">
+        <table class="dash-table dash-log">
+          <thead>
+            <tr>
+              <th scope="col">Thời gian</th>
+              <th scope="col">Sự kiện</th>
+              <th scope="col">Mức độ</th>
+              <th scope="col">Người dùng</th>
+              <th scope="col">IP</th>
+              <th scope="col">Đường dẫn</th>
+              <th scope="col">Chi tiết</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in events %}
+              <tr class="dash-log__row dash-log__row--{{ e.severity }}">
+                <td class="dash-log__time">{{ e.created_at|date:"H:i:s d/m/Y" }}</td>
+                <td><span class="dash-table__title">{{ e.label }}</span><span class="dash-table__sub">{{ e.event_type }}</span></td>
+                <td>
+                  {% if e.severity == "critical" %}<span class="dash-badge dash-badge--error">{{ e.severity_label }}</span>
+                  {% elif e.severity == "warning" %}<span class="dash-badge dash-badge--warning">{{ e.severity_label }}</span>
+                  {% else %}<span class="dash-badge">{{ e.severity_label }}</span>{% endif %}
+                </td>
+                <td>{{ e.who|default:"—" }}</td>
+                <td class="dash-log__mono dash-log__ip">{{ e.ip_address }}</td>
+                <td class="dash-log__mono">{% if e.path %}{{ e.method }} {{ e.path }}{% else %}—{% endif %}</td>
+                <td>
+                  {% if e.detail_items or e.user_agent %}
+                    <details class="dash-log__detail">
+                      <summary>Xem</summary>
+                      <dl>
+                        {% for key, value in e.detail_items %}<div><dt>{{ key }}</dt><dd>{{ value }}</dd></div>{% endfor %}
+                        {% if e.user_agent %}<div><dt>user_agent</dt><dd>{{ e.user_agent }}</dd></div>{% endif %}
+                      </dl>
+                    </details>
+                  {% else %}—{% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <section class="dash-empty">
+        {% include "components/icon.html" with name="list" size="lg" %}
+        <p>{% if filtered %}Không có sự kiện nào khớp bộ lọc.{% else %}Chưa có sự kiện nào.{% endif %}</p>
+      </section>
+    {% endif %}
+  {% else %}
+    {% if entries %}
+      <div class="dash-table-wrap">
+        <table class="dash-table dash-log">
+          <thead>
+            <tr>
+              <th scope="col">Thời gian</th>
+              <th scope="col">Dữ liệu</th>
+              <th scope="col">Hành động</th>
+              <th scope="col">Thay đổi</th>
+              <th scope="col">Nguồn</th>
+              <th scope="col">Người thực hiện</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in entries %}
+              <tr>
+                <td class="dash-log__time">{{ a.created_at|date:"H:i:s d/m/Y" }}</td>
+                <td><span class="dash-table__title">{{ a.table_label }}</span><span class="dash-table__sub">{{ a.record_label }}</span></td>
+                <td>{{ a.action_label }}</td>
+                <td>
+                  {% if a.changes %}
+                    <ul class="dash-log__changes">
+                      {% for key, old, new in a.changes %}
+                        <li><span class="dash-log__key">{{ key }}</span>{% if old %} <span class="dash-log__old">{{ old }}</span> →{% endif %} <span class="dash-log__new">{{ new }}</span></li>
+                      {% endfor %}
+                    </ul>
+                  {% else %}—{% endif %}
+                </td>
+                <td>{{ a.source_label|default:"—" }}</td>
+                <td>{{ a.username|default:"—" }}<span class="dash-table__sub dash-log__mono">{{ a.db_user }}</span></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <section class="dash-empty">
+        {% include "components/icon.html" with name="list" size="lg" %}
+        <p>{% if filtered %}Không có thay đổi nào khớp bộ lọc.{% else %}Chưa có thay đổi nào.{% endif %}</p>
+      </section>
+    {% endif %}
+  {% endif %}
+
+  {% if pager.has_other_pages %}
+    <nav class="dash-pager" aria-label="Phân trang">
+      {% if pager.has_previous %}<a class="btn btn--secondary" href="?{% if querystring %}{{ querystring }}&amp;{% endif %}trang={{ pager.previous_page_number }}">Trang trước</a>{% endif %}
+      <span>Trang {{ pager.number }} / {{ pager.paginator.num_pages }}</span>
+      {% if pager.has_next %}<a class="btn btn--secondary" href="?{% if querystring %}{{ querystring }}&amp;{% endif %}trang={{ pager.next_page_number }}">Trang sau</a>{% endif %}
+    </nav>
+  {% endif %}
 {% endblock %}

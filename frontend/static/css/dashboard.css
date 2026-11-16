@@ -230,3 +230,24 @@
   .dash-confirm:has(> .dash-form) { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
   .dash-confirm:has(> .dash-form) > .dash-form { grid-column: 1; grid-row: auto; }
 }
+
+/* AI-TRACE#343 | Claude Opus 5.5 | Kiểu trang nhật ký hệ thống: tab, dòng cảnh báo/nghiêm trọng tô nền, chữ đơn cách cho IP và đường dẫn, chi tiết và danh sách thay đổi gọn | CẤM XÓA CHÚ THÍCH NÀY */
+.dash-tabs { display: flex; gap: var(--space-xs); margin-bottom: var(--space-md); border-bottom: 1px solid var(--color-border); }
+.dash-tabs__tab { padding: var(--space-sm) var(--space-md); border-bottom: 2px solid transparent; margin-bottom: -1px; color: var(--color-muted); text-decoration: none; font-weight: 500; }
+.dash-tabs__tab:hover { color: var(--color-text); }
+.dash-tabs__tab.is-active { border-bottom-color: var(--color-primary); color: var(--color-primary); font-weight: 600; }
+.dash-log td { vertical-align: top; }
+.dash-log__row--warning { background: rgba(138, 97, 0, 0.05); }
+.dash-log__row--critical { background: rgba(186, 26, 26, 0.07); }
+.dash-log__time { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.dash-log__mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; overflow-wrap: anywhere; }
+.dash-log__ip { white-space: nowrap; overflow-wrap: normal; }
+.dash-log__detail summary { cursor: pointer; color: var(--color-primary); font-size: 13px; }
+.dash-log__detail dl { margin: var(--space-xs) 0 0; display: grid; gap: 2px; font-size: 12px; max-width: 320px; }
+.dash-log__detail dl div { display: grid; grid-template-columns: 90px 1fr; gap: var(--space-xs); }
+.dash-log__detail dt { color: var(--color-subtle); }
+.dash-log__detail dd { margin: 0; overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.dash-log__changes { list-style: none; margin: 0; padding: 0; font-size: 13px; display: grid; gap: 2px; }
+.dash-log__key { color: var(--color-subtle); margin-right: var(--space-xs); }
+.dash-log__old { text-decoration: line-through; color: var(--color-muted); overflow-wrap: anywhere; }
+.dash-log__new { font-weight: 600; overflow-wrap: anywhere; }

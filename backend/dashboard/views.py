@@ -26,12 +26,6 @@ def orders(request):
     return render(request, "dashboard/orders.html")
 
 
-@staff_required
-@require_GET
-def logs(request):
-    return render(request, "dashboard/logs.html")
-
-
 # AI-TRACE#037 | Claude Opus 5.5 | Trang thông tin của nhân viên, mặc định không gửi email và SĐT | CẤM XÓA CHÚ THÍCH NÀY
 @staff_required
 @never_cache

@@ -9,11 +9,13 @@ from django.http import Http404
 from django.views.decorators.http import require_GET, require_http_methods, require_POST, require_safe
 
 from accounts.profile import decrypt_phone
+from core.security_log import log_event
 
 from .cart_services import (CART_MAX_PER_BOOK, CartError, add_to_cart, get_cart, remove_from_cart,
                             set_cart_quantity)
 from .forms import CartAddForm, CartQuantityForm, CartRemoveForm, CheckoutForm
-from .services import SHIPPING_FEE, OrderError, cancel_order, get_order, new_idempotency_key, place_order
+from .services import (ORDER_CODE_RE, SHIPPING_FEE, OrderError, cancel_order, get_order, new_idempotency_key,
+                       place_order)
 
 ORDER_TABS = {
     "active": "Đang xử lý",
@@ -138,6 +140,13 @@ def cart_add(request):
     return redirect(back_url)
 
 
+# AI-TRACE#328 | Claude Opus 5.5 | Ghi idor_attempt khi khách mở/hủy đơn bằng mã đúng định dạng nhưng không phải đơn của mình (hoặc không có); người dùng vẫn chỉ thấy 404 | CẤM XÓA CHÚ THÍCH NÀY
+def _log_order_probe(request, code, exc):
+    if exc.code == "ORDER_NOT_FOUND" and ORDER_CODE_RE.match(code or ""):
+        log_event("idor_attempt", request, severity="warning", user=request.user,
+                  username=request.user.get_username(), detail={"resource": "order", "code_prefix": code[:8]})
+
+
 CHECKOUT_KEY_SESSION = "checkout_idempotency_key"
 LAST_ORDER_SESSION = "last_order_code"
 
@@ -213,7 +222,8 @@ def order_detail(request, code):
         return redirect("dashboard:index")
     try:
         order = get_order(request, code)
-    except OrderError:
+    except OrderError as exc:
+        _log_order_probe(request, code, exc)
         raise Http404 from None
     return render(request, "shop/order_detail.html", {"order": order})
 
@@ -229,6 +239,7 @@ def order_cancel(request, code):
         cancel_order(request, code)
     except OrderError as exc:
         if exc.code == "ORDER_NOT_FOUND":
+            _log_order_probe(request, code, exc)
             raise Http404 from None
         messages.error(request, exc.message)
     else:

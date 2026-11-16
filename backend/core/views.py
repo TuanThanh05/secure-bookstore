@@ -2,9 +2,11 @@
 
 Các handler này chỉ có tác dụng khi DEBUG = False (môi trường prod).
 Khi DEBUG = True, Django hiện trang lỗi chi tiết để lập trình viên gỡ lỗi.
-Bước sau: ghi sự kiện bảo mật (403, CSRF) vào core_securityevent và security.log.
+Lỗi CSRF được ghi vào core_securityevent (csrf_failed) và security.log.
 """
 from django.shortcuts import render
+
+from core.security_log import log_event
 from django.template import loader
 from django.http import HttpResponseServerError
 
@@ -29,6 +31,10 @@ def server_error(request):
     return HttpResponseServerError(template.render())
 
 
+# AI-TRACE#326 | Claude Opus 5.5 | Trang lỗi CSRF ghi sự kiện csrf_failed (lý do của Django chỉ vào log, không hiện cho người dùng) | CẤM XÓA CHÚ THÍCH NÀY
 def csrf_failure(request, reason=""):
-    # Không hiện "reason" cho người dùng (chỉ dùng để ghi log ở bước sau)
+    user = getattr(request, "user", None)
+    log_event("csrf_failed", request, severity="warning", user=user,
+              username=user.get_username() if user is not None and user.is_authenticated else None,
+              detail={"reason": str(reason)[:120]})
     return render(request, "errors/403_csrf.html", status=403)

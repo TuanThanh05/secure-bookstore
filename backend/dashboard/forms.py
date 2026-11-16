@@ -1,8 +1,13 @@
+from datetime import datetime, time, timedelta
+
 from django import forms
 from django.contrib.auth import authenticate
+from django.utils import timezone
 
 from accounts.forms import ProfileUpdateForm
 from catalog.review_services import CONTROL_CHARS
+
+from .log_services import ACTION_LABELS, EVENT_LABELS, SEVERITY_LABELS, TABLE_LABELS
 
 
 class ReauthForm(forms.Form):
@@ -74,3 +79,58 @@ class AccountActionForm(ReauthForm):
         if len(text) < 5:
             raise forms.ValidationError("Lý do cần ít nhất 5 ký tự.", code="min_length")
         return text
+
+
+LOG_MAX_DAYS = 400
+
+
+# AI-TRACE#336 | Claude Opus 5.5 | Phần lọc ngày dùng chung cho hai tab nhật ký: từ ngày/đến ngày theo giờ Việt Nam, đổi thành khoảng [bắt đầu, kết thúc) có múi giờ, tối đa 400 ngày | CẤM XÓA CHÚ THÍCH NÀY
+class _LogDateRangeForm(forms.Form):
+    tu = forms.DateField(label="Từ ngày", required=False, widget=forms.DateInput(attrs={"type": "date"}))
+    den = forms.DateField(label="Đến ngày", required=False, widget=forms.DateInput(attrs={"type": "date"}))
+
+    def clean(self):
+        cleaned = super().clean()
+        start, end = cleaned.get("tu"), cleaned.get("den")
+        if start and end:
+            if start > end:
+                raise forms.ValidationError("Ngày bắt đầu phải trước ngày kết thúc.")
+            if (end - start).days > LOG_MAX_DAYS:
+                raise forms.ValidationError(f"Chỉ xem tối đa {LOG_MAX_DAYS} ngày một lần.")
+        return cleaned
+
+    def range(self):
+        tz = timezone.get_current_timezone()
+        start, end = self.cleaned_data.get("tu"), self.cleaned_data.get("den")
+        begin = datetime.combine(start, time.min, tzinfo=tz) if start else None
+        finish = datetime.combine(end + timedelta(days=1), time.min, tzinfo=tz) if end else None
+        return begin, finish
+
+
+# AI-TRACE#337 | Claude Opus 5.5 | Bộ lọc tab nhật ký bảo mật: loại sự kiện, mức độ (danh sách cố định), khoảng ngày, username/IP | CẤM XÓA CHÚ THÍCH NÀY
+class SecurityLogFilterForm(_LogDateRangeForm):
+    loai = forms.ChoiceField(label="Loại sự kiện", required=False)
+    muc_do = forms.ChoiceField(label="Mức độ", required=False)
+    tim = forms.CharField(label="Username hoặc IP", required=False, max_length=150)
+    field_order = ["loai", "muc_do", "tu", "den", "tim"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["loai"].choices = [("", "Tất cả"), *sorted(EVENT_LABELS.items(), key=lambda item: item[1])]
+        self.fields["muc_do"].choices = [("", "Tất cả"), *SEVERITY_LABELS.items()]
+
+    def clean_tim(self):
+        return " ".join(CONTROL_CHARS.sub("", self.cleaned_data["tim"]).split())
+
+
+# AI-TRACE#338 | Claude Opus 5.5 | Bộ lọc tab nhật ký thay đổi dữ liệu: bảng, hành động (danh sách cố định), khoảng ngày, id bản ghi | CẤM XÓA CHÚ THÍCH NÀY
+class AuditLogFilterForm(_LogDateRangeForm):
+    bang = forms.ChoiceField(label="Dữ liệu", required=False)
+    hanh_dong = forms.ChoiceField(label="Hành động", required=False)
+    ma = forms.IntegerField(label="Id bản ghi", required=False, min_value=1, max_value=2**63 - 1)
+    field_order = ["bang", "hanh_dong", "tu", "den", "ma"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["bang"].choices = [("", "Tất cả"), *TABLE_LABELS.items()]
+        self.fields["hanh_dong"].choices = [("", "Tất cả"), *ACTION_LABELS.items()]
