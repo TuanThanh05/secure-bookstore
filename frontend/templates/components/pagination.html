@@ -1,0 +1,29 @@
+{# AI-TRACE#406 | Claude Opus 5.5 | Thanh chuyển trang không JS: trước/sau, số trang có dấu ba chấm, ô nhập số trang gửi bằng form GET giữ nguyên bộ lọc | CẤM XÓA CHÚ THÍCH NÀY #}
+{% if page.has_other_pages %}
+  <nav class="pager" aria-label="Chuyển trang">
+    <ul class="pager__list">
+      {% if page.has_previous %}
+        <li><a class="pager__item pager__item--nav" href="?{% if query %}{{ query }}&amp;{% endif %}trang={{ page.previous_page_number }}#{{ anchor }}" aria-label="Trang trước">‹</a></li>
+      {% endif %}
+      {% for number in items %}
+        {% if number is None %}
+          <li><span class="pager__gap" aria-hidden="true">…</span></li>
+        {% elif number == page.number %}
+          <li><span class="pager__item is-current" aria-current="page">{{ number }}</span></li>
+        {% else %}
+          <li><a class="pager__item" href="?{% if query %}{{ query }}&amp;{% endif %}trang={{ number }}#{{ anchor }}" aria-label="Trang {{ number }}">{{ number }}</a></li>
+        {% endif %}
+      {% endfor %}
+      {% if page.has_next %}
+        <li><a class="pager__item pager__item--nav" href="?{% if query %}{{ query }}&amp;{% endif %}trang={{ page.next_page_number }}#{{ anchor }}" aria-label="Trang sau">›</a></li>
+      {% endif %}
+    </ul>
+    <form class="pager__jump" method="get" action="#{{ anchor }}">
+      {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+      {% if category %}<input type="hidden" name="category" value="{{ category }}">{% endif %}
+      <label for="pager-jump">Đến trang</label>
+      <input class="pager__input" id="pager-jump" type="number" name="trang" min="1" max="{{ page.paginator.num_pages }}" inputmode="numeric" placeholder="{{ page.number }}/{{ page.paginator.num_pages }}" required>
+      <button class="btn btn--secondary pager__go" type="submit">Đi</button>
+    </form>
+  </nav>
+{% endif %}

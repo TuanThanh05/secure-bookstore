@@ -86,3 +86,53 @@ class AboutPageTests(SimpleTestCase):
         response = self.client.get(reverse("catalog:about"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Nhóm 7")
+
+
+MANY = [BookCard(i, f"Sách số {i:02d}", "Tác giả", 1, 100000, None, 0, True) for i in range(1, 31)]
+
+
+# AI-TRACE#408 | Claude Opus 5.5 | Test phân trang tủ sách: 12 cuốn mỗi trang, trang sai về trang hợp lệ, link giữ từ khóa và thể loại, dấu ba chấm, ô nhập số trang; danh sách số trang hiện ra | CẤM XÓA CHÚ THÍCH NÀY
+class HomePaginationTests(SimpleTestCase):
+    url = reverse("catalog:home")
+
+    def setUp(self):
+        categories = mock.patch("catalog.views.services.list_categories", return_value=CATEGORIES)
+        books = mock.patch("catalog.views.services.list_public_books", return_value=MANY)
+        categories.start()
+        self.list_books = books.start()
+        self.addCleanup(categories.stop)
+        self.addCleanup(books.stop)
+
+    def test_twelve_per_page(self):
+        response = self.client.get(self.url)
+        self.assertEqual(len(response.context["books"]), 12)
+        self.assertContains(response, "Sách số 12")
+        self.assertNotContains(response, "Sách số 13")
+        self.assertContains(response, "30 cuốn sách · trang 1/3")
+        last = self.client.get(self.url, {"trang": "3"})
+        self.assertEqual([b.id for b in last.context["books"]], list(range(25, 31)))
+
+    def test_bad_page_values(self):
+        for value, expected in (("abc", 1), ("0", 1), ("-2", 1), ("+2", 1), ("999", 3), ("2", 2)):
+            with self.subTest(value=value):
+                self.assertEqual(self.client.get(self.url, {"trang": value}).context["page"].number, expected)
+
+    def test_links_keep_filters(self):
+        response = self.client.get(self.url, {"q": "sách", "category": "3", "trang": "2"})
+        self.assertContains(response, "?q=s%C3%A1ch&amp;category=3&amp;trang=3#tu-sach")
+        self.assertContains(response, 'name="q" value="sách"')
+        self.assertContains(response, 'name="category" value="3"')
+        self.assertContains(response, 'aria-current="page">2<')
+        self.assertContains(response, 'max="3"')
+
+    def test_single_page_has_no_pager(self):
+        self.list_books.return_value = MANY[:12]
+        self.assertNotContains(self.client.get(self.url), 'class="pager"')
+
+    def test_page_items(self):
+        from catalog.views import page_items
+        self.assertEqual(page_items(1, 10), [1, 2, 3, None, 10])
+        self.assertEqual(page_items(5, 10), [1, None, 4, 5, 6, None, 10])
+        self.assertEqual(page_items(10, 10), [1, None, 8, 9, 10])
+        self.assertEqual(page_items(4, 5), [1, 2, 3, 4, 5])
+        self.assertEqual(page_items(1, 1), [1])

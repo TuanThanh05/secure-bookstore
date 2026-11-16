@@ -303,3 +303,11 @@ Trang `/orders/` (`orders:list`), hai tab:
 - Trả 2 bộ kết quả: tổng số + một trang (mới nhất trước): mã đơn, trạng thái, tổng tiền, các mốc thời gian, số cuốn, số đầu sách, tên cuốn đầu. **Không trả SĐT/địa chỉ** (xem ở trang chi tiết đơn). Kiểm tra: nhóm chỉ `active`/`history`, `limit` 1–50, `offset` 0–100000 → sai là `INVALID_INPUT`.
 - Django: `orders.services.list_my_orders(request, group, page)` (nhóm sai không xuống CSDL, 10 đơn mỗi trang, `OrderSummary` chỉ đọc), view `order_list` (`login_required`, `never_cache`, `require_safe`, nhân viên → dashboard, tab sai → Đang xử lý, `trang` sai → 1). Mỗi đơn là một thẻ bấm sang `/orders/don/<mã đơn>/`; đơn chờ thanh toán đã quá hạn hiện "Quá hạn thanh toán".
 - Đã kiểm tra trên CSDL thật: tổng số mỗi tab khớp với đếm trực tiếp; khách B không thấy đơn khách A; phân trang đúng; nhóm/limit/offset sai bị từ chối; trigger chặn paid → shipped, packed → delivered (nhảy cóc), confirmed → paid, packed → confirmed, delivered → shipped/cancelled (quay lại) và trạng thái lạ; nhật ký đơn ghi đủ pending, paid, confirmed, packed, shipped, delivered.
+
+## Phân trang tủ sách trang chủ
+
+Chốt 2026-11-16. Trang chủ `/` hiện **12 cuốn mỗi trang** (3 hàng × 4 cột trên màn hình ngang; máy tính bảng 3 cột × 4 hàng; điện thoại 2 cột). Không đổi CSDL: `sp_public_book_list` vẫn trả tối đa 200 cuốn mới nhất, Django chia trang trên danh sách đó (`catalog.views.home`, `BOOKS_PER_PAGE = 12`).
+
+- Tham số `?trang=`: chỉ nhận chữ số (`parse_positive_int`); sai, 0, âm → trang 1; lớn hơn số trang → trang cuối. Link chuyển trang **giữ nguyên** `q` và `category`, kèm `#tu-sach` để trình duyệt cuộn thẳng tới tủ sách.
+- Thanh chuyển trang (`components/pagination.html`, không JS): `‹` `1` `2` `3` `…` `<trang cuối>` `›`; hiện trang đầu, trang cuối, trang hiện tại và hai trang kề, chỗ bỏ qua là `…` (`catalog.views.page_items`). Ô **Đến trang** là form GET (số 1–số trang cuối, giữ `q`, `category`). Chỉ 1 trang thì không hiện thanh.
+- Test: `catalog/tests/test_home.py` lớp `HomePaginationTests`.
