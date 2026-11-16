@@ -69,6 +69,8 @@ CHECKS = (
     ("default", "app_customer đọc payments_payment", "SELECT id FROM payments_payment LIMIT 1", 1142),
     ("default", "app_customer INSERT thẳng payments_payment", "INSERT INTO payments_payment (order_id, provider, amount, status) SELECT 1, 'simulated', 1, 'failed' FROM DUAL WHERE 1 = 0", 1142),
     ("staff", "app_staff đọc payments_payment", "SELECT id FROM payments_payment LIMIT 1", 1142),
+    ("default", "app_customer gọi sp_order_list_mine (id sai, không đọc gì)", "CALL sp_order_list_mine(0, 'active', 0, 10)", SIGNAL),
+    ("staff", "app_staff gọi sp_order_list_mine", "CALL sp_order_list_mine(0, 'active', 0, 10)", 1370),
     ("default", "app_customer gọi sp_staff_security_events", "CALL sp_staff_security_events(0, NULL, NULL, NULL, NULL, NULL, 0, 50)", 1370),
     ("default", "app_customer đọc core_securityevent", "SELECT id FROM core_securityevent LIMIT 1", 1142),
     ("default", "app_customer gọi sp_purge_old_logs", "CALL sp_purge_old_logs(@n)", 1370),

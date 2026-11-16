@@ -1,8 +1,9 @@
 {% extends "layouts/account.html" %}
-{% load static %}
+{% load static bookstore %}
 {% block title %}Đơn hàng của tôi{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/account-area.css' %}">{% endblock %}
 {% block account_content %}
+  {# AI-TRACE#368 | Claude Opus 5.5 | Trang Đơn hàng của tôi: hai tab, mỗi đơn hiện mã, ngày đặt, sách, số cuốn, tổng tiền, trạng thái và link sang chi tiết; phân trang | CẤM XÓA CHÚ THÍCH NÀY #}
   <header class="area-header">
     <h1 class="area-header__title">Đơn hàng của tôi</h1>
     <p class="area-header__desc">Theo dõi đơn đang xử lý và xem lại đơn cũ.</p>
@@ -12,8 +13,36 @@
       <a class="area-tabs__tab{% if key == status %} is-active{% endif %}" href="?status={{ key }}"{% if key == status %} aria-current="page"{% endif %}>{{ label }}</a>
     {% endfor %}
   </nav>
-  <section class="area-empty">
-    {% include "components/icon.html" with name="list" size="lg" %}
-    <p>{% if status == "active" %}Bạn chưa có đơn nào đang xử lý.{% else %}Bạn chưa có đơn nào trong lịch sử.{% endif %}</p>
-  </section>
+
+  {% if orders %}
+    <ul class="order-list">
+      {% for o in orders %}
+        <li class="order-list__item">
+          <a class="order-list__link" href="{% url 'orders:order_detail' o.code %}">
+            <span class="order-list__head">
+              <span class="order__code">{{ o.code|slice:":8" }}…</span>
+              <span class="order__status order__status--{{ o.status_key }}">{{ o.status_label }}</span>
+            </span>
+            <span class="order-list__books">{{ o.first_title }}{% if o.other_titles %} và {{ o.other_titles }} sách khác{% endif %}</span>
+            <span class="order-list__meta">
+              <span>Đặt lúc {{ o.created_at|date:"H:i d/m/Y" }} · {{ o.item_count }} cuốn</span>
+              <strong class="order-list__total">{{ o.total|vnd }}</strong>
+            </span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+    {% if pager.has_other_pages %}
+      <nav class="order-list__pager" aria-label="Phân trang">
+        {% if pager.has_previous %}<a class="btn btn--secondary" href="?status={{ status }}&amp;trang={{ pager.previous_page_number }}">Trang trước</a>{% endif %}
+        <span>Trang {{ pager.number }} / {{ pager.paginator.num_pages }}</span>
+        {% if pager.has_next %}<a class="btn btn--secondary" href="?status={{ status }}&amp;trang={{ pager.next_page_number }}">Trang sau</a>{% endif %}
+      </nav>
+    {% endif %}
+  {% else %}
+    <section class="area-empty">
+      {% include "components/icon.html" with name="list" size="lg" %}
+      <p>{% if total %}Trang này không có đơn nào.{% elif status == "active" %}Bạn chưa có đơn nào đang xử lý.{% else %}Bạn chưa có đơn nào trong lịch sử.{% endif %}</p>
+    </section>
+  {% endif %}
 {% endblock %}

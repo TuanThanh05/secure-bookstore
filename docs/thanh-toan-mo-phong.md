@@ -38,7 +38,7 @@ payments.services.simulate_payment(request, code)
 sp_payment_simulate(user_id, code, client_ip, OUT transaction_id)   [SQL SECURITY DEFINER]
     1. Kiểm tra: id hợp lệ, IP đúng mẫu, là khách hợp lệ (NOT_CUSTOMER), mã đơn đúng mẫu
     2. START TRANSACTION; khóa dòng đơn của chính khách FOR UPDATE
-    3. Kiểm tra lại: không thấy → ORDER_NOT_FOUND; đã paid/shipped/delivered → ORDER_ALREADY_PAID;
+    3. Kiểm tra lại: không thấy → ORDER_NOT_FOUND; đã paid/confirmed/packed/shipped/delivered → ORDER_ALREADY_PAID;
        đã hủy → ORDER_NOT_PAYABLE; quá hạn → ORDER_EXPIRED
     4. Mã giao dịch = 'SIM' + HEX(RANDOM_BYTES(12)), sinh ngay trong CSDL
     5. INSERT payments_payment: provider 'simulated', amount = total của đơn trong CSDL,

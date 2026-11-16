@@ -29,9 +29,18 @@ ORDER_ERROR_MESSAGES = {
     "RATE_LIMITED": "Bạn thao tác quá nhanh. Hãy thử lại sau ít phút.",
 }
 
+ORDER_GROUPS = {
+    "active": "Đang xử lý",
+    "history": "Lịch sử",
+}
+ORDER_LIST_PAGE_SIZE = 10
+ORDER_LIST_MAX_OFFSET = 100000
+
 ORDER_STATUS_LABELS = {
     "pending": "Chờ thanh toán",
     "paid": "Đã thanh toán",
+    "confirmed": "Đã tiếp nhận",
+    "packed": "Đã đóng gói",
     "shipped": "Đang giao",
     "delivered": "Đã giao",
     "cancelled": "Đã hủy",
@@ -247,3 +256,66 @@ def cancel_order(request, code):
         if signal is None:
             raise
         raise OrderError(signal) from exc
+
+
+# AI-TRACE#365 | Claude Opus 5.5 | Một dòng trong danh sách đơn của khách: mã, trạng thái, tổng tiền, thời gian, số cuốn và tên cuốn đầu; không chứa thông tin giao hàng | CẤM XÓA CHÚ THÍCH NÀY
+@dataclass(frozen=True)
+class OrderSummary:
+    code: str
+    status: str
+    total: int
+    created_at: datetime.datetime
+    expires_at: datetime.datetime
+    paid_at: datetime.datetime | None
+    cancelled_at: datetime.datetime | None
+    item_count: int
+    line_count: int
+    first_title: str
+
+    @property
+    def expired(self):
+        return self.status == "pending" and self.expires_at <= datetime.datetime.now(datetime.UTC)
+
+    @property
+    def status_key(self):
+        return "expired" if self.expired else self.status
+
+    @property
+    def status_label(self):
+        return "Quá hạn thanh toán" if self.expired else ORDER_STATUS_LABELS.get(self.status, self.status)
+
+    @property
+    def other_titles(self):
+        return max(self.line_count - 1, 0)
+
+
+# AI-TRACE#366 | Claude Opus 5.5 | Đọc một trang đơn của chính khách theo nhóm Đang xử lý/Lịch sử bằng sp_order_list_mine; nhóm sai bị chặn trước khi xuống CSDL, trả tổng số và danh sách | CẤM XÓA CHÚ THÍCH NÀY
+def list_my_orders(request, group, page=1):
+    user = request.user
+    if not user.is_authenticated or user.is_staff:
+        raise OrderError("NOT_CUSTOMER")
+    if group not in ORDER_GROUPS:
+        raise OrderError("INVALID_INPUT")
+    if not isinstance(page, int) or page < 1:
+        page = 1
+    offset = min((page - 1) * ORDER_LIST_PAGE_SIZE, ORDER_LIST_MAX_OFFSET)
+    try:
+        with connection.cursor() as cursor:
+            cursor.callproc("sp_order_list_mine", [user.pk, group, offset, ORDER_LIST_PAGE_SIZE])
+            total = int(cursor.fetchone()[0])
+            cursor.nextset()
+            rows = cursor.fetchall()
+            while cursor.nextset():
+                pass
+    except OperationalError as exc:
+        signal = _signal_code(exc)
+        if signal is None:
+            raise
+        raise OrderError(signal) from exc
+    orders = [
+        OrderSummary(code=r[0], status=r[1], total=int(r[2]), created_at=_aware(r[3]), expires_at=_aware(r[4]),
+                     paid_at=_aware(r[5]), cancelled_at=_aware(r[6]), item_count=int(r[7]), line_count=int(r[8]),
+                     first_title=r[9] or "")
+        for r in rows
+    ]
+    return total, orders

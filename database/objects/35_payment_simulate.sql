@@ -25,7 +25,7 @@
 -- Mã lỗi:
 --   INVALID_INPUT, NOT_CUSTOMER
 --   ORDER_NOT_FOUND     mã sai, không có, hoặc đơn của người khác (như nhau)
---   ORDER_ALREADY_PAID  đơn đã thanh toán (hoặc đang giao, đã giao)
+--   ORDER_ALREADY_PAID  đơn đã thanh toán (hoặc đã tiếp nhận, đóng gói, đang giao, đã giao)
 --   ORDER_NOT_PAYABLE   đơn đã hủy
 --   ORDER_EXPIRED       đơn còn chờ nhưng đã quá hạn thanh toán
 --   PAYMENT_LOCKED      (trigger) sửa hoặc xóa giao dịch đã ghi
@@ -91,7 +91,7 @@ BEGIN
     IF v_order_id IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ORDER_NOT_FOUND';
     END IF;
-    IF v_status IN ('paid', 'shipped', 'delivered') THEN
+    IF v_status IN ('paid', 'confirmed', 'packed', 'shipped', 'delivered') THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ORDER_ALREADY_PAID';
     END IF;
     IF v_status <> 'pending' THEN
