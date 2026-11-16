@@ -14,7 +14,7 @@
     <a class="admin__link{% if current == 'categories' or current == 'category_delete' %} is-active{% endif %}" href="{% url 'dashboard:categories' %}"{% if current == 'categories' %} aria-current="page"{% endif %}>
       {% include "components/icon.html" with name="list" %}<span>Thể loại sách</span>
     </a>
-    <a class="admin__link{% if current == 'orders' %} is-active{% endif %}" href="{% url 'dashboard:orders' %}"{% if current == 'orders' %} aria-current="page"{% endif %}>
+    <a class="admin__link{% if current == 'orders' or current == 'order_detail' %} is-active{% endif %}" href="{% url 'dashboard:orders' %}"{% if current == 'orders' %} aria-current="page"{% endif %}>
       {% include "components/icon.html" with name="shopping-bag" %}<span>Quản lý đơn hàng</span>
     </a>
     <a class="admin__link{% if current == 'accounts' or current == 'accounts_full' or current == 'account_lock' or current == 'account_unlock' or current == 'reauth' %} is-active{% endif %}" href="{% url 'dashboard:accounts' %}"{% if current == 'accounts' %} aria-current="page"{% endif %}>

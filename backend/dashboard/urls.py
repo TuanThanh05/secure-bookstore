@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import account_views, catalog_views, log_views, views
+from . import account_views, catalog_views, log_views, order_views, views
 
 app_name = "dashboard"
 
@@ -16,7 +16,12 @@ urlpatterns = [
     path("the-loai/", catalog_views.categories, name="categories"),
     path("the-loai/<int:category_id>/sua/", catalog_views.category_rename, name="category_rename"),
     path("the-loai/<int:category_id>/xoa/", catalog_views.category_delete, name="category_delete"),
-    path("don-hang/", views.orders, name="orders"),
+    path("don-hang/", order_views.orders, name="orders"),
+    path("don-hang/<str:code>/", order_views.order_detail, name="order_detail"),
+    path("don-hang/<str:code>/tiep-nhan/", order_views.order_advance, {"action": "confirm"}, name="order_confirm"),
+    path("don-hang/<str:code>/dong-goi/", order_views.order_advance, {"action": "pack"}, name="order_pack"),
+    path("don-hang/<str:code>/giao-hang/", order_views.order_advance, {"action": "ship"}, name="order_ship"),
+    path("don-hang/<str:code>/da-giao/", order_views.order_advance, {"action": "deliver"}, name="order_deliver"),
     path("tai-khoan/", account_views.accounts, name="accounts"),
     path("tai-khoan/day-du/", account_views.accounts_full, name="accounts_full"),
     path("tai-khoan/<int:user_id>/khoa/", account_views.account_lock, name="account_lock"),

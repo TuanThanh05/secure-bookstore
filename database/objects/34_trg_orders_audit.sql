@@ -10,10 +10,12 @@
 --                                   là event_scheduler@localhost – đã thử thật)
 --   bookstore_definer  → system
 --   app_payment        → payment   (nhánh thanh toán, sau này)
---   app_staff          → staff     (quản lý đơn của admin, sau này)
+--   app_staff          → staff     (quản lý đơn của admin; app_user_id = id
+--                                   admin do thủ tục 44_staff_orders.sql đặt
+--                                   vào biến phiên @bookstore_actor_id)
 --   khác (root...)     → other
--- Thủ tục admin đổi trạng thái đơn sau này KHÔNG tự ghi thêm core_auditlog
--- cho việc đổi trạng thái (trigger đã ghi), chỉ ghi phần riêng như lý do.
+-- Thủ tục admin đổi trạng thái đơn KHÔNG tự ghi thêm core_auditlog cho việc
+-- đổi trạng thái (trigger đã ghi), chỉ ghi phần riêng như lý do.
 --
 -- Chạy bằng quyền bookstore_definer (đã có INSERT core_auditlog, TRIGGER trên
 -- orders_order). Root tạo bằng `python manage.py db_apply`. Chạy lại được.
@@ -45,7 +47,7 @@ BEGIN
             USER(), IF(v_account = 'app_customer', NEW.user_id, NULL));
 END$$
 
--- AI-TRACE#321 | Claude Opus 5.5 | Trigger ghi nhật ký khi đơn đổi trạng thái (chờ → đã thanh toán/đã hủy...), kèm nguồn gây ra; không đổi trạng thái thì không ghi | CẤM XÓA CHÚ THÍCH NÀY
+-- AI-TRACE#321 | Claude Opus 5.5 | Trigger ghi nhật ký khi đơn đổi trạng thái (chờ → đã thanh toán/đã hủy...), kèm nguồn gây ra và id người làm (khách là chủ đơn, admin lấy từ biến phiên do thủ tục đặt); không đổi trạng thái thì không ghi | CẤM XÓA CHÚ THÍCH NÀY
 CREATE DEFINER = 'bookstore_definer'@'localhost'
 TRIGGER trg_order_audit_update
 AFTER UPDATE ON orders_order
@@ -65,7 +67,10 @@ BEGIN
         VALUES ('orders_order', NEW.id, 'UPDATE',
                 JSON_OBJECT('status', OLD.status),
                 JSON_OBJECT('code', NEW.code, 'status', NEW.status, 'source', v_source),
-                USER(), IF(v_account = 'app_customer', NEW.user_id, NULL));
+                USER(), CASE v_account
+                            WHEN 'app_customer' THEN NEW.user_id
+                            WHEN 'app_staff' THEN @bookstore_actor_id
+                            ELSE NULL END);
     END IF;
 END$$
 

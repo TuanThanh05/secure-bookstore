@@ -1,0 +1,4 @@
+{% if order.status_key == "delivered" %}<span class="dash-badge dash-badge--success">{{ order.status_label }}</span>
+{% elif order.status_key == "cancelled" or order.status_key == "expired" %}<span class="dash-badge dash-badge--error">{{ order.status_label }}</span>
+{% elif order.status_key == "pending" %}<span class="dash-badge">{{ order.status_label }}</span>
+{% else %}<span class="dash-badge dash-badge--warning">{{ order.status_label }}</span>{% endif %}

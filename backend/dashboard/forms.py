@@ -8,6 +8,7 @@ from accounts.forms import ProfileUpdateForm
 from catalog.review_services import CONTROL_CHARS
 
 from .log_services import ACTION_LABELS, EVENT_LABELS, SEVERITY_LABELS, TABLE_LABELS
+from .order_services import ORDER_FILTERS
 
 
 class ReauthForm(forms.Form):
@@ -134,3 +135,13 @@ class AuditLogFilterForm(_LogDateRangeForm):
         super().__init__(*args, **kwargs)
         self.fields["bang"].choices = [("", "Tất cả"), *TABLE_LABELS.items()]
         self.fields["hanh_dong"].choices = [("", "Tất cả"), *ACTION_LABELS.items()]
+
+
+# AI-TRACE#382 | Claude Opus 5.5 | Bộ lọc trang quản lý đơn: chỉ chọn trong danh sách trạng thái cố định (hoặc Cần xử lý) | CẤM XÓA CHÚ THÍCH NÀY
+class OrderFilterForm(forms.Form):
+    trang_thai = forms.ChoiceField(label="Trạng thái", required=False,
+                                   choices=[("", "Tất cả"), *ORDER_FILTERS.items()])
+
+    @property
+    def status(self):
+        return (self.cleaned_data.get("trang_thai") or None) if self.is_valid() else None

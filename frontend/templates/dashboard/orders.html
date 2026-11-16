@@ -1,14 +1,65 @@
 {% extends "layouts/admin.html" %}
-{% load static %}
+{% load static bookstore %}
 {% block title %}Quản lý đơn hàng{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
 {% block content %}
+  {# AI-TRACE#387 | Claude Opus 5.5 | Trang quản lý đơn hàng: lọc trạng thái, bảng mã đơn/khách/ngày đặt/số cuốn/tổng tiền/trạng thái, link chi tiết (cần xác thực lại), nút bước tiếp theo, phân trang | CẤM XÓA CHÚ THÍCH NÀY #}
   <header class="dash-header">
     <h1 class="dash-header__title">Quản lý đơn hàng</h1>
-    <p class="dash-header__desc">Danh sách đơn, chi tiết đơn và chuyển trạng thái.</p>
+    <p class="dash-header__desc">{{ total }} đơn{% if filtered %} khớp bộ lọc{% endif %}. Đơn đi lần lượt: Đã thanh toán → Đã tiếp nhận → Đã đóng gói → Đang giao → Đã giao, không quay lại.</p>
   </header>
-  <section class="dash-empty">
-    {% include "components/icon.html" with name="shopping-bag" size="lg" %}
-    <p>Chưa có dữ liệu. Phần này nối với cơ sở dữ liệu ở đợt 2.</p>
-  </section>
+
+  <form class="dash-filters" method="get" aria-label="Lọc đơn hàng">
+    <div class="dash-field">
+      <label for="{{ form.trang_thai.id_for_label }}">Trạng thái</label>
+      {{ form.trang_thai }}
+    </div>
+    <div class="dash-filters__actions">
+      <button class="btn" type="submit">Lọc</button>
+      {% if filtered %}<a class="btn btn--link" href="{% url 'dashboard:orders' %}">Bỏ lọc</a>{% endif %}
+    </div>
+  </form>
+
+  {% if orders %}
+    <div class="dash-table-wrap">
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th scope="col">Mã đơn</th>
+            <th scope="col">Khách</th>
+            <th scope="col">Ngày đặt</th>
+            <th scope="col" class="is-num">Số cuốn</th>
+            <th scope="col" class="is-num">Tổng tiền</th>
+            <th scope="col">Trạng thái</th>
+            <th scope="col"><span class="visually-hidden">Thao tác</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in orders %}
+            <tr>
+              <td><a class="dash-table__title dash-order__code" href="{% url 'dashboard:order_detail' order.code %}">{{ order.code|slice:":8" }}…</a></td>
+              <td>{{ order.username }}</td>
+              <td>{{ order.created_at|date:"H:i d/m/Y" }}</td>
+              <td class="is-num">{{ order.item_count }}</td>
+              <td class="is-num">{{ order.total|vnd }}</td>
+              <td>{% include "dashboard/partials/order_status.html" %}</td>
+              <td class="is-num">{% include "dashboard/partials/order_action.html" %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if pager.has_other_pages %}
+      <nav class="dash-pager" aria-label="Phân trang">
+        {% if pager.has_previous %}<a class="btn btn--secondary" href="?{% if querystring %}{{ querystring }}&amp;{% endif %}trang={{ pager.previous_page_number }}">Trang trước</a>{% endif %}
+        <span>Trang {{ pager.number }} / {{ pager.paginator.num_pages }}</span>
+        {% if pager.has_next %}<a class="btn btn--secondary" href="?{% if querystring %}{{ querystring }}&amp;{% endif %}trang={{ pager.next_page_number }}">Trang sau</a>{% endif %}
+      </nav>
+    {% endif %}
+  {% else %}
+    <section class="dash-empty">
+      {% include "components/icon.html" with name="shopping-bag" size="lg" %}
+      <p>{% if filtered %}Không có đơn nào khớp bộ lọc.{% elif total %}Trang này không có đơn nào.{% else %}Chưa có đơn hàng nào.{% endif %}</p>
+    </section>
+  {% endif %}
 {% endblock %}
