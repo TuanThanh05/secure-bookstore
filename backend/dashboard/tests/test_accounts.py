@@ -19,6 +19,7 @@ from dashboard.account_services import (AccountError, StaffAccount, get_account,
                                         mask_email, mask_phone, unlock_account)
 
 PASSWORD = secrets.token_urlsafe(12) + "-Aa9"
+WRONG_PASSWORD = secrets.token_urlsafe(12)
 VIEWS = "dashboard.account_views"
 NOW = datetime.datetime(2026, 11, 16, 2, 0, tzinfo=datetime.UTC)
 
@@ -170,7 +171,7 @@ class AccountViewTests(TestCase):
 
     def test_lock_requires_password_even_after_recent_reauth(self):
         self.mark_reauth()
-        response = self.client.post(self.lock_url, self.action_data(password="sai-mat-khau"))
+        response = self.client.post(self.lock_url, self.action_data(password=WRONG_PASSWORD))
         self.assertEqual(response.status_code, 400)
         response = self.client.post(self.lock_url, {"reason": "Spam đánh giá"})
         self.assertEqual(response.status_code, 400)
