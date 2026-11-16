@@ -13,7 +13,7 @@ from accounts.profile import decrypt_phone
 from .cart_services import (CART_MAX_PER_BOOK, CartError, add_to_cart, get_cart, remove_from_cart,
                             set_cart_quantity)
 from .forms import CartAddForm, CartQuantityForm, CartRemoveForm, CheckoutForm
-from .services import SHIPPING_FEE, OrderError, get_order, new_idempotency_key, place_order
+from .services import SHIPPING_FEE, OrderError, cancel_order, get_order, new_idempotency_key, place_order
 
 ORDER_TABS = {
     "active": "Đang xử lý",
@@ -216,3 +216,21 @@ def order_detail(request, code):
     except OrderError:
         raise Http404 from None
     return render(request, "shop/order_detail.html", {"order": order})
+
+
+# AI-TRACE#288 | Claude Opus 5.5 | Nhận nút hủy đơn (chỉ POST, CSRF, sau bước xác nhận trên trang đơn): đơn người khác/mã sai trả 404, xong quay về trang đơn | CẤM XÓA CHÚ THÍCH NÀY
+@login_required
+@require_POST
+def order_cancel(request, code):
+    if request.user.is_staff:
+        messages.error(request, "Tài khoản quản trị không có đơn hàng.")
+        return redirect("dashboard:index")
+    try:
+        cancel_order(request, code)
+    except OrderError as exc:
+        if exc.code == "ORDER_NOT_FOUND":
+            raise Http404 from None
+        messages.error(request, exc.message)
+    else:
+        messages.success(request, "Đã hủy đơn hàng. Sách trong đơn đã được trả lại kho.")
+    return redirect("orders:order_detail", code=code)

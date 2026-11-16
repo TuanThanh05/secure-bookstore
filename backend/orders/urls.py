@@ -12,4 +12,5 @@ urlpatterns = [
     path("cart/go/", views.cart_remove, name="cart_remove"),
     path("dat-hang/", views.checkout, name="checkout"),
     path("don/<str:code>/", views.order_detail, name="order_detail"),
+    path("don/<str:code>/huy/", views.order_cancel, name="order_cancel"),
 ]
