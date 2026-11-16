@@ -18,6 +18,8 @@ Quy ước:
 | `orders:cart` | `/orders/cart/` | `shop/cart.html` | Khách đã đăng nhập (ẩn danh → đăng nhập; nhân viên → về dashboard); không lưu cache | `cart` (`Cart`: `lines` là list `CartLine`, `subtotal`, `item_count`, `has_unavailable`), `cart_max` (= 5), `cart_update_url`, `cart_remove_url` | – (chỉ GET) |
 | `orders:cart_update` | `/orders/cart/cap-nhat/` | – (redirect về `orders:cart` kèm thông báo) | Như `orders:cart` | – | `book_id`, `quantity` (**số lượng cuối cùng** 1–5; chỉ POST + CSRF) |
 | `orders:cart_remove` | `/orders/cart/go/` | – (redirect về `orders:cart` kèm thông báo) | Như `orders:cart` | – | `book_id` (chỉ POST + CSRF) |
+| `orders:checkout` | `/orders/dat-hang/` | `shop/checkout.html` | Khách đã đăng nhập (ẩn danh → đăng nhập; nhân viên → dashboard); giỏ không rỗng, không có sách ngừng bán/hết hàng; không lưu cache | `form` (`CheckoutForm`), `cart`, `shipping_fee` (30.000), `total` | `shipping_name`, `phone`, `address` (chỉ POST + CSRF; mã chống trùng nằm trong phiên, không có trong form) |
+| `orders:order_detail` | `/orders/don/<code>/` | `shop/order_detail.html` | Chỉ chủ đơn; mã sai mẫu, đơn không có hay đơn của người khác đều 404; không lưu cache | `order` (`Order`: `code`, `status`, `status_label`, `subtotal`, `shipping_fee`, `total`, `shipping_name`, `shipping_phone`, `shipping_address`, `created_at`, `expires_at`, `paid_at`, `cancelled_at`, `awaiting_payment`, `expired`, `lines` là list `OrderLine`) | – (chỉ GET) |
 | `accounts:register` | `/account/register/` | `account/register.html` | Chưa đăng nhập | `form` | `username`, `email`, `password1`, `password2` |
 | `accounts:login` | `/account/login/` | `account/login.html` | Chưa đăng nhập | `form`, `next` | `username`, `password`, `next` |
 | `accounts:logout` | `/account/logout/` | – (redirect) | Đã đăng nhập | – | (chỉ POST + CSRF) |
@@ -178,37 +180,67 @@ Bảo mật đã kiểm tra (test `orders/tests/test_cart_page.py`, `db_check_gr
 
 ## Đặt đơn: `sp_place_order` và `orders.services.place_order`
 
-Chốt 2026-11-14. Đổi chữ ký thủ tục hoặc hàm thì sửa mục này trong cùng PR.
+Chốt 2026-11-14, bổ sung 2026-11-16 (nhánh đặt hàng). Đổi chữ ký thủ tục hoặc hàm thì sửa mục này trong cùng PR.
+
+**Luồng:** trang giỏ → nút **Đặt hàng** (`/orders/dat-hang/`) → điền tên người nhận, SĐT, địa chỉ (tên và SĐT điền sẵn từ hồ sơ, vẫn sửa được; địa chỉ nhập mới mỗi lần) → **Xác nhận đặt hàng** → trang đơn `/orders/don/<mã đơn>/` (trạng thái "Chờ thanh toán", hạn thanh toán 15 phút, nút Thanh toán mờ cho tới nhánh thanh toán). Nút **Đặt hàng** ở trang chi tiết sách gửi cùng form thêm vào giỏ (`then=cart`) rồi chuyển sang trang giỏ.
 
 **Thủ tục MySQL** (`database/objects/30_sp_place_order.sql`), `r_customer` chỉ có `EXECUTE`:
 
 | Tham số | Kiểu | Ghi chú |
 | --- | --- | --- |
-| `p_user_id` | IN BIGINT | Luôn là `request.user.pk`, không bao giờ lấy từ form |
-| `p_idempotency_key` | IN CHAR(32) | 32 ký tự hex thường, sinh bằng `new_idempotency_key()` khi mở trang đặt hàng |
+| `p_user_id` | IN BIGINT | Luôn là `request.user.pk`, không bao giờ lấy từ form; thủ tục tự kiểm tra lại là khách hợp lệ |
+| `p_idempotency_key` | IN CHAR(32) | 32 ký tự hex thường, Django sinh và giữ trong phiên (`checkout_idempotency_key`), không nhận từ form |
 | `p_shipping_name` | IN VARCHAR(255) | Tên người nhận, 1–100 ký tự sau khi bỏ khoảng trắng hai đầu |
-| `p_phone_encrypted` | IN VARCHAR(512) | SĐT đã mã hóa AES-GCM ở Django (đợt 2) |
-| `p_address_encrypted` | IN VARCHAR(1024) | Địa chỉ đã mã hóa AES-GCM ở Django (đợt 2) |
-| `p_order_code` | OUT CHAR(32) | Mã đơn, dùng trên URL thay cho id |
+| `p_phone_encrypted` | IN VARCHAR(512) | SĐT đã mã hóa AES-GCM ở Django |
+| `p_address_encrypted` | IN VARCHAR(1024) | Địa chỉ đã mã hóa AES-GCM ở Django |
+| `p_order_code` | OUT CHAR(32) | Mã đơn (`RANDOM_BYTES`), dùng trên URL thay cho id |
 | `p_created` | OUT TINYINT | `1` = đơn mới, `0` = gửi lại cùng mã yêu cầu, trả mã đơn cũ |
 
-Danh sách sách, số lượng, giá đều do thủ tục đọc từ giỏ và `catalog_book`. Phí ship cố định 30.000 đ; hạn thanh toán 15 phút.
+Danh sách sách, số lượng, giá đều do thủ tục đọc từ giỏ và `catalog_book`. Phí ship cố định 30.000 đ (`SHIPPING_FEE` ở Django chỉ để hiển thị trước); hạn thanh toán 15 phút. Kho bị trừ ngay khi tạo đơn.
+
+**Chống giữ kho (chốt 2026-11-16):** mỗi khách tối đa **1 đơn chờ thanh toán còn hạn** (`PENDING_EXISTS`), kiểm tra khi đang giữ khóa giỏ nên nhiều tab bấm cùng lúc cũng chỉ ra 1 đơn; Django giới hạn thêm 5 lần đặt/10 phút (`ORDER_PLACE_RATE_*`). Hủy đơn quá hạn và trả kho làm ở nhánh thanh toán.
+
+**Mã hóa:** SĐT và địa chỉ mã hóa AES-GCM, ngữ cảnh `orders_order.<cột>:<user_id>:<idempotency_key>` (`shipping_context`). Bản mã chép sang đơn khác, người khác hoặc cột khác đều không giải mã được.
 
 **Hàm Django** (`backend/orders/services.py`):
 
 ```python
-place_order(user, idempotency_key, shipping_name, phone_encrypted, address_encrypted) -> PlaceOrderResult(order_code, created)
+place_order(request, idempotency_key, shipping_name, phone, address) -> PlaceOrderResult(order_code, created)
+get_order(request, code) -> Order
 ```
 
-- Không gọi bên trong `transaction.atomic` (hàm sẽ raise `RuntimeError`): thủ tục tự quản giao dịch.
+- `place_order` nhận SĐT, địa chỉ **chưa mã hóa** (đã qua `CheckoutForm`) và tự mã hóa; không gọi bên trong `transaction.atomic`.
 - Lỗi nghiệp vụ raise `OrderError` có `.code` và `.message`. Frontend chỉ hiển thị `.message`:
 
-| `code` | `message` | Frontend làm gì |
+| `code` | `message` | View làm gì |
 | --- | --- | --- |
-| `OUT_OF_STOCK` | Một số sách vừa hết hàng, vui lòng kiểm tra lại giỏ. | Quay lại giỏ |
-| `BOOK_INACTIVE` | Một số sách đã ngừng bán. | Quay lại giỏ |
-| `CART_EMPTY` | Giỏ hàng đang trống. | Quay lại giỏ |
-| `INVALID_INPUT` | Thông tin giao hàng không hợp lệ. | Ở lại form đặt hàng |
+| `OUT_OF_STOCK` | Một số sách vừa hết hàng hoặc không đủ số lượng, vui lòng kiểm tra lại giỏ. | Về giỏ |
+| `BOOK_INACTIVE` | Một số sách đã ngừng bán. Hãy gỡ chúng khỏi giỏ trước khi đặt hàng. | Về giỏ |
+| `CART_EMPTY` | Giỏ hàng đang trống. | Về giỏ |
+| `PENDING_EXISTS` | Bạn đang có một đơn chờ thanh toán... | Về đơn đó nếu phiên còn nhớ mã (`last_order_code`), không thì ở lại form |
+| `INVALID_INPUT`, `NOT_CUSTOMER`, `RATE_LIMITED` | (xem `ORDER_ERROR_MESSAGES`) | Ở lại form, mã 400 |
+| `ORDER_NOT_FOUND` | Không tìm thấy đơn hàng. | `get_order`: trang đơn trả 404 |
 
-- `created = True`: chuyển sang trang đơn, báo "Đặt hàng thành công". `created = False`: chuyển tới đơn cũ, không báo lỗi.
+- Thành công: xóa mã chống trùng khỏi phiên (lần đặt sau có mã mới), nhớ `last_order_code`, chuyển sang trang đơn. Bấm đúp: cùng mã → thủ tục trả lại đơn cũ.
 - Mọi lỗi khác (mất kết nối, lỗi quyền 1142...) được ném nguyên ra ngoài để ghi log, không đổi thành `OrderError`.
+
+## Đọc đơn: `sp_order_get`
+
+`sp_order_get(p_user_id, p_code)` (cùng file 30) trả 2 bộ kết quả: dòng đơn (kể cả `idempotency_key` để Django giải mã, không đưa ra template) và các sách (`book_id`, `book_title`, `unit_price`, `quantity` lúc đặt). Mã sai mẫu, đơn không có hay đơn của người khác đều `ORDER_NOT_FOUND` → 404 như nhau, nên không dò được mã đơn của người khác (IDOR). Trang chi tiết đơn `never_cache` vì có SĐT, địa chỉ.
+
+## Đơn đã tạo không sửa được: `32_trg_orders_guard.sql`
+
+Chốt 2026-11-16: thanh toán xong (và cả lúc đang chờ thanh toán) không thể tăng số lượng hay thêm sách khác vào đơn. Hai lớp:
+
+1. **Quyền:** không tài khoản ứng dụng nào có quyền ghi `orders_order`, `orders_orderitem`; không có thủ tục nào sửa đơn.
+2. **Trigger** (chặn cả root, cả khi một thủ tục sau này viết sai), mã lỗi `ORDER_LOCKED`:
+
+| Bảng | Quy tắc |
+| --- | --- |
+| `orders_orderitem` | Chỉ thêm khi đơn `pending`, chưa thanh toán và **tổng các dòng không vượt `subtotal` đã chốt** (lúc tạo đơn các dòng cộng lại vừa bằng `subtotal`, nên sau đó thêm bất kỳ dòng nào cũng bị chặn). Không bao giờ sửa, không bao giờ xóa |
+| `orders_order` | Không đổi mã đơn, người đặt, tiền sách, phí ship, tổng tiền, thông tin giao hàng, mã chống trùng, ngày tạo, hạn thanh toán. Trạng thái chỉ đi `pending → paid/cancelled`, `paid → shipped`, `shipped → delivered`; `paid_at`, `cancelled_at` ghi một lần đúng lúc chuyển trạng thái. Không xóa đơn |
+
+Đã thử bằng root trong sandbox: thêm sách vào đơn đang chờ hay đã thanh toán, tăng số lượng, sửa giá, sửa tổng tiền, sửa người nhận, nhảy `pending → shipped`, quay lại `pending`, hủy đơn đã thanh toán, xóa dòng, xóa đơn → đều `ORDER_LOCKED`; `pending → paid`, `paid → shipped` đi qua.
+
+**Bảo mật đã kiểm tra** (test `orders/tests/test_checkout.py`, `test_place_order.py`, `db_check_grants` tổng 46 + chạy thật): `total`, `user_id`, `idempotency_key` gửi kèm form bị bỏ qua; thiếu CSRF → 403; khách B mở đơn của khách A → 404; mã đơn chứa `' OR 1=1` → 404 không xuống CSDL; `app_customer` đọc/sửa thẳng `orders_order`, thêm thẳng `orders_orderitem` → 1142; gọi thủ tục bằng id quản trị → `NOT_CUSTOMER`; CSDL chỉ lưu bản mã (`v1.`...). Chạy đồng thời: cùng khách bấm 4 lần cùng mã → 1 đơn mới + 3 lần trả lại đơn cũ; cùng khách 3 tab khác mã → 1 đơn + 2 `PENDING_EXISTS`; hai khách tranh cuốn cuối → 1 đơn + 1 `OUT_OF_STOCK`, kho về 0, không âm.
+

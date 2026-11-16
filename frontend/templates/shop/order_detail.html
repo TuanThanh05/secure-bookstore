@@ -1,0 +1,46 @@
+{% extends "layouts/account.html" %}
+{% load static bookstore %}
+{% block title %}Đơn hàng{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/account-area.css' %}">{% endblock %}
+{% block account_content %}
+  {# AI-TRACE#276 | Claude Opus 5.5 | Trang chi tiết đơn: mã đơn, trạng thái, hạn thanh toán, sách và giá lúc đặt, thông tin giao hàng; nút thanh toán chờ nhánh sau | CẤM XÓA CHÚ THÍCH NÀY #}
+  <header class="area-header">
+    <h1 class="area-header__title">Đơn hàng</h1>
+    <p class="area-header__desc">Mã đơn <span class="order__code">{{ order.code }}</span></p>
+  </header>
+
+  <dl class="area-info area-info--compact">
+    <div class="area-info__row"><dt>Trạng thái</dt><dd><span class="order__status order__status--{{ order.status }}">{% if order.expired %}Quá hạn thanh toán{% else %}{{ order.status_label }}{% endif %}</span></dd></div>
+    <div class="area-info__row"><dt>Ngày đặt</dt><dd>{{ order.created_at|date:"H:i d/m/Y" }}</dd></div>
+    {% if order.awaiting_payment %}
+      <div class="area-info__row"><dt>Hạn thanh toán</dt><dd>{{ order.expires_at|date:"H:i d/m/Y" }}</dd></div>
+    {% endif %}
+    {% if order.paid_at %}<div class="area-info__row"><dt>Thanh toán lúc</dt><dd>{{ order.paid_at|date:"H:i d/m/Y" }}</dd></div>{% endif %}
+    {% if order.cancelled_at %}<div class="area-info__row"><dt>Hủy lúc</dt><dd>{{ order.cancelled_at|date:"H:i d/m/Y" }}</dd></div>{% endif %}
+    <div class="area-info__row"><dt>Người nhận</dt><dd>{{ order.shipping_name }}</dd></div>
+    <div class="area-info__row"><dt>Số điện thoại</dt><dd>{{ order.shipping_phone|default:"Không đọc được" }}</dd></div>
+    <div class="area-info__row"><dt>Địa chỉ</dt><dd>{{ order.shipping_address|default:"Không đọc được" }}</dd></div>
+  </dl>
+
+  <table class="order__table">
+    <thead><tr><th scope="col">Sách</th><th scope="col">Đơn giá</th><th scope="col">SL</th><th scope="col">Thành tiền</th></tr></thead>
+    <tbody>
+      {% for line in order.lines %}
+        <tr><td>{{ line.title }}</td><td>{{ line.unit_price|vnd }}</td><td>{{ line.quantity }}</td><td>{{ line.line_total|vnd }}</td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><th scope="row" colspan="3">Tạm tính</th><td>{{ order.subtotal|vnd }}</td></tr>
+      <tr><th scope="row" colspan="3">Phí giao hàng</th><td>{{ order.shipping_fee|vnd }}</td></tr>
+      <tr class="order__total"><th scope="row" colspan="3">Tổng cộng</th><td>{{ order.total|vnd }}</td></tr>
+    </tfoot>
+  </table>
+
+  <div class="area-actions order__actions">
+    {% if order.awaiting_payment %}
+      <button class="btn" type="button" disabled>Thanh toán</button>
+      <p class="cart__note">Chức năng thanh toán sắp có. Đơn đã đặt không sửa được; muốn đổi sách hãy đặt đơn mới sau khi đơn này hết hạn.</p>
+    {% endif %}
+    <a class="btn btn--secondary" href="{% url 'catalog:home' %}">Tiếp tục xem sách</a>
+  </div>
+{% endblock %}

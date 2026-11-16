@@ -8,7 +8,7 @@
     <p class="area-header__desc">Sách bạn đã chọn, chưa đặt hàng.</p>
   </header>
   {% if cart.lines %}
-    {# AI-TRACE#254 | Claude Opus 5.5 | Danh sách sách trong giỏ: nút −/+ gửi số lượng cuối cùng, nút Gỡ, sách ngừng bán/hết hàng hiện mờ chỉ gỡ được, tạm tính và nút đặt hàng mờ | CẤM XÓA CHÚ THÍCH NÀY #}
+    {# AI-TRACE#254 | Claude Opus 5.5 | Danh sách sách trong giỏ: nút −/+ gửi số lượng cuối cùng, nút Gỡ, sách ngừng bán/hết hàng hiện mờ chỉ gỡ được, tạm tính và nút đặt hàng (khóa khi còn sách không bán được) | CẤM XÓA CHÚ THÍCH NÀY #}
     <div class="cart">
       <ul class="cart__list">
         {% for line in cart.lines %}
@@ -52,8 +52,13 @@
       <aside class="cart__summary" aria-label="Tạm tính">
         <p class="cart__row"><span>Tạm tính ({{ cart.item_count }} cuốn)</span><strong>{{ cart.subtotal|vnd }}</strong></p>
         <p class="cart__note">Giá chốt khi đặt hàng. Mỗi sách tối đa {{ cart_max }} cuốn.{% if cart.has_unavailable %} Sách ngừng bán hoặc hết hàng không được tính.{% endif %}</p>
-        <button class="btn cart__order" type="button" disabled>Đặt hàng</button>
-        <p class="cart__note">Chức năng đặt hàng sắp có.</p>
+        {% if cart.has_unavailable %}
+          <button class="btn cart__order" type="button" disabled>Đặt hàng</button>
+          <p class="cart__note">Hãy gỡ sách ngừng bán hoặc hết hàng trước khi đặt hàng.</p>
+        {% else %}
+          <a class="btn cart__order" href="{% url 'orders:checkout' %}">Đặt hàng</a>
+          <p class="cart__note">Phí giao hàng 30.000 ₫, thanh toán trong 15 phút sau khi đặt.</p>
+        {% endif %}
         <a class="btn btn--secondary cart__more" href="{% url 'catalog:home' %}">Xem thêm sách</a>
       </aside>
     </div>

@@ -86,6 +86,16 @@ GRANT EXECUTE ON PROCEDURE sp_place_order TO 'bookstore_definer'@'localhost';
 -- Khách chỉ được gọi thủ tục, không có quyền nào trên các bảng trên
 GRANT EXECUTE ON PROCEDURE sp_place_order TO 'r_customer';
 
+-- Đặt hàng (2026-11-16): đọc đơn của chính khách + trigger khóa đơn
+-- (database/objects/30_sp_place_order.sql, 32_trg_orders_guard.sql).
+-- Definer: đọc chi tiết đơn cho sp_order_get; TRIGGER để chạy các trigger
+-- khóa đơn (trigger chạy bằng quyền definer).
+GRANT SELECT          ON orders_orderitem TO 'bookstore_definer'@'localhost';
+GRANT TRIGGER         ON orders_order     TO 'bookstore_definer'@'localhost';
+GRANT TRIGGER         ON orders_orderitem TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_order_get   TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_order_get   TO 'r_customer';
+
 -- ---------------------------------------------------------------------
 -- Thể loại sách (database/objects/40_category.sql)
 -- Definer: đọc/khóa/ghi catalog_category, đếm sách, ghi nhật ký.

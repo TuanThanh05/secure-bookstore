@@ -42,7 +42,7 @@ class BookDetailViewTests(TestCase):
         self.assertIn("đã sửa", html)
         self.assertIn(f"{reverse('accounts:login')}?next={self.detail}", html)
         self.assertNotIn("<form method=\"post\" action=\"" + self.submit, html)
-        self.assertIn('type="button" disabled', html)
+        self.assertIn('form="cart-add-form" name="then" value="cart"', html)
 
     def test_review_content_is_escaped(self):
         html = self.client.get(self.detail).content.decode()

@@ -1,15 +1,39 @@
+import datetime
+import re
 import secrets
+from dataclasses import dataclass
 from typing import NamedTuple
 
+from django.conf import settings
+from django.core.cache import cache
 from django.db import OperationalError, connection
+
+from core.crypto import DecryptionError, decrypt_field, encrypt_field
+from core.security_log import log_event
 
 SIGNAL_ERROR_CODE = 1644
 
+SHIPPING_FEE = 30000
+IDEMPOTENCY_KEY_RE = re.compile(r"^[0-9a-f]{32}$")
+ORDER_CODE_RE = IDEMPOTENCY_KEY_RE
+
 ORDER_ERROR_MESSAGES = {
     "INVALID_INPUT": "Thông tin giao hàng không hợp lệ.",
+    "NOT_CUSTOMER": "Chỉ khách đã đăng nhập và xác nhận email mới đặt hàng được.",
+    "PENDING_EXISTS": "Bạn đang có một đơn chờ thanh toán. Hãy thanh toán hoặc đợi đơn đó hết hạn trước khi đặt đơn mới.",
     "CART_EMPTY": "Giỏ hàng đang trống.",
-    "BOOK_INACTIVE": "Một số sách đã ngừng bán.",
-    "OUT_OF_STOCK": "Một số sách vừa hết hàng, vui lòng kiểm tra lại giỏ.",
+    "BOOK_INACTIVE": "Một số sách đã ngừng bán. Hãy gỡ chúng khỏi giỏ trước khi đặt hàng.",
+    "OUT_OF_STOCK": "Một số sách vừa hết hàng hoặc không đủ số lượng, vui lòng kiểm tra lại giỏ.",
+    "ORDER_NOT_FOUND": "Không tìm thấy đơn hàng.",
+    "RATE_LIMITED": "Bạn thao tác quá nhanh. Hãy thử lại sau ít phút.",
+}
+
+ORDER_STATUS_LABELS = {
+    "pending": "Chờ thanh toán",
+    "paid": "Đã thanh toán",
+    "shipped": "Đang giao",
+    "delivered": "Đã giao",
+    "cancelled": "Đã hủy",
 }
 
 
@@ -32,10 +56,40 @@ def new_idempotency_key():
     return secrets.token_hex(16)
 
 
-# AI-TRACE#005 | Claude Opus 5.5 | Gọi thủ tục sp_place_order và đổi lỗi SIGNAL thành OrderError | CẤM XÓA CHÚ THÍCH NÀY
-def place_order(user, idempotency_key, shipping_name, phone_encrypted, address_encrypted):
+# AI-TRACE#266 | Claude Opus 5.5 | Ngữ cảnh mã hóa SĐT/địa chỉ giao hàng gắn với người đặt và mã chống trùng của đơn, bản mã chép sang đơn khác sẽ không giải mã được | CẤM XÓA CHÚ THÍCH NÀY
+def shipping_context(field, user_pk, idempotency_key):
+    return f"orders_order.{field}:{user_pk}:{idempotency_key}"
+
+
+# AI-TRACE#267 | Claude Opus 5.5 | Giới hạn số lần đặt hàng của mỗi khách theo ORDER_PLACE_RATE_* | CẤM XÓA CHÚ THÍCH NÀY
+def _allow_place_order(user):
+    key = f"order-place-rate:{user.pk}"
+    window = settings.ORDER_PLACE_RATE_WINDOW
+    if cache.add(key, 1, window):
+        return True
+    try:
+        count = cache.incr(key)
+    except ValueError:
+        cache.set(key, 1, window)
+        return True
+    return count <= settings.ORDER_PLACE_RATE_LIMIT
+
+
+# AI-TRACE#005 | Claude Opus 5.5 | Đặt đơn: user lấy từ phiên, mã hóa SĐT/địa chỉ, giới hạn tần suất rồi gọi sp_place_order và đổi lỗi SIGNAL thành OrderError | CẤM XÓA CHÚ THÍCH NÀY
+def place_order(request, idempotency_key, shipping_name, phone, address):
+    user = request.user
+    if not user.is_authenticated or user.is_staff:
+        raise OrderError("NOT_CUSTOMER")
+    if not isinstance(idempotency_key, str) or not IDEMPOTENCY_KEY_RE.match(idempotency_key):
+        raise OrderError("INVALID_INPUT")
     if connection.in_atomic_block:
         raise RuntimeError("place_order không được gọi bên trong transaction.atomic")
+    if not _allow_place_order(user):
+        log_event("rate_limited", request, severity="warning", user=user, username=user.get_username(),
+                  detail={"action": "place_order"})
+        raise OrderError("RATE_LIMITED")
+    phone_encrypted = encrypt_field(phone, shipping_context("shipping_phone_encrypted", user.pk, idempotency_key))
+    address_encrypted = encrypt_field(address, shipping_context("shipping_address_encrypted", user.pk, idempotency_key))
     params = [user.pk, idempotency_key, shipping_name, phone_encrypted, address_encrypted, None, None]
     try:
         with connection.cursor() as cursor:
@@ -58,3 +112,94 @@ def _signal_code(exc):
     if len(args) >= 2 and args[0] == SIGNAL_ERROR_CODE and args[1] in ORDER_ERROR_MESSAGES:
         return args[1]
     return None
+
+
+# AI-TRACE#268 | Claude Opus 5.5 | Một sách trong đơn: tên và giá chụp lúc đặt | CẤM XÓA CHÚ THÍCH NÀY
+@dataclass(frozen=True)
+class OrderLine:
+    book_id: int
+    title: str
+    unit_price: int
+    quantity: int
+
+    @property
+    def line_total(self):
+        return self.unit_price * self.quantity
+
+
+# AI-TRACE#269 | Claude Opus 5.5 | Đơn hàng cho template: trạng thái, tiền, thông tin giao hàng đã giải mã, hạn thanh toán; không chứa mã chống trùng | CẤM XÓA CHÚ THÍCH NÀY
+@dataclass(frozen=True)
+class Order:
+    code: str
+    status: str
+    subtotal: int
+    shipping_fee: int
+    total: int
+    shipping_name: str
+    shipping_phone: str | None
+    shipping_address: str | None
+    created_at: datetime.datetime
+    expires_at: datetime.datetime
+    paid_at: datetime.datetime | None
+    cancelled_at: datetime.datetime | None
+    lines: tuple
+
+    @property
+    def status_label(self):
+        return ORDER_STATUS_LABELS.get(self.status, self.status)
+
+    @property
+    def awaiting_payment(self):
+        return self.status == "pending" and self.expires_at > datetime.datetime.now(datetime.UTC)
+
+    @property
+    def expired(self):
+        return self.status == "pending" and not self.awaiting_payment
+
+
+def _aware(value):
+    if value is None or value.tzinfo is not None:
+        return value
+    return value.replace(tzinfo=datetime.UTC)
+
+
+def _decrypt_shipping(value, field, user_pk, idempotency_key):
+    try:
+        return decrypt_field(value, shipping_context(field, user_pk, idempotency_key))
+    except DecryptionError:
+        return None
+
+
+# AI-TRACE#270 | Claude Opus 5.5 | Đọc một đơn của chính khách bằng sp_order_get; mã đơn sai mẫu bị chặn trước khi xuống CSDL, đơn người khác báo không tìm thấy | CẤM XÓA CHÚ THÍCH NÀY
+def get_order(request, code):
+    user = request.user
+    if not user.is_authenticated or user.is_staff:
+        raise OrderError("NOT_CUSTOMER")
+    if not isinstance(code, str) or not ORDER_CODE_RE.match(code):
+        raise OrderError("ORDER_NOT_FOUND")
+    try:
+        with connection.cursor() as cursor:
+            cursor.callproc("sp_order_get", [user.pk, code])
+            header = cursor.fetchone()
+            cursor.nextset()
+            items = cursor.fetchall()
+            while cursor.nextset():
+                pass
+    except OperationalError as exc:
+        signal = _signal_code(exc)
+        if signal is None:
+            raise
+        raise OrderError(signal) from exc
+    if header is None:
+        raise OrderError("ORDER_NOT_FOUND")
+    (order_code, status, subtotal, shipping_fee, total, shipping_name, phone_enc, address_enc,
+     idempotency_key, created_at, expires_at, paid_at, cancelled_at) = header
+    return Order(
+        code=order_code, status=status, subtotal=int(subtotal), shipping_fee=int(shipping_fee), total=int(total),
+        shipping_name=shipping_name,
+        shipping_phone=_decrypt_shipping(phone_enc, "shipping_phone_encrypted", user.pk, idempotency_key),
+        shipping_address=_decrypt_shipping(address_enc, "shipping_address_encrypted", user.pk, idempotency_key),
+        created_at=_aware(created_at), expires_at=_aware(expires_at),
+        paid_at=_aware(paid_at), cancelled_at=_aware(cancelled_at),
+        lines=tuple(OrderLine(book_id=int(r[0]), title=r[1], unit_price=int(r[2]), quantity=int(r[3])) for r in items),
+    )
