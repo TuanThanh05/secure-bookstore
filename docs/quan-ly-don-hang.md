@@ -51,3 +51,19 @@ Mã lỗi: `INVALID_INPUT`, `NOT_STAFF`, `ORDER_NOT_FOUND` (→ 404), `ORDER_WRO
 
 - Test `dashboard/tests/test_orders.py` (17 test): bộ lọc/mã đơn/tên bước sai không xuống CSDL; mỗi bước gọi đúng thủ tục qua kết nối `staff`; giải mã đúng ngữ cảnh chủ đơn; lỗi quyền không bị nuốt; nút bước tiếp theo theo trạng thái; view: chỉ nhân viên (khách 403, ẩn danh đi đăng nhập), danh sách không có SĐT, chi tiết bắt xác thực lại + ghi log, mã không có 404, GET 405, thiếu CSRF 403, sai bước báo lỗi, redirect chỉ trong mục đơn hàng.
 - Chạy thật trên MySQL trong sandbox: tiếp nhận đơn chờ thanh toán, đóng gói trước khi tiếp nhận → `ORDER_WRONG_STATUS`; 5 luồng bấm "Tiếp nhận" cùng lúc → 1 thành công, 4 `ORDER_WRONG_STATUS`; đi hết pack → ship → deliver; bấm "đã giao" lần 2 → `ORDER_WRONG_STATUS`; nhật ký đơn: `pending`, `paid` (Khách, id khách), `confirmed`, `packed`, `shipped`, `delivered` (Quản trị, id admin); biến phiên không còn sau thủ tục; chi tiết giải mã đúng SĐT/địa chỉ và hiện mã giao dịch; tổng "Cần xử lý" khớp đếm trực tiếp; id khách làm actor → `NOT_STAFF`.
+
+## 6. Trang Tổng quan (`/dashboard/`)
+
+Chốt 2026-11-16: báo cáo cơ bản, chỉ con số trọng tâm (bỏ "bán chạy" và "khách mới").
+
+| Nhóm | Số liệu | Bấm vào |
+| --- | --- | --- |
+| Đơn hàng | Cần xử lý (tổng), đơn mới hôm nay, đơn hủy hôm nay; dải 4 bước: Đã thanh toán, Đã tiếp nhận, Đã đóng gói, Đang giao | Quản lý đơn có lọc sẵn (`?trang_thai=todo`, `paid`...) |
+| Doanh thu | Hôm nay, 7 ngày gần nhất (gồm hôm nay), tháng này | – |
+| Kho sách | Sắp hết (1–`LOW_STOCK_THRESHOLD` cuốn), hết hàng (chỉ sách đang bán); 5 cuốn đang bán còn ít nhất | Quản lý kho / trang sửa sách |
+| Bảo mật | Sự kiện nghiêm trọng, cảnh báo trong 24 giờ (thẻ nghiêm trọng tô đỏ khi > 0); đăng nhập sai từ đầu ngày | Nhật ký hệ thống có lọc sẵn (vẫn phải xác thực lại) |
+
+- **Doanh thu** = tổng `total` của đơn từ "Đã thanh toán" trở đi, tính theo `paid_at` (đơn đã thanh toán không hủy được nên không bị trừ lại), gồm cả thanh toán mô phỏng. "Hôm nay", "tháng này" theo giờ Việt Nam: Django tính mốc rồi truyền xuống thủ tục dạng UTC (`dashboard.overview_services.period_starts`).
+- **Thủ tục đọc, không dùng view** (cần `COUNT`/`SUM`/`WHERE`, MySQL từ chối view DEFINER như vậy khi phiên bật role): `database/objects/45_dashboard.sql` – `sp_staff_dashboard_orders(actor, today, week, month)`, `sp_staff_dashboard_stock(actor, low_threshold)` (2 bộ kết quả), `sp_staff_dashboard_security(actor, today)`. Mỗi thủ tục kiểm tra `NOT_STAFF` và mốc thời gian hợp lý (`INVALID_INPUT`). Chỉ `r_staff` được gọi; `db_check_grants` thêm 5 kiểm tra (tổng 85).
+- Trang chỉ có con số và tên sách, **không có dữ liệu cá nhân** → không bắt xác thực lại, không ghi log mỗi lần xem (chốt). `staff_required` + `never_cache` + `require_GET`.
+- Đã kiểm tra trên CSDL thật: mọi con số khớp với đếm trực tiếp bằng SQL (đơn theo bước, đơn mới/hủy hôm nay, doanh thu, sắp hết/hết hàng, sự kiện bảo mật); id khách làm actor → `NOT_STAFF`; mốc thời gian sai, ngưỡng 0 → `INVALID_INPUT`. Test `dashboard/tests/test_overview.py` (7 test, gồm mốc giờ Việt Nam lúc qua nửa đêm và đầu tháng).
