@@ -207,3 +207,26 @@
 .dash-header--row .btn .icon { margin-right: var(--space-xs); }
 .dash-confirm .dash-form { grid-template-columns: 1fr; max-width: 520px; }
 .dash-confirm textarea { resize: vertical; }
+
+/* AI-TRACE#316 | Claude Opus 5.5 | Nút khóa nhỏ trong bảng tài khoản dùng màu nút chính và căn giữa khung xác nhận trong vùng quản trị | CẤM XÓA CHÚ THÍCH NÀY */
+.btn--danger.btn--sm { background: var(--color-primary); border-color: var(--color-primary); }
+.btn--danger.btn--sm:hover { background: var(--color-primary-strong); border-color: var(--color-primary-strong); }
+.dash-confirm { margin-left: auto; margin-right: auto; }
+.dash-info:has(+ .dash-form) { max-width: 520px; }
+
+/* AI-TRACE#317 | Claude Opus 5.5 | Khung xác nhận khóa tài khoản chia hai cột: thông tin bên trái, form bên phải, về một cột trên màn hình nhỏ | CẤM XÓA CHÚ THÍCH NÀY */
+.dash-confirm:has(> .dash-form) {
+  max-width: 1040px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: auto auto auto auto 1fr;
+  column-gap: var(--space-lg);
+  align-items: start;
+}
+.dash-confirm:has(> .dash-form) > * { grid-column: 1; }
+.dash-confirm:has(> .dash-form) > .dash-confirm__title { grid-column: 1 / -1; }
+.dash-confirm:has(> .dash-form) > .dash-info { margin: 0; }
+.dash-confirm:has(> .dash-form) > .dash-form { grid-column: 2; grid-row: 2 / 6; max-width: none; }
+@media (max-width: 900px) {
+  .dash-confirm:has(> .dash-form) { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  .dash-confirm:has(> .dash-form) > .dash-form { grid-column: 1; grid-row: auto; }
+}
