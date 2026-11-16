@@ -268,3 +268,12 @@ Chốt 2026-11-16: thanh toán xong (và cả lúc đang chờ thanh toán) khô
 
 **Bảo mật đã kiểm tra** (test `orders/tests/test_checkout.py`, `test_place_order.py`, `db_check_grants` tổng 46 + chạy thật): `total`, `user_id`, `idempotency_key` gửi kèm form bị bỏ qua; thiếu CSRF → 403; khách B mở đơn của khách A → 404; mã đơn chứa `' OR 1=1` → 404 không xuống CSDL; `app_customer` đọc/sửa thẳng `orders_order`, thêm thẳng `orders_orderitem` → 1142; gọi thủ tục bằng id quản trị → `NOT_CUSTOMER`; CSDL chỉ lưu bản mã (`v1.`...). Chạy đồng thời: cùng khách bấm 4 lần cùng mã → 1 đơn mới + 3 lần trả lại đơn cũ; cùng khách 3 tab khác mã → 1 đơn + 2 `PENDING_EXISTS`; hai khách tranh cuốn cuối → 1 đơn + 1 `OUT_OF_STOCK`, kho về 0, không âm.
 
+
+## Thanh toán mô phỏng: `sp_payment_simulate`
+
+Chốt 2026-11-16, tạm thời khi chưa có cổng thật. Chi tiết: `docs/thanh-toan-mo-phong.md`.
+
+- Bật bằng `PAYMENT_SIMULATION=True` trong `.env`; tắt thì nút hiện "Chưa cấu hình cổng thanh toán".
+- `POST /payments/mo-phong/<mã đơn>/` (`payments:simulate`) → `payments.services.simulate_payment(request, code)` → `sp_payment_simulate(user_id, code, client_ip, OUT transaction_id)`.
+- Thủ tục khóa dòng đơn của chính khách, chỉ nhận đơn `pending` còn hạn, ghi một dòng `payments_payment` (`provider = 'simulated'`, số tiền lấy từ `total` của đơn) rồi đổi đơn sang `paid` trong cùng giao dịch. Mã lỗi: `ORDER_NOT_FOUND` (→ 404 + `idor_attempt`), `ORDER_ALREADY_PAID`, `ORDER_NOT_PAYABLE`, `ORDER_EXPIRED`, `NOT_CUSTOMER`, `INVALID_INPUT`; service thêm `NOT_CONFIGURED`, `RATE_LIMITED`.
+- Giao dịch đã ghi không sửa/xóa được (trigger `PAYMENT_LOCKED`); một đơn tối đa một giao dịch thành công (UNIQUE `uq_payment_success_order`).

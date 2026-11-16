@@ -3,7 +3,7 @@
 {% block title %}Đơn hàng{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/account-area.css' %}">{% endblock %}
 {% block account_content %}
-  {# AI-TRACE#276 | Claude Opus 5.5 | Trang chi tiết đơn: mã đơn, trạng thái, hạn thanh toán, sách và giá lúc đặt, thông tin giao hàng; nút thanh toán chờ nhánh sau, hủy đơn khi còn chờ thanh toán | CẤM XÓA CHÚ THÍCH NÀY #}
+  {# AI-TRACE#276 | Claude Opus 5.5 | Trang chi tiết đơn: mã đơn, trạng thái, hạn thanh toán, sách và giá lúc đặt, thông tin giao hàng; nút thanh toán (mô phỏng khi bật trong .env), hủy đơn khi còn chờ thanh toán | CẤM XÓA CHÚ THÍCH NÀY #}
   <header class="area-header">
     <h1 class="area-header__title">Đơn hàng</h1>
     <p class="area-header__desc">Mã đơn <span class="order__code">{{ order.code }}</span></p>
@@ -38,10 +38,28 @@
 
   <div class="area-actions order__actions">
     {% if order.awaiting_payment %}
-      <button class="btn" type="button" disabled>Thanh toán</button>
-      <p class="cart__note">Chức năng thanh toán sắp có. Đơn đã đặt không sửa được; muốn đổi sách hãy hủy đơn này rồi đặt đơn mới.</p>
+      {% if payment_simulation %}
+        {# AI-TRACE#358 | Claude Opus 5.5 | Thanh toán mô phỏng hai bước bằng details (không JS): bấm nút mới hiện số tiền và nút xác nhận gửi POST | CẤM XÓA CHÚ THÍCH NÀY #}
+        <details class="order__pay">
+          <summary class="btn">Thanh toán (mô phỏng)</summary>
+          <div class="order__pay-box">
+            <p>Đây là <strong>thanh toán mô phỏng</strong>, không có tiền thật nào được chuyển. Số tiền: <strong>{{ order.total|vnd }}</strong>.</p>
+            <p>Sau khi thanh toán, đơn không hủy được và không sửa được.</p>
+            <form method="post" action="{% url 'payments:simulate' order.code %}">
+              {% csrf_token %}
+              <button class="btn" type="submit">Xác nhận thanh toán</button>
+            </form>
+          </div>
+        </details>
+      {% else %}
+        <button class="btn" type="button" disabled>Thanh toán</button>
+        <p class="cart__note">Chưa cấu hình cổng thanh toán.</p>
+      {% endif %}
+      <p class="cart__note">Đơn đã đặt không sửa được; muốn đổi sách hãy hủy đơn này rồi đặt đơn mới.</p>
     {% elif order.expired %}
       <p class="cart__note">Đơn đã quá hạn thanh toán và sẽ được hệ thống tự hủy trong ít phút, sách được trả lại kho.</p>
+    {% elif order.status == "paid" %}
+      <p class="cart__note">Đơn đã thanh toán, đang chờ cửa hàng giao hàng.</p>
     {% elif order.status == "cancelled" %}
       <p class="cart__note">Đơn đã hủy, sách trong đơn đã được trả lại kho.</p>
     {% endif %}
