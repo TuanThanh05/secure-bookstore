@@ -4,13 +4,13 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 
 | ID | Model | Người dùng | File | Class / Hàm | Dòng | Làm gì | Đã duyệt |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 001 | Claude Opus 5.5 | TuanThanh | `database/objects/30_sp_place_order.sql` | `PROCEDURE sp_place_order` | 43 | Thủ tục đặt đơn: khóa giỏ và sách, kiểm tra kho, tạo đơn, trừ kho | [ ] |
-| 002 | Claude Opus 5.5 | TuanThanh | `backend/orders/services.py` | `OrderError` | 16 | Lỗi nghiệp vụ khi đặt đơn, mang mã lỗi và câu tiếng Việt | [ ] |
-| 003 | Claude Opus 5.5 | TuanThanh | `backend/orders/services.py` | `PlaceOrderResult` | 24 | Kết quả đặt đơn gồm mã đơn và cờ đơn mới | [ ] |
-| 004 | Claude Opus 5.5 | TuanThanh | `backend/orders/services.py` | `new_idempotency_key` | 30 | Sinh mã yêu cầu chống bấm đặt hàng hai lần | [ ] |
-| 005 | Claude Opus 5.5 | TuanThanh | `backend/orders/services.py` | `place_order` | 35 | Gọi thủ tục sp_place_order và đổi lỗi SIGNAL thành OrderError | [ ] |
-| 006 | Claude Opus 5.5 | TuanThanh | `backend/orders/services.py` | `_signal_code` | 55 | Đọc mã lỗi nghiệp vụ từ lỗi MySQL 1644 do SIGNAL | [ ] |
-| 007 | Claude Opus 5.5 | TuanThanh | `backend/orders/tests/test_place_order.py` | `PlaceOrderTests` | 14 | Test place_order bằng cursor giả, không cần thủ tục thật | [ ] |
+| 001 | Claude Opus 5.5 | TuanThanh | `database/objects/30_sp_place_order.sql` | `PROCEDURE sp_place_order` | 54 | Thủ tục đặt đơn: khóa giỏ và sách, kiểm tra kho, tạo đơn, trừ kho | [ ] |
+| 002 | Claude Opus 5.5 | TuanThanh | `backend/orders/services.py` | `OrderError` | 40 | Lỗi nghiệp vụ khi đặt đơn, mang mã lỗi và câu tiếng Việt | [ ] |
+| 003 | Claude Opus 5.5 | TuanThanh | `backend/orders/services.py` | `PlaceOrderResult` | 48 | Kết quả đặt đơn gồm mã đơn và cờ đơn mới | [ ] |
+| 004 | Claude Opus 5.5 | TuanThanh | `backend/orders/services.py` | `new_idempotency_key` | 54 | Sinh mã yêu cầu chống bấm đặt hàng hai lần | [ ] |
+| 005 | Claude Opus 5.5 | TuanThanh | `backend/orders/services.py` | `place_order` | 78 | Đặt đơn: user lấy từ phiên, mã hóa SĐT/địa chỉ, giới hạn tần suất rồi gọi sp_place_order và đổi lỗi SIGNAL thành OrderError | [ ] |
+| 006 | Claude Opus 5.5 | TuanThanh | `backend/orders/services.py` | `_signal_code` | 109 | Đọc mã lỗi nghiệp vụ từ lỗi MySQL 1644 do SIGNAL | [ ] |
+| 007 | Claude Opus 5.5 | TuanThanh | `backend/orders/tests/test_place_order.py` | `PlaceOrderTests` | 17 | Test place_order bằng cursor giả: user lấy từ phiên, SĐT/địa chỉ được mã hóa theo ngữ cảnh đơn, giới hạn tần suất, đổi lỗi SIGNAL | [ ] |
 | 008 | Claude Opus 5.5 |  | `backend/accounts/tokens.py` | `EmailTokenResult` | 9 | Kết quả đọc mã xác nhận email gồm trạng thái và dữ liệu | [ ] |
 | 009 | Claude Opus 5.5 |  | `backend/accounts/tokens.py` | `make_email_token` | 16 | Tạo mã xác nhận email ký bằng SECRET_KEY kèm salt riêng | [ ] |
 | 010 | Claude Opus 5.5 |  | `backend/accounts/tokens.py` | `read_email_token` | 21 | Kiểm tra chữ ký và hạn dùng của mã xác nhận email | [ ] |
@@ -118,7 +118,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 113 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `rename_category` | 111 | Sửa tên thể loại bằng sp_category_rename, slug đổi theo tên | [ ] |
 | 114 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `delete_category` | 117 | Xóa thể loại bằng sp_category_delete | [ ] |
 | 115 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `_category_id` | 84 | Đổi id thể loại nhận từ request thành số nguyên, sai kiểu thì coi như không tìm thấy | [ ] |
-| 116 | Claude Opus 5.5 |  | `backend/core/management/commands/db_check_grants.py` | `Command` | 50 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi | [ ] |
+| 116 | Claude Opus 5.5 |  | `backend/core/management/commands/db_check_grants.py` | `Command` | 57 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi | [ ] |
 | 117 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `SlugAndNameTests` | 22 | Test tạo slug và chuẩn hóa tên thể loại tiếng Việt | [ ] |
 | 118 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `CategoryProcedureTests` | 48 | Test gọi thủ tục thể loại bằng cursor giả qua kết nối staff, đổi lỗi SIGNAL | [ ] |
 | 119 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `CategoryListTests` | 101 | Test đọc danh sách thể loại qua sp_category_list và lệnh kiểm tra quyền từ chối settings.migrate | [ ] |
@@ -233,10 +233,10 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 228 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `_int_in_range` | 34 | Đổi id sách và số lượng nhận từ request thành số nguyên trong khoảng cho phép | [ ] |
 | 229 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `_allow_cart_action` | 47 | Giới hạn tần suất thao tác giỏ hàng theo từng khách: thêm vào giỏ (CART_ADD_RATE_*) và đổi số lượng/gỡ (CART_UPDATE_RATE_*) | [ ] |
 | 230 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `add_to_cart` | 97 | Thêm sách vào giỏ bằng sp_cart_add; user lấy từ phiên đăng nhập, có giới hạn tần suất; trả số cuốn của sách đó trong giỏ sau khi thêm | [ ] |
-| 231 | Claude Opus 5.5 |  | `backend/orders/forms.py` | `CartAddForm` | 6 | Form thêm vào giỏ: chỉ id sách và số lượng 1–5, không có giá hay user | [ ] |
-| 232 | Claude Opus 5.5 |  | `backend/orders/views.py` | `_safe_back_url` | 94 | Chỉ quay lại địa chỉ nội bộ an toàn sau khi thêm vào giỏ, chặn open redirect | [ ] |
-| 233 | Claude Opus 5.5 |  | `backend/orders/views.py` | `cart_add` | 105 | Nhận form thêm vào giỏ (chỉ POST, CSRF): ẩn danh đi đăng nhập, nhân viên bị từ chối, xong thì ở lại trang đang xem kèm thông báo | [ ] |
-| 234 | Claude Opus 5.5 |  | `frontend/templates/shop/book_detail.html` | `{% if book.in_stock and not user.is_staff %}` | 48 | Form thêm vào giỏ cạnh nút đặt hàng: ô số lượng 1–5, khóa khi hết hàng | [ ] |
+| 231 | Claude Opus 5.5 |  | `backend/orders/forms.py` | `CartAddForm` | 10 | Form thêm vào giỏ: chỉ id sách và số lượng 1–5, không có giá hay user | [ ] |
+| 232 | Claude Opus 5.5 |  | `backend/orders/views.py` | `_safe_back_url` | 98 | Chỉ quay lại địa chỉ nội bộ an toàn sau khi thêm vào giỏ, chặn open redirect | [ ] |
+| 233 | Claude Opus 5.5 |  | `backend/orders/views.py` | `cart_add` | 109 | Nhận form thêm vào giỏ (chỉ POST, CSRF): ẩn danh đi đăng nhập, nhân viên bị từ chối, xong thì ở lại trang đang xem kèm thông báo | [ ] |
+| 234 | Claude Opus 5.5 |  | `frontend/templates/shop/book_detail.html` | `{% if book.in_stock and not user.is_staff %}` | 48 | Form thêm vào giỏ cạnh nút đặt hàng: ô số lượng 1–5, khóa khi hết hàng; nút Đặt hàng gửi cùng form rồi chuyển sang giỏ | [ ] |
 | 235 | Claude Opus 5.5 |  | `frontend/static/css/shop.css` | `.cart-add { display: flex; align-items: center; gap: var(--s` | 274 | Kiểu form thêm vào giỏ ở trang chi tiết: ô số lượng gọn cạnh nút | [ ] |
 | 236 | Claude Opus 5.5 |  | `backend/orders/tests/test_cart_add.py` | `AddToCartServiceTests` | 25 | Test service thêm vào giỏ bằng cursor giả: user lấy từ phiên, số lượng 1–5, chặn nhân viên, giới hạn tần suất, đổi lỗi SIGNAL | [ ] |
 | 237 | Claude Opus 5.5 |  | `backend/orders/tests/test_cart_add.py` | `CartAddViewTests` | 99 | Test view thêm vào giỏ: chỉ POST, CSRF, ẩn danh đi đăng nhập, nhân viên bị từ chối, chặn open redirect, ở lại trang đang xem | [ ] |
@@ -250,14 +250,37 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 245 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `get_cart` | 168 | Đọc giỏ của khách đang đăng nhập bằng sp_cart_list | [ ] |
 | 246 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `set_cart_quantity` | 179 | Đặt số lượng mới (1–5) cho sách trong giỏ bằng sp_cart_set_quantity, dùng cho nút tăng và giảm | [ ] |
 | 247 | Claude Opus 5.5 |  | `backend/orders/cart_services.py` | `remove_from_cart` | 190 | Gỡ một sách khỏi giỏ bằng sp_cart_remove | [ ] |
-| 248 | Claude Opus 5.5 |  | `backend/orders/forms.py` | `CartQuantityForm` | 12 | Form đổi số lượng trong giỏ: id sách và số lượng cuối cùng 1–5 | [ ] |
-| 249 | Claude Opus 5.5 |  | `backend/orders/forms.py` | `CartRemoveForm` | 18 | Form gỡ sách khỏi giỏ: chỉ id sách | [ ] |
-| 250 | Claude Opus 5.5 |  | `backend/orders/views.py` | `cart` | 20 | Trang giỏ hàng của khách: đọc bằng sp_cart_list, không lưu cache; nhân viên không có giỏ | [ ] |
-| 251 | Claude Opus 5.5 |  | `backend/orders/views.py` | `_cart_page_guard` | 36 | Kiểm tra chung cho form trên trang giỏ: ẩn danh đi đăng nhập rồi quay lại giỏ, nhân viên bị từ chối | [ ] |
-| 252 | Claude Opus 5.5 |  | `backend/orders/views.py` | `cart_update` | 47 | Nhận nút tăng/giảm trên trang giỏ (chỉ POST, CSRF): gửi số lượng cuối cùng, xong quay về giỏ | [ ] |
-| 253 | Claude Opus 5.5 |  | `backend/orders/views.py` | `cart_remove` | 66 | Nhận nút gỡ sách trên trang giỏ (chỉ POST, CSRF), không hỏi xác nhận, xong quay về giỏ | [ ] |
-| 254 | Claude Opus 5.5 |  | `frontend/templates/shop/cart.html` | `<div class="cart">` | 11 | Danh sách sách trong giỏ: nút −/+ gửi số lượng cuối cùng, nút Gỡ, sách ngừng bán/hết hàng hiện mờ chỉ gỡ được, tạm tính và nút đặt hàng mờ | [ ] |
+| 248 | Claude Opus 5.5 |  | `backend/orders/forms.py` | `CartQuantityForm` | 16 | Form đổi số lượng trong giỏ: id sách và số lượng cuối cùng 1–5 | [ ] |
+| 249 | Claude Opus 5.5 |  | `backend/orders/forms.py` | `CartRemoveForm` | 22 | Form gỡ sách khỏi giỏ: chỉ id sách | [ ] |
+| 250 | Claude Opus 5.5 |  | `backend/orders/views.py` | `cart` | 24 | Trang giỏ hàng của khách: đọc bằng sp_cart_list, không lưu cache; nhân viên không có giỏ | [ ] |
+| 251 | Claude Opus 5.5 |  | `backend/orders/views.py` | `_cart_page_guard` | 40 | Kiểm tra chung cho form trên trang giỏ: ẩn danh đi đăng nhập rồi quay lại giỏ, nhân viên bị từ chối | [ ] |
+| 252 | Claude Opus 5.5 |  | `backend/orders/views.py` | `cart_update` | 51 | Nhận nút tăng/giảm trên trang giỏ (chỉ POST, CSRF): gửi số lượng cuối cùng, xong quay về giỏ | [ ] |
+| 253 | Claude Opus 5.5 |  | `backend/orders/views.py` | `cart_remove` | 70 | Nhận nút gỡ sách trên trang giỏ (chỉ POST, CSRF), không hỏi xác nhận, xong quay về giỏ | [ ] |
+| 254 | Claude Opus 5.5 |  | `frontend/templates/shop/cart.html` | `<div class="cart">` | 11 | Danh sách sách trong giỏ: nút −/+ gửi số lượng cuối cùng, nút Gỡ, sách ngừng bán/hết hàng hiện mờ chỉ gỡ được, tạm tính và nút đặt hàng (khóa khi còn sách không bán được) | [ ] |
 | 255 | Claude Opus 5.5 |  | `frontend/static/css/account-area.css` | `.cart { display: grid; grid-template-columns: minmax(0, 1fr)` | 48 | Kiểu trang giỏ hàng: danh sách sách bên trái, ô tạm tính bên phải, sách không bán được hiện mờ, xếp dọc trên màn hình hẹp | [ ] |
 | 256 | Claude Opus 5.5 |  | `backend/orders/tests/test_cart_page.py` | `CartDataTests` | 30 | Test dữ liệu giỏ: tạm tính chỉ tính sách còn bán, nút tăng/giảm khóa đúng lúc, nhãn ngừng bán/hết hàng | [ ] |
 | 257 | Claude Opus 5.5 |  | `backend/orders/tests/test_cart_page.py` | `CartPageServiceTests` | 53 | Test service trang giỏ bằng cursor giả: user lấy từ phiên, id/số lượng kiểm tra trước khi xuống CSDL, giới hạn tần suất, đổi lỗi SIGNAL | [ ] |
 | 258 | Claude Opus 5.5 |  | `backend/orders/tests/test_cart_page.py` | `CartPageViewTests` | 131 | Test view trang giỏ: hiển thị dòng, nút khóa, không cache; form chỉ POST + CSRF, ẩn danh đi đăng nhập, nhân viên bị từ chối, luôn quay về giỏ | [ ] |
+| 259 | Claude Opus 5.5 |  | `database/objects/30_sp_place_order.sql` | `SELECT COUNT(*) INTO v_customer` | 108 | sp_place_order tự kiểm tra lại người gọi là khách hợp lệ (đang hoạt động, không phải nhân viên, đã xác nhận email) | [ ] |
+| 260 | Claude Opus 5.5 |  | `database/objects/30_sp_place_order.sql` | `SELECT COUNT(*) INTO v_pending_count` | 147 | Chống giữ kho: mỗi khách tối đa 1 đơn chờ thanh toán còn hạn, kiểm tra khi đang giữ khóa giỏ | [ ] |
+| 261 | Claude Opus 5.5 |  | `database/objects/30_sp_place_order.sql` | `-- Trả 2 bộ kết quả:` | 213 | Thủ tục đọc một đơn của chính khách theo mã đơn: dòng đầu là đơn, bộ kết quả thứ hai là các sách; đơn của người khác báo như không tồn tại | [ ] |
+| 262 | Claude Opus 5.5 |  | `database/objects/32_trg_orders_guard.sql` | `CREATE DEFINER = 'bookstore_definer'@'localhost'` | 39 | Trigger chỉ cho thêm sách vào đơn đang chờ thanh toán lúc tạo đơn: tổng các dòng không vượt subtotal đã chốt, đơn đã thanh toán/giao/hủy bị chặn | [ ] |
+| 263 | Claude Opus 5.5 |  | `database/objects/32_trg_orders_guard.sql` | `CREATE DEFINER = 'bookstore_definer'@'localhost'` | 65 | Trigger cấm sửa và xóa chi tiết đơn hàng (giá, số lượng, tên sách) | [ ] |
+| 264 | Claude Opus 5.5 |  | `database/objects/32_trg_orders_guard.sql` | `CREATE DEFINER = 'bookstore_definer'@'localhost'` | 82 | Trigger cấm đổi tiền, thông tin giao hàng của đơn; trạng thái chỉ đi đúng chiều, mốc thanh toán/hủy ghi một lần | [ ] |
+| 265 | Claude Opus 5.5 |  | `database/objects/32_trg_orders_guard.sql` | `CREATE DEFINER = 'bookstore_definer'@'localhost'` | 117 | Trigger cấm xóa đơn hàng để giữ lịch sử | [ ] |
+| 266 | Claude Opus 5.5 |  | `backend/orders/services.py` | `shipping_context` | 59 | Ngữ cảnh mã hóa SĐT/địa chỉ giao hàng gắn với người đặt và mã chống trùng của đơn, bản mã chép sang đơn khác sẽ không giải mã được | [ ] |
+| 267 | Claude Opus 5.5 |  | `backend/orders/services.py` | `_allow_place_order` | 64 | Giới hạn số lần đặt hàng của mỗi khách theo ORDER_PLACE_RATE_* | [ ] |
+| 268 | Claude Opus 5.5 |  | `backend/orders/services.py` | `OrderLine` | 117 | Một sách trong đơn: tên và giá chụp lúc đặt | [ ] |
+| 269 | Claude Opus 5.5 |  | `backend/orders/services.py` | `Order` | 130 | Đơn hàng cho template: trạng thái, tiền, thông tin giao hàng đã giải mã, hạn thanh toán; không chứa mã chống trùng | [ ] |
+| 270 | Claude Opus 5.5 |  | `backend/orders/services.py` | `get_order` | 173 | Đọc một đơn của chính khách bằng sp_order_get; mã đơn sai mẫu bị chặn trước khi xuống CSDL, đơn người khác báo không tìm thấy | [ ] |
+| 271 | Claude Opus 5.5 |  | `backend/orders/forms.py` | `CheckoutForm` | 31 | Form thông tin giao hàng: tên người nhận, SĐT Việt Nam, địa chỉ; bỏ ký tự điều khiển/vô hình, gom khoảng trắng | [ ] |
+| 272 | Claude Opus 5.5 |  | `backend/orders/views.py` | `_checkout_key` | 145 | Mã chống bấm trùng của lần đặt hàng: sinh ở server, chỉ lưu trong phiên, không nhận từ form | [ ] |
+| 273 | Claude Opus 5.5 |  | `backend/orders/views.py` | `checkout` | 159 | Trang đặt hàng: kiểm tra giỏ (không rỗng, không có sách ngừng bán/hết hàng), form giao hàng điền sẵn từ hồ sơ, gọi sp_place_order, xong chuyển tới trang đơn | [ ] |
+| 274 | Claude Opus 5.5 |  | `backend/orders/views.py` | `order_detail` | 206 | Trang chi tiết đơn của chính khách theo mã đơn; mã sai hoặc đơn người khác đều trả 404 như nhau | [ ] |
+| 275 | Claude Opus 5.5 |  | `frontend/templates/shop/checkout.html` | `<header class="area-header">` | 6 | Trang đặt hàng: form giao hàng bên trái, tóm tắt giỏ, phí ship và tổng tiền bên phải; giá chỉ để xem, server tính lại | [ ] |
+| 276 | Claude Opus 5.5 |  | `frontend/templates/shop/order_detail.html` | `<header class="area-header">` | 6 | Trang chi tiết đơn: mã đơn, trạng thái, hạn thanh toán, sách và giá lúc đặt, thông tin giao hàng; nút thanh toán chờ nhánh sau | [ ] |
+| 277 | Claude Opus 5.5 |  | `frontend/static/css/account-area.css` | `.checkout { display: grid; grid-template-columns: minmax(0, ` | 91 | Kiểu trang đặt hàng (form + tóm tắt) và trang chi tiết đơn (bảng sách, nhãn trạng thái) | [ ] |
+| 278 | Claude Opus 5.5 |  | `backend/orders/tests/test_checkout.py` | `CheckoutFormTests` | 35 | Test form giao hàng: chuẩn hóa SĐT, chặn tên có thẻ HTML/ký tự lạ, địa chỉ quá ngắn, bỏ ký tự vô hình | [ ] |
+| 279 | Claude Opus 5.5 |  | `backend/orders/tests/test_checkout.py` | `GetOrderServiceTests` | 61 | Test get_order bằng cursor giả: mã đơn sai mẫu không xuống CSDL, giải mã đúng ngữ cảnh, đơn người khác báo không tìm thấy, hạn thanh toán | [ ] |
+| 280 | Claude Opus 5.5 |  | `backend/orders/tests/test_checkout.py` | `CheckoutViewTests` | 114 | Test view đặt hàng và xem đơn: giỏ phải sạch, mã chống trùng chỉ trong phiên, giá/user_id từ form bị bỏ qua, IDOR trả 404, CSRF, nhân viên bị từ chối | [ ] |
+| 281 | Claude Opus 5.5 |  | `backend/orders/tests/test_checkout.py` | `BuyNowButtonTests` | 207 | Test nút Đặt hàng ở trang chi tiết sách: thêm vào giỏ rồi chuyển sang giỏ | [ ] |

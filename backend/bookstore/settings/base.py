@@ -211,6 +211,8 @@ CART_ADD_RATE_LIMIT = 20                            # mỗi khách thêm vào gi
 CART_ADD_RATE_WINDOW = 60
 CART_UPDATE_RATE_LIMIT = 60                         # đổi số lượng / gỡ khỏi giỏ: tối đa 60 lần trong CART_UPDATE_RATE_WINDOW
 CART_UPDATE_RATE_WINDOW = 60
+ORDER_PLACE_RATE_LIMIT = 5                          # đặt hàng: tối đa 5 lần trong ORDER_PLACE_RATE_WINDOW
+ORDER_PLACE_RATE_WINDOW = 600
 
 LOG_DIR = REPO_DIR / "logs"
 LOG_DIR.mkdir(exist_ok=True)

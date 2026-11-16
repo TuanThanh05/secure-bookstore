@@ -87,3 +87,36 @@
   .cart-line__total { grid-column: 3; grid-row: 1; align-self: start; }
   .cart-line__remove { grid-column: 3; grid-row: 2; justify-self: end; }
 }
+
+/* AI-TRACE#277 | Claude Opus 5.5 | Kiểu trang đặt hàng (form + tóm tắt) và trang chi tiết đơn (bảng sách, nhãn trạng thái) | CẤM XÓA CHÚ THÍCH NÀY */
+.checkout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: var(--space-lg); align-items: start; }
+.checkout__form { max-width: none; }
+.checkout__form textarea {
+  width: 100%; min-height: 96px; padding: 0.7rem 1rem; resize: vertical;
+  border: 1px solid transparent; border-radius: var(--radius-md); background: var(--color-surface-low);
+  color: var(--color-text); font: inherit; line-height: 1.5;
+}
+.checkout__form textarea:hover { background: var(--color-surface-mid); }
+.checkout__form textarea:focus { outline: none; border-color: var(--color-primary); background: var(--color-surface); box-shadow: 0 0 0 4px var(--color-primary-ring); }
+.checkout__form .auth-form__field--error textarea { border-color: var(--color-error); }
+.checkout__heading { margin: 0 0 var(--space-md); font-family: var(--font-serif); font-size: 20px; font-weight: 600; }
+.checkout__lines { list-style: none; margin: 0 0 var(--space-md); padding: 0 0 var(--space-sm); border-bottom: 1px solid var(--color-border); font-size: 14px; }
+.checkout__lines li { display: flex; justify-content: space-between; gap: var(--space-sm); padding: var(--space-xs) 0; }
+.checkout__lines li span:first-child { overflow-wrap: anywhere; }
+.checkout__lines li span:last-child, .checkout__row span:last-child { white-space: nowrap; }
+.checkout__row { font-size: 14px; color: var(--color-muted); }
+.order__code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; overflow-wrap: anywhere; }
+.order__status { display: inline-block; padding: 0.15rem 0.65rem; border-radius: var(--radius-full); font-size: 13px; background: var(--color-surface-mid); }
+.order__status--pending { background: var(--color-gold-soft); }
+.order__status--paid, .order__status--shipped, .order__status--delivered { color: var(--color-success); background: rgba(46, 107, 58, 0.12); }
+.order__table { width: 100%; border-collapse: collapse; margin-bottom: var(--space-lg); font-size: 15px; }
+.order__table th, .order__table td { padding: var(--space-sm); border-bottom: 1px solid var(--color-border); text-align: right; }
+.order__table th:first-child, .order__table td:first-child { text-align: left; overflow-wrap: anywhere; }
+.order__table thead th { font-size: 13px; font-weight: 600; color: var(--color-subtle); }
+.order__table tfoot th { font-weight: 400; color: var(--color-muted); text-align: right; }
+.order__total th, .order__total td { font-weight: 700; color: var(--color-primary); font-size: 17px; border-bottom: 0; }
+.order__actions { align-items: center; }
+.order__actions .cart__note { margin: 0; flex-basis: 100%; }
+@media (max-width: 900px) {
+  .checkout { grid-template-columns: 1fr; }
+}

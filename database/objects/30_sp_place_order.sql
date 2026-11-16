@@ -26,17 +26,28 @@
 --   p_order_code (OUT)  mã đơn (32 ký tự hex)
 --   p_created    (OUT)  1 = đơn mới tạo, 0 = bấm lại, trả mã đơn cũ
 --
--- Lỗi (SIGNAL SQLSTATE '45000', MESSAGE_TEXT là đúng 1 trong 4 mã):
---   INVALID_INPUT  tham số sai, hoặc mã yêu cầu đã thuộc người khác
---   CART_EMPTY     giỏ rỗng hoặc chưa có giỏ
---   BOOK_INACTIVE  có sách đã ngừng bán
---   OUT_OF_STOCK   có sách không đủ số lượng
+-- Lỗi (SIGNAL SQLSTATE '45000', MESSAGE_TEXT là đúng 1 trong 6 mã):
+--   INVALID_INPUT   tham số sai, hoặc mã yêu cầu đã thuộc người khác
+--   NOT_CUSTOMER    người gọi là nhân viên, bị khóa hoặc chưa xác nhận email
+--   PENDING_EXISTS  khách đang có 1 đơn chờ thanh toán còn hạn
+--   CART_EMPTY      giỏ rỗng hoặc chưa có giỏ
+--   BOOK_INACTIVE   có sách đã ngừng bán
+--   OUT_OF_STOCK    có sách không đủ số lượng
+--
+-- Bổ sung 2026-11-16 (nhánh đặt hàng):
+--   - Tự kiểm tra lại người gọi là khách hợp lệ (NOT_CUSTOMER), như các thủ
+--     tục giỏ hàng.
+--   - Chống "giữ kho": kho bị trừ ngay khi tạo đơn, nên mỗi khách chỉ được có
+--     tối đa 1 đơn 'pending' còn hạn. Kiểm tra sau khi khóa giỏ nên hai lần
+--     đặt cùng lúc của cùng một người không lọt qua được.
+--   - Đơn đã tạo không sửa được: trigger ở 32_trg_orders_guard.sql.
 -- Lỗi ở bất kỳ bước nào: ROLLBACK, không có đơn dở dang, kho và giỏ giữ nguyên.
 --
 -- Root tạo thủ tục bằng `python manage.py db_apply`. Chạy lại nhiều lần được.
 -- =====================================================================
 
 DROP PROCEDURE IF EXISTS sp_place_order;
+DROP PROCEDURE IF EXISTS sp_order_get;
 
 DELIMITER $$
 
@@ -66,6 +77,8 @@ proc: BEGIN
     DECLARE v_subtotal       BIGINT DEFAULT 0;
     DECLARE v_order_id       BIGINT;
     DECLARE v_code           CHAR(32);
+    DECLARE v_customer       INT DEFAULT 0;
+    DECLARE v_pending_count  INT DEFAULT 0;
 
     -- Bước 1: lỗi ở đâu cũng hủy toàn bộ giao dịch rồi báo lỗi ra ngoài
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -90,6 +103,14 @@ proc: BEGIN
        OR p_address_encrypted IS NULL OR CHAR_LENGTH(p_address_encrypted) = 0
     THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'INVALID_INPUT';
+    END IF;
+
+    -- AI-TRACE#259 | Claude Opus 5.5 | sp_place_order tự kiểm tra lại người gọi là khách hợp lệ (đang hoạt động, không phải nhân viên, đã xác nhận email) | CẤM XÓA CHÚ THÍCH NÀY
+    SELECT COUNT(*) INTO v_customer
+      FROM accounts_user
+     WHERE id = p_user_id AND is_active = 1 AND is_staff = 0 AND email_verified = 1;
+    IF v_customer = 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'NOT_CUSTOMER';
     END IF;
 
     SET v_now = UTC_TIMESTAMP(6);
@@ -121,6 +142,14 @@ proc: BEGIN
 
     IF v_cart_id IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'CART_EMPTY';
+    END IF;
+
+    -- AI-TRACE#260 | Claude Opus 5.5 | Chống giữ kho: mỗi khách tối đa 1 đơn chờ thanh toán còn hạn, kiểm tra khi đang giữ khóa giỏ | CẤM XÓA CHÚ THÍCH NÀY
+    SELECT COUNT(*) INTO v_pending_count
+      FROM orders_order
+     WHERE user_id = p_user_id AND status = 'pending' AND expires_at > v_now;
+    IF v_pending_count > 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'PENDING_EXISTS';
     END IF;
 
     -- Bước 6: khóa các dòng sách trong giỏ và tính toán trong cùng một câu.
@@ -180,5 +209,58 @@ proc: BEGIN
     SET p_created = 1;
     COMMIT;
 END proc$$
+
+-- AI-TRACE#261 | Claude Opus 5.5 | Thủ tục đọc một đơn của chính khách theo mã đơn: dòng đầu là đơn, bộ kết quả thứ hai là các sách; đơn của người khác báo như không tồn tại | CẤM XÓA CHÚ THÍCH NÀY
+-- Trả 2 bộ kết quả:
+--   1. đơn: code, status, subtotal, shipping_fee, total, shipping_name,
+--      shipping_phone_encrypted, shipping_address_encrypted, idempotency_key
+--      (Django dùng làm ngữ cảnh giải mã, không đưa ra template), created_at,
+--      expires_at, paid_at, cancelled_at
+--   2. sách: book_id, book_title, unit_price, quantity
+-- Mã đơn sai mẫu, đơn không có hoặc đơn của người khác → ORDER_NOT_FOUND như
+-- nhau (chống IDOR: không dò được mã đơn của người khác).
+CREATE DEFINER = 'bookstore_definer'@'localhost' PROCEDURE sp_order_get(
+    IN p_user_id  BIGINT,
+    IN p_code     VARCHAR(64)
+)
+SQL SECURITY DEFINER
+READS SQL DATA
+BEGIN
+    DECLARE v_customer INT DEFAULT 0;
+    DECLARE v_order_id BIGINT DEFAULT NULL;
+
+    IF p_user_id IS NULL OR p_user_id <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'INVALID_INPUT';
+    END IF;
+
+    SELECT COUNT(*) INTO v_customer
+      FROM accounts_user
+     WHERE id = p_user_id AND is_active = 1 AND is_staff = 0 AND email_verified = 1;
+    IF v_customer = 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'NOT_CUSTOMER';
+    END IF;
+
+    IF p_code IS NULL OR NOT REGEXP_LIKE(p_code, '^[0-9a-f]{32}$', 'c') THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ORDER_NOT_FOUND';
+    END IF;
+
+    SELECT id INTO v_order_id
+      FROM orders_order
+     WHERE code = p_code AND user_id = p_user_id;
+    IF v_order_id IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ORDER_NOT_FOUND';
+    END IF;
+
+    SELECT code, status, subtotal, shipping_fee, total, shipping_name,
+           shipping_phone_encrypted, shipping_address_encrypted, idempotency_key,
+           created_at, expires_at, paid_at, cancelled_at
+      FROM orders_order
+     WHERE id = v_order_id;
+
+    SELECT book_id, book_title, unit_price, quantity
+      FROM orders_orderitem
+     WHERE order_id = v_order_id
+     ORDER BY id;
+END$$
 
 DELIMITER ;

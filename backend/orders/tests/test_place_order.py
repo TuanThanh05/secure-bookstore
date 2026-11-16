@@ -2,19 +2,28 @@ import re
 from types import SimpleNamespace
 from unittest import mock
 
+from django.core.cache import cache
 from django.db import OperationalError
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 
+from core.crypto import decrypt_field
 from orders import services
-from orders.services import ORDER_ERROR_MESSAGES, OrderError, PlaceOrderResult, new_idempotency_key, place_order
+from orders.services import (ORDER_ERROR_MESSAGES, OrderError, PlaceOrderResult, new_idempotency_key, place_order,
+                             shipping_context)
 
 KEY = "0123456789abcdef0123456789abcdef"
 
 
-# AI-TRACE#007 | Claude Opus 5.5 | Test place_order bằng cursor giả, không cần thủ tục thật | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#007 | Claude Opus 5.5 | Test place_order bằng cursor giả: user lấy từ phiên, SĐT/địa chỉ được mã hóa theo ngữ cảnh đơn, giới hạn tần suất, đổi lỗi SIGNAL | CẤM XÓA CHÚ THÍCH NÀY
+@override_settings(ORDER_PLACE_RATE_LIMIT=100, ORDER_PLACE_RATE_WINDOW=600)
 class PlaceOrderTests(SimpleTestCase):
     def setUp(self):
-        self.user = SimpleNamespace(pk=42)
+        cache.clear()
+        self.user = SimpleNamespace(pk=42, is_authenticated=True, is_staff=False, get_username=lambda: "an_nguyen")
+        self.request = SimpleNamespace(user=self.user, META={"REMOTE_ADDR": "127.0.0.1"}, method="POST", path="/orders/dat-hang/")
+        log_patcher = mock.patch.object(services, "log_event")
+        self.log_event = log_patcher.start()
+        self.addCleanup(log_patcher.stop)
         self.cursor = mock.MagicMock()
         self.cursor.nextset.return_value = None
         self.cursor.fetchone.return_value = ("a" * 32, 1)
@@ -26,18 +35,53 @@ class PlaceOrderTests(SimpleTestCase):
         self.addCleanup(patcher.stop)
 
     def call(self):
-        return place_order(self.user, KEY, "Nguyễn An", "enc-phone", "enc-address")
+        return place_order(self.request, KEY, "Nguyễn An", "0901234567", "12 Nguyễn Huệ, Q.1")
 
     def test_new_order_returns_code_and_created_true(self):
         result = self.call()
         self.assertEqual(result, PlaceOrderResult("a" * 32, True))
 
-    def test_passes_user_pk_and_params_in_order(self):
+    def test_passes_user_pk_and_encrypted_shipping(self):
         self.call()
-        self.cursor.callproc.assert_called_once_with(
-            "sp_place_order", [42, KEY, "Nguyễn An", "enc-phone", "enc-address", None, None]
-        )
+        proc, params = self.cursor.callproc.call_args.args
+        self.assertEqual(proc, "sp_place_order")
+        self.assertEqual(params[:3], [42, KEY, "Nguyễn An"])
+        self.assertEqual(params[5:], [None, None])
+        self.assertNotIn("0901234567", params[3])
+        self.assertEqual(decrypt_field(params[3], shipping_context("shipping_phone_encrypted", 42, KEY)), "0901234567")
+        self.assertEqual(decrypt_field(params[4], shipping_context("shipping_address_encrypted", 42, KEY)), "12 Nguyễn Huệ, Q.1")
         self.cursor.execute.assert_called_once_with("SELECT @_sp_place_order_5, @_sp_place_order_6")
+
+    def test_ciphertext_bound_to_order_context(self):
+        self.call()
+        phone_enc = self.cursor.callproc.call_args.args[1][3]
+        from core.crypto import DecryptionError
+        for context in (shipping_context("shipping_phone_encrypted", 43, KEY),
+                        shipping_context("shipping_phone_encrypted", 42, "f" * 32),
+                        shipping_context("shipping_address_encrypted", 42, KEY)):
+            with self.subTest(context=context), self.assertRaises(DecryptionError):
+                decrypt_field(phone_enc, context)
+
+    def test_staff_anonymous_and_bad_key_refused(self):
+        for user in (SimpleNamespace(pk=2, is_authenticated=True, is_staff=True),
+                     SimpleNamespace(pk=None, is_authenticated=False, is_staff=False)):
+            with self.subTest(user=user), self.assertRaises(OrderError):
+                place_order(SimpleNamespace(user=user), KEY, "A", "0901234567", "12 Nguyễn Huệ")
+        for bad in ("A" * 32, "abc", None, KEY + "0"):
+            with self.subTest(bad=bad), self.assertRaises(OrderError) as ctx:
+                place_order(self.request, bad, "A", "0901234567", "12 Nguyễn Huệ")
+            self.assertEqual(ctx.exception.code, "INVALID_INPUT")
+        self.cursor.callproc.assert_not_called()
+
+    @override_settings(ORDER_PLACE_RATE_LIMIT=2)
+    def test_rate_limited_and_logged(self):
+        self.call()
+        self.call()
+        with self.assertRaises(OrderError) as ctx:
+            self.call()
+        self.assertEqual(ctx.exception.code, "RATE_LIMITED")
+        self.assertEqual(self.cursor.callproc.call_count, 2)
+        self.assertEqual(self.log_event.call_args.args[0], "rate_limited")
 
     def test_repeated_request_returns_created_false(self):
         self.cursor.fetchone.return_value = ("b" * 32, 0)
@@ -47,6 +91,8 @@ class PlaceOrderTests(SimpleTestCase):
 
     def test_each_signal_code_becomes_order_error(self):
         for code, message in ORDER_ERROR_MESSAGES.items():
+            if code == "RATE_LIMITED":
+                continue
             with self.subTest(code=code):
                 self.cursor.callproc.side_effect = OperationalError(1644, code)
                 with self.assertRaises(OrderError) as ctx:

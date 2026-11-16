@@ -5,11 +5,15 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.cache import never_cache
-from django.views.decorators.http import require_GET, require_POST, require_safe
+from django.http import Http404
+from django.views.decorators.http import require_GET, require_http_methods, require_POST, require_safe
+
+from accounts.profile import decrypt_phone
 
 from .cart_services import (CART_MAX_PER_BOOK, CartError, add_to_cart, get_cart, remove_from_cart,
                             set_cart_quantity)
-from .forms import CartAddForm, CartQuantityForm, CartRemoveForm
+from .forms import CartAddForm, CartQuantityForm, CartRemoveForm, CheckoutForm
+from .services import SHIPPING_FEE, OrderError, get_order, new_idempotency_key, place_order
 
 ORDER_TABS = {
     "active": "Đang xử lý",
@@ -125,6 +129,90 @@ def cart_add(request):
             back_url = _safe_back_url(request, book_id, allow_detail=False)
             if back_url == reverse("catalog:book_detail", args=[book_id]):
                 back_url = reverse("catalog:home")
+        if request.POST.get("then") == "cart" and exc.code != "BOOK_NOT_FOUND":
+            back_url = reverse("orders:cart")
     else:
         messages.success(request, f"Đã thêm vào giỏ. Trong giỏ đang có {in_cart} cuốn sách này.")
+        if request.POST.get("then") == "cart":
+            back_url = reverse("orders:cart")
     return redirect(back_url)
+
+
+CHECKOUT_KEY_SESSION = "checkout_idempotency_key"
+LAST_ORDER_SESSION = "last_order_code"
+
+
+# AI-TRACE#272 | Claude Opus 5.5 | Mã chống bấm trùng của lần đặt hàng: sinh ở server, chỉ lưu trong phiên, không nhận từ form | CẤM XÓA CHÚ THÍCH NÀY
+def _checkout_key(request):
+    key = request.session.get(CHECKOUT_KEY_SESSION)
+    if not key:
+        key = new_idempotency_key()
+        request.session[CHECKOUT_KEY_SESSION] = key
+    return key
+
+
+def _checkout_initial(user):
+    return {"shipping_name": " ".join(part for part in (user.last_name, user.first_name) if part),
+            "phone": decrypt_phone(user) or ""}
+
+
+# AI-TRACE#273 | Claude Opus 5.5 | Trang đặt hàng: kiểm tra giỏ (không rỗng, không có sách ngừng bán/hết hàng), form giao hàng điền sẵn từ hồ sơ, gọi sp_place_order, xong chuyển tới trang đơn | CẤM XÓA CHÚ THÍCH NÀY
+@login_required
+@never_cache
+@require_http_methods(["GET", "HEAD", "POST"])
+def checkout(request):
+    if request.user.is_staff:
+        messages.error(request, "Tài khoản quản trị không đặt hàng.")
+        return redirect("dashboard:index")
+    cart_data = get_cart(request)
+    if not cart_data.lines:
+        messages.error(request, OrderError("CART_EMPTY").message)
+        return redirect("orders:cart")
+    if cart_data.has_unavailable:
+        messages.error(request, "Hãy gỡ các sách ngừng bán hoặc hết hàng khỏi giỏ trước khi đặt hàng.")
+        return redirect("orders:cart")
+    key = _checkout_key(request)
+    status = 200
+    if request.method == "POST":
+        form = CheckoutForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            try:
+                result = place_order(request, key, data["shipping_name"], data["phone"], data["address"])
+            except OrderError as exc:
+                messages.error(request, exc.message)
+                if exc.code in ("CART_EMPTY", "BOOK_INACTIVE", "OUT_OF_STOCK"):
+                    return redirect("orders:cart")
+                if exc.code == "PENDING_EXISTS" and request.session.get(LAST_ORDER_SESSION):
+                    return redirect("orders:order_detail", code=request.session[LAST_ORDER_SESSION])
+                status = 400
+            else:
+                request.session.pop(CHECKOUT_KEY_SESSION, None)
+                request.session[LAST_ORDER_SESSION] = result.order_code
+                messages.success(request, "Đã tạo đơn hàng. Hãy thanh toán trong 15 phút, quá hạn đơn sẽ bị hủy.")
+                return redirect("orders:order_detail", code=result.order_code)
+        else:
+            status = 400
+    else:
+        form = CheckoutForm(initial=_checkout_initial(request.user))
+    return render(request, "shop/checkout.html", {
+        "form": form,
+        "cart": cart_data,
+        "shipping_fee": SHIPPING_FEE,
+        "total": cart_data.subtotal + SHIPPING_FEE,
+    }, status=status)
+
+
+# AI-TRACE#274 | Claude Opus 5.5 | Trang chi tiết đơn của chính khách theo mã đơn; mã sai hoặc đơn người khác đều trả 404 như nhau | CẤM XÓA CHÚ THÍCH NÀY
+@login_required
+@never_cache
+@require_safe
+def order_detail(request, code):
+    if request.user.is_staff:
+        messages.error(request, "Tài khoản quản trị không có đơn hàng.")
+        return redirect("dashboard:index")
+    try:
+        order = get_order(request, code)
+    except OrderError:
+        raise Http404 from None
+    return render(request, "shop/order_detail.html", {"order": order})
