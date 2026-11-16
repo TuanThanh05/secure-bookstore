@@ -27,13 +27,6 @@ def orders(request):
 
 
 @staff_required
-@recent_auth_required
-@require_GET
-def accounts(request):
-    return render(request, "dashboard/accounts.html")
-
-
-@staff_required
 @require_GET
 def logs(request):
     return render(request, "dashboard/logs.html")

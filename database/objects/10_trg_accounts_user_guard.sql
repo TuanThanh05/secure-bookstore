@@ -18,7 +18,8 @@
 -- Với app_staff (kết nối "staff" của dashboard): quyền theo cột chỉ cho sửa
 -- first_name, last_name, phone_encrypted; trigger chặn thêm việc sửa dòng
 -- của KHÁCH (is_staff = 0). Kết nối staff bị lạm dụng cũng không sửa được
--- tên/SĐT của khách hàng.
+-- tên/SĐT của khách hàng. Ngoại lệ duy nhất (2026-11-16): cột is_active của
+-- khách, chỉ đổi được qua thủ tục khóa/mở khóa tài khoản.
 --
 -- Hệ quả cho code:
 --   - Tạo tài khoản admin: chạy createsuperuser bằng settings.migrate.
@@ -77,8 +78,18 @@ BEGIN
         END IF;
     END IF;
     -- app_staff: chỉ được sửa dòng của nhân viên (cột nào thì quyền theo cột đã giới hạn).
-    -- AI-TRACE#099 | Claude Opus 5.5 | Chặn app_staff sửa dòng của khách hàng | CẤM XÓA CHÚ THÍCH NÀY
-    IF SUBSTRING_INDEX(USER(), '@', 1) = 'app_staff' AND OLD.is_staff <> 1 THEN
+    -- Riêng dòng của khách: chỉ được đổi đúng cột is_active (khóa/mở khóa). app_staff
+    -- không có quyền UPDATE(is_active) trực tiếp, nên thay đổi này chỉ có thể đến từ
+    -- sp_staff_account_lock/unlock (42_account.sql, chạy bằng quyền definer, ghi nhật ký).
+    -- AI-TRACE#099 | Claude Opus 5.5 | Chặn app_staff sửa dòng của khách hàng, trừ cột is_active do thủ tục khóa/mở khóa đổi | CẤM XÓA CHÚ THÍCH NÀY
+    IF SUBSTRING_INDEX(USER(), '@', 1) = 'app_staff' AND OLD.is_staff <> 1 AND NOT (
+           NEW.id <=> OLD.id AND NEW.password <=> OLD.password
+       AND NEW.username <=> OLD.username AND NEW.email <=> OLD.email
+       AND NEW.first_name <=> OLD.first_name AND NEW.last_name <=> OLD.last_name
+       AND NEW.is_staff <=> OLD.is_staff AND NEW.is_superuser <=> OLD.is_superuser
+       AND NEW.date_joined <=> OLD.date_joined AND NEW.last_login <=> OLD.last_login
+       AND NEW.phone_encrypted <=> OLD.phone_encrypted
+       AND NEW.email_verified <=> OLD.email_verified) THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'app_staff khong duoc sua thong tin cua khach hang';
     END IF;

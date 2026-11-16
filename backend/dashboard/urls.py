@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import catalog_views, views
+from . import account_views, catalog_views, views
 
 app_name = "dashboard"
 
@@ -17,7 +17,10 @@ urlpatterns = [
     path("the-loai/<int:category_id>/sua/", catalog_views.category_rename, name="category_rename"),
     path("the-loai/<int:category_id>/xoa/", catalog_views.category_delete, name="category_delete"),
     path("don-hang/", views.orders, name="orders"),
-    path("tai-khoan/", views.accounts, name="accounts"),
+    path("tai-khoan/", account_views.accounts, name="accounts"),
+    path("tai-khoan/day-du/", account_views.accounts_full, name="accounts_full"),
+    path("tai-khoan/<int:user_id>/khoa/", account_views.account_lock, name="account_lock"),
+    path("tai-khoan/<int:user_id>/mo-khoa/", account_views.account_unlock, name="account_unlock"),
     path("nhat-ky/", views.logs, name="logs"),
     path("thong-tin/", views.profile, name="profile"),
     path("thong-tin/lien-he/", views.profile_contact, name="profile_contact"),

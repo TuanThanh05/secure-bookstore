@@ -200,3 +200,10 @@
   .dash-grid { grid-template-columns: 1fr; }
   .dash-inline-form--wide { grid-template-columns: 1fr; }
 }
+
+/* AI-TRACE#312 | Claude Opus 5.5 | Kiểu trang quản lý tài khoản: ghi chú trạng thái xem dữ liệu nhạy cảm, nút nhỏ trong bảng, form xác nhận một cột | CẤM XÓA CHÚ THÍCH NÀY */
+.dash-note { margin: 0 0 var(--space-md); padding: var(--space-sm) var(--space-md); border-left: 3px solid var(--color-warning); border-radius: var(--radius-sm); background: rgba(138, 97, 0, 0.08); font-size: 14px; color: var(--color-text); }
+.btn--sm { min-height: 34px; padding: 0.35rem 0.9rem; font-size: 12px; }
+.dash-header--row .btn .icon { margin-right: var(--space-xs); }
+.dash-confirm .dash-form { grid-template-columns: 1fr; max-width: 520px; }
+.dash-confirm textarea { resize: vertical; }
