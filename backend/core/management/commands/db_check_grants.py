@@ -83,6 +83,8 @@ CHECKS = (
     ("staff", "app_staff gọi sp_staff_dashboard_security (id sai, không đọc gì)", "CALL sp_staff_dashboard_security(0, UTC_TIMESTAMP())", SIGNAL),
     ("default", "app_customer gọi sp_staff_dashboard_orders", "CALL sp_staff_dashboard_orders(0, UTC_TIMESTAMP(), UTC_TIMESTAMP(), UTC_TIMESTAMP())", 1370),
     ("default", "app_customer gọi sp_staff_dashboard_security", "CALL sp_staff_dashboard_security(0, UTC_TIMESTAMP())", 1370),
+    ("staff", "app_staff gọi sp_staff_dashboard_backup (id sai, không đọc gì)", "CALL sp_staff_dashboard_backup(0)", SIGNAL),
+    ("default", "app_customer gọi sp_staff_dashboard_backup", "CALL sp_staff_dashboard_backup(0)", 1370),
     ("default", "app_customer gọi sp_staff_security_events", "CALL sp_staff_security_events(0, NULL, NULL, NULL, NULL, NULL, 0, 50)", 1370),
     ("default", "app_customer đọc core_securityevent", "SELECT id FROM core_securityevent LIMIT 1", 1142),
     ("default", "app_customer gọi sp_purge_old_logs", "CALL sp_purge_old_logs(@n)", 1370),

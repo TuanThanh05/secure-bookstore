@@ -10,13 +10,15 @@ Việc nó làm:
   3. Tạo role r_customer, r_staff (quyền cụ thể cấp sau, bằng db_apply).
   4. Tạo/cập nhật app_customer, app_staff, bookstore_migrate theo ĐỊA CHỈ MÀ
      MYSQL THẤY MÁY NÀY KẾT NỐI TỪ (Docker: 172.28.0.1, cài thường: 127.0.0.1
-     hoặc localhost) và bookstore_definer (khóa đăng nhập).
+     hoặc localhost), bookstore_definer (khóa đăng nhập) và bookstore_backup
+     (chỉ đọc, chỉ đăng nhập tại chỗ, dùng cho lệnh sao lưu).
 """
 import secrets
 
 import MySQLdb
 from django.core.management.base import BaseCommand, CommandError
 
+from core.backup import BACKUP_USER
 from core.dbadmin import admin_secret, connect_admin, db_settings, load_admin_env
 
 COMPONENT = "file://component_validate_password"
@@ -37,6 +39,7 @@ class Command(BaseCommand):
 
         root_password = admin_secret("MYSQL_ROOT_PASSWORD", f"Mật khẩu MySQL của {options['root_user']}: ")
         migrate_password = admin_secret("DB_MIGRATE_PASSWORD")
+        backup_password = admin_secret("DB_BACKUP_PASSWORD")
 
         conn = connect_admin(options["root_user"], root_password)
         try:
@@ -88,13 +91,17 @@ class Command(BaseCommand):
                     ("bookstore_migrate", host),
                 )
 
+                # AI-TRACE#421 | Claude Opus 5.5 | Tạo tài khoản sao lưu bookstore_backup chỉ đăng nhập tại chỗ (localhost, socket trong container), tối đa 2 kết nối; quyền chỉ đọc cấp bằng db_apply | CẤM XÓA CHÚ THÍCH NÀY
+                self._upsert_user(cur, BACKUP_USER, "localhost", backup_password, 2, "DB_BACKUP_PASSWORD")
+
                 self._warn_other_hosts(cur, [default["USER"], staff["USER"], "bookstore_migrate"], host)
         finally:
             conn.close()
 
         self.stdout.write(self.style.SUCCESS(
             f"Xong: CSDL `{db_name}`, role r_customer/r_staff, tài khoản "
-            f"{default['USER']}, {staff['USER']}, bookstore_migrate @ {host}, bookstore_definer (khóa)."
+            f"{default['USER']}, {staff['USER']}, bookstore_migrate @ {host}, bookstore_definer (khóa), "
+            f"{BACKUP_USER}@localhost (chỉ đọc, dùng để sao lưu)."
         ))
         self.stdout.write("Tiếp theo: python manage.py migrate --settings=bookstore.settings.migrate")
 

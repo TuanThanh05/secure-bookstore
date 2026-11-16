@@ -1,4 +1,5 @@
 import datetime
+import json
 from dataclasses import dataclass
 
 from django.conf import settings
@@ -20,6 +21,53 @@ class OverviewError(Exception):
         self.code = code
         self.message = OVERVIEW_ERROR_MESSAGES[code]
         super().__init__(self.message)
+
+
+# AI-TRACE#428 | Claude Opus 5.5 | Trạng thái sao lưu cho Tổng quan: lần thành công, lần lỗi, lần kiểm tra khôi phục gần nhất; cảnh báo khi lỗi mới hơn thành công, chưa từng sao lưu hoặc bản mới nhất cũ hơn 7 ngày | CẤM XÓA CHÚ THÍCH NÀY
+@dataclass(frozen=True)
+class BackupStatus:
+    last_success: datetime.datetime | None
+    last_size: int | None
+    last_failure: datetime.datetime | None
+    last_verify: datetime.datetime | None
+    last_verify_ok: bool | None
+
+    @property
+    def failing(self):
+        return self.last_failure is not None and (self.last_success is None or self.last_failure > self.last_success)
+
+    @property
+    def stale(self):
+        return self.last_success is None or self.last_success < datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=7)
+
+    @property
+    def needs_attention(self):
+        return self.failing or self.stale or self.last_verify_ok is False
+
+
+def _backup_status(rows):
+    data = {}
+    for event_type, created_at, detail in rows:
+        if isinstance(detail, (bytes, str)):
+            try:
+                detail = json.loads(detail)
+            except ValueError:
+                detail = {}
+        data[event_type] = (_aware(created_at), detail if isinstance(detail, dict) else {})
+    success = data.get("backup_created", (None, {}))
+    verify = data.get("restore_verified", (None, {}))
+    size = success[1].get("size")
+    return BackupStatus(
+        last_success=success[0], last_size=int(size) if isinstance(size, int) else None,
+        last_failure=data.get("backup_failed", (None, {}))[0],
+        last_verify=verify[0], last_verify_ok=verify[1].get("ok") if verify[0] else None,
+    )
+
+
+def _aware(value):
+    if value is None or value.tzinfo is not None:
+        return value
+    return value.replace(tzinfo=datetime.UTC)
 
 
 @dataclass(frozen=True)
@@ -48,6 +96,7 @@ class Overview:
     critical_24h: int
     login_failed_today: int
     low_threshold: int
+    backup: BackupStatus
 
     @property
     def todo(self):
@@ -83,7 +132,7 @@ def _call(procedure, params):
         raise
 
 
-# AI-TRACE#398 | Claude Opus 5.5 | Đọc số liệu tổng quan bằng 3 thủ tục (đơn và doanh thu, kho, bảo mật) qua kết nối staff, ngưỡng sắp hết lấy từ LOW_STOCK_THRESHOLD | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#398 | Claude Opus 5.5 | Đọc số liệu tổng quan bằng 4 thủ tục (đơn và doanh thu, kho, bảo mật, trạng thái sao lưu) qua kết nối staff, ngưỡng sắp hết lấy từ LOW_STOCK_THRESHOLD | CẤM XÓA CHÚ THÍCH NÀY
 def get_overview(actor, now=None):
     today, week, month = period_starts(now)
     threshold = int(settings.LOW_STOCK_THRESHOLD)
@@ -91,6 +140,7 @@ def get_overview(actor, now=None):
     stock_counts, lowest = _call("sp_staff_dashboard_stock", [actor.pk, threshold])[:2]
     s = stock_counts[0]
     sec = _call("sp_staff_dashboard_security", [actor.pk, today])[0][0]
+    backup = _backup_status(_call("sp_staff_dashboard_backup", [actor.pk])[0])
     return Overview(
         paid=int(o[0]), confirmed=int(o[1]), packed=int(o[2]), shipped=int(o[3]),
         new_today=int(o[4]), cancelled_today=int(o[5]),
@@ -98,5 +148,5 @@ def get_overview(actor, now=None):
         low_stock=int(s[0]), out_of_stock=int(s[1]),
         lowest_books=tuple(LowStockBook(id=int(r[0]), title=r[1], stock=int(r[2])) for r in lowest),
         warning_24h=int(sec[0]), critical_24h=int(sec[1]), login_failed_today=int(sec[2]),
-        low_threshold=threshold,
+        low_threshold=threshold, backup=backup,
     )

@@ -9,7 +9,8 @@ from django.urls import reverse
 
 from accounts.models import User
 from dashboard import overview_services
-from dashboard.overview_services import LowStockBook, Overview, OverviewError, get_overview, period_starts
+from dashboard.overview_services import (BackupStatus, LowStockBook, Overview, OverviewError, get_overview,
+                                         period_starts)
 
 PASSWORD = secrets.token_urlsafe(12) + "-Aa9"
 
@@ -19,7 +20,10 @@ def overview(**changes):
                 revenue_week=1250000, revenue_month=5400000, low_stock=2, out_of_stock=1,
                 lowest_books=(LowStockBook(id=20, title="Đắc Nhân Tâm", stock=0),
                               LowStockBook(id=23, title="Nhà Giả Kim", stock=4)),
-                warning_24h=5, critical_24h=0, login_failed_today=3, low_threshold=10)
+                warning_24h=5, critical_24h=0, login_failed_today=3, low_threshold=10,
+                backup=BackupStatus(last_success=datetime.datetime.now(datetime.UTC), last_size=45000,
+                                    last_failure=None, last_verify=datetime.datetime.now(datetime.UTC),
+                                    last_verify_ok=True))
     data.update(changes)
     return Overview(**data)
 
@@ -42,8 +46,10 @@ class OverviewServiceTests(SimpleTestCase):
             [(3, 2, 1, 4, 7, 1, 267000, 1250000, 5400000)],
             [(2, 1)], [(20, "Đắc Nhân Tâm", 0)],
             [(5, 0, 3)],
+            [("backup_created", datetime.datetime(2026, 11, 16, 6), '{"size": 45000}'),
+             ("backup_failed", datetime.datetime(2026, 11, 16, 7), "{}")],
         ]
-        cursor.nextset.side_effect = [None, True, None, None]
+        cursor.nextset.side_effect = [None, True, None, None, None]
         cursor.description = ("x",)
         conn = mock.MagicMock()
         conn.cursor.return_value.__enter__.return_value = cursor
@@ -51,7 +57,10 @@ class OverviewServiceTests(SimpleTestCase):
             result = get_overview(SimpleNamespace(pk=2), datetime.datetime(2026, 11, 16, 7, tzinfo=datetime.UTC))
         names = [c.args[0] for c in cursor.callproc.call_args_list]
         self.assertEqual(names, ["sp_staff_dashboard_orders", "sp_staff_dashboard_stock",
-                                 "sp_staff_dashboard_security"])
+                                 "sp_staff_dashboard_security", "sp_staff_dashboard_backup"])
+        self.assertEqual(result.backup.last_size, 45000)
+        self.assertTrue(result.backup.failing)
+        self.assertIsNone(result.backup.last_verify_ok)
         self.assertEqual(cursor.callproc.call_args_list[1].args[1], [2, 10])
         self.assertEqual((result.todo, result.revenue_week, result.out_of_stock, result.login_failed_today),
                          (10, 1250000, 1, 3))
@@ -97,6 +106,22 @@ class OverviewViewTests(TestCase):
         self.get_overview.return_value = overview(critical_24h=2)
         self.client.force_login(self.staff)
         self.assertContains(self.client.get(self.url), "dash-stat--alert")
+
+    def test_backup_status_states(self):
+        self.client.force_login(self.staff)
+        self.assertContains(self.client.get(self.url), "Đạt")
+        self.get_overview.return_value = overview(backup=BackupStatus(None, None, None, None, None))
+        response = self.client.get(self.url)
+        self.assertContains(response, "Chưa có")
+        self.assertContains(response, "Chưa có bản sao lưu trong 7 ngày qua")
+        self.assertContains(response, "dash-stat--alert")
+        now = datetime.datetime.now(datetime.UTC)
+        failing = BackupStatus(now - datetime.timedelta(hours=2), 1, now, now, False)
+        self.assertTrue(failing.failing and failing.needs_attention)
+        self.get_overview.return_value = overview(backup=failing)
+        response = self.client.get(self.url)
+        self.assertContains(response, "Lần sao lưu gần nhất bị lỗi")
+        self.assertContains(response, "Không đạt")
 
     def test_error_shows_message(self):
         self.get_overview.side_effect = OverviewError("NOT_STAFF")

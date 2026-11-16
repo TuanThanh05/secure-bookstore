@@ -94,6 +94,30 @@
         <p class="dash-overview__note">Xem chi tiết trong Nhật ký hệ thống (cần xác thực lại).</p>
       </section>
     </div>
+
+    {# AI-TRACE#429 | Claude Opus 5.5 | Ô trạng thái sao lưu trên Tổng quan: lần sao lưu thành công/lỗi, kiểm tra khôi phục gần nhất, tô đỏ khi cần chú ý; không có nút sao lưu (chỉ chạy bằng lệnh trên máy chủ) | CẤM XÓA CHÚ THÍCH NÀY #}
+    {% with b=overview.backup %}
+      <section class="dash-overview" aria-labelledby="ov-backup">
+        <h2 class="dash-overview__title" id="ov-backup">Sao lưu CSDL</h2>
+        <div class="dash-stats">
+          <article class="dash-stat{% if b.failing or b.stale %} dash-stat--alert{% endif %}">
+            <p class="dash-stat__label">Sao lưu gần nhất</p>
+            <p class="dash-stat__value dash-stat__value--text">{% if b.last_success %}{{ b.last_success|date:"H:i d/m/Y" }}{% else %}Chưa có{% endif %}</p>
+            {% if b.last_size %}<p class="dash-stat__hint">{{ b.last_size|filesizeformat }}, đã mã hóa</p>{% endif %}
+          </article>
+          <article class="dash-stat{% if b.failing %} dash-stat--alert{% endif %}">
+            <p class="dash-stat__label">Sao lưu lỗi gần nhất</p>
+            <p class="dash-stat__value dash-stat__value--text">{% if b.last_failure %}{{ b.last_failure|date:"H:i d/m/Y" }}{% else %}Không có{% endif %}</p>
+          </article>
+          <article class="dash-stat{% if b.last_verify_ok is False %} dash-stat--alert{% endif %}">
+            <p class="dash-stat__label">Kiểm tra khôi phục</p>
+            <p class="dash-stat__value dash-stat__value--text">{% if b.last_verify %}{% if b.last_verify_ok %}Đạt{% else %}Không đạt{% endif %}{% else %}Chưa kiểm tra{% endif %}</p>
+            {% if b.last_verify %}<p class="dash-stat__hint">{{ b.last_verify|date:"H:i d/m/Y" }}</p>{% endif %}
+          </article>
+        </div>
+        <p class="dash-overview__note">{% if b.failing %}Lần sao lưu gần nhất bị lỗi. {% elif b.stale %}Chưa có bản sao lưu trong 7 ngày qua. {% endif %}Sao lưu và khôi phục chỉ chạy bằng lệnh trên máy chủ (<code>manage.py db_backup</code>, <code>db_backup_verify</code>), không có nút trên web.</p>
+      </section>
+    {% endwith %}
   {% else %}
     <section class="dash-empty">
       {% include "components/icon.html" with name="dashboard" size="lg" %}

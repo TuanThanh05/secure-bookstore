@@ -298,3 +298,18 @@ GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_security  TO 'bookstore_definer'@'
 GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_orders    TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_stock     TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_security  TO 'r_staff';
+
+-- ---------------------------------------------------------------------
+-- Tài khoản sao lưu bookstore_backup (db_setup tạo, chỉ @localhost: chỉ đăng
+-- nhập được bằng socket ngay trên máy/container MySQL, không qua mạng).
+-- CHỈ ĐỌC: đủ cho mysqldump --single-transaction --routines --triggers --events.
+-- Không INSERT/UPDATE/DELETE/DROP/ALTER, không FILE, không LOCK TABLES (giao
+-- dịch nhất quán thay cho khóa bảng), không PROCESS (--no-tablespaces).
+-- Lộ mật khẩu tài khoản này không phá được dữ liệu.
+-- ---------------------------------------------------------------------
+GRANT SELECT, SHOW VIEW, TRIGGER, EVENT ON *   TO 'bookstore_backup'@'localhost';
+GRANT SHOW_ROUTINE ON *.*                      TO 'bookstore_backup'@'localhost';
+
+-- Trạng thái sao lưu trên trang Tổng quan (database/objects/45_dashboard.sql)
+GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_backup    TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_backup    TO 'r_staff';
