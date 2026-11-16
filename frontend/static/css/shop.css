@@ -279,3 +279,21 @@
 }
 .cart-add__qty:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-ring); }
 .book-detail__note { flex-basis: 100%; }
+
+/* AI-TRACE#407 | Claude Opus 5.5 | Kiểu thanh chuyển trang tủ sách: ô số tròn, trang hiện tại tô màu chính, dấu ba chấm, ô nhập số trang; xuống dòng gọn trên điện thoại | CẤM XÓA CHÚ THÍCH NÀY */
+.catalog { scroll-margin-top: var(--space-lg); }
+.pager { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--space-sm) var(--space-lg); margin-top: var(--space-xl); }
+.pager__list { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--space-xs); margin: 0; padding: 0; list-style: none; }
+.pager__item { display: inline-flex; align-items: center; justify-content: center; min-width: 40px; height: 40px; padding: 0 var(--space-sm); border: 1px solid var(--color-border); border-radius: var(--radius-full); background: var(--color-surface); color: var(--color-text); font-weight: 600; font-variant-numeric: tabular-nums; text-decoration: none; }
+.pager__item:hover, .pager__item:focus-visible { border-color: var(--color-primary); color: var(--color-primary); }
+.pager__item.is-current { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-on-primary); }
+.pager__item--nav { font-size: 20px; line-height: 1; }
+.pager__gap { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; color: var(--color-muted); }
+.pager__jump { display: flex; align-items: center; gap: var(--space-xs); font-size: 14px; color: var(--color-muted); }
+.pager__input { width: 84px; height: 40px; padding: 0 var(--space-sm); border: 1px solid var(--color-border); border-radius: var(--radius-full); background: var(--color-surface-low); color: var(--color-text); font: inherit; text-align: center; }
+.pager__input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-ring); }
+.pager__go { height: 40px; }
+@media (max-width: 479px) {
+  .pager__item { min-width: 36px; height: 36px; }
+  .pager__input, .pager__go { height: 36px; }
+}

@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.views import redirect_to_login
-from django.http import Http404
+from django.core.paginator import Paginator
+from django.http import Http404, QueryDict
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST, require_safe
@@ -14,6 +15,28 @@ from .forms import ReviewForm
 from .review_services import ReviewError, get_my_review, list_reviews, save_review
 
 
+BOOKS_PER_PAGE = 12
+
+
+# AI-TRACE#404 | Claude Opus 5.5 | Danh sách số trang để hiện: trang đầu, trang cuối, trang hiện tại và hai trang kề, chỗ bị bỏ qua thay bằng dấu ba chấm (None) | CẤM XÓA CHÚ THÍCH NÀY
+def page_items(current, last):
+    wanted = {1, last, current - 1, current, current + 1}
+    if current <= 2:
+        wanted.add(3)
+    if current >= last - 1:
+        wanted.add(last - 2)
+    shown = sorted(wanted & set(range(1, last + 1)))
+    items = []
+    for number in shown:
+        if items and number - items[-1] == 2:
+            items.append(number - 1)
+        elif items and number - items[-1] > 2:
+            items.append(None)
+        items.append(number)
+    return items
+
+
+# AI-TRACE#405 | Claude Opus 5.5 | Trang chủ: tủ sách 12 cuốn mỗi trang (3 hàng x 4 cột trên màn hình ngang), giữ từ khóa và thể loại khi chuyển trang, trang sai về trang gần nhất hợp lệ | CẤM XÓA CHÚ THÍCH NÀY
 @require_safe
 def home(request):
     q = clean_search_query(request.GET.get("q", ""))
@@ -22,9 +45,20 @@ def home(request):
     if category_id not in {c.id for c in categories}:
         category_id = None
 
+    books = services.list_public_books(category_id=category_id, q=q)
+    page = Paginator(books, BOOKS_PER_PAGE).get_page(parse_positive_int(request.GET.get("trang", "")) or 1)
+    query = QueryDict(mutable=True)
+    if q:
+        query["q"] = q
+    if category_id:
+        query["category"] = category_id
     context = {
         "categories": categories,
-        "books": services.list_public_books(category_id=category_id, q=q),
+        "books": page.object_list,
+        "total": len(books),
+        "page": page,
+        "page_items": page_items(page.number, page.paginator.num_pages),
+        "page_query": query.urlencode(),
         "current_category": category_id,
         "q": q,
         "cart_add_url": reverse("orders:cart_add"),

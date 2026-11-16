@@ -12,10 +12,10 @@
     {% include "components/category_filter.html" with categories=categories current=current_category q=q %}
   </section>
 
-  <section class="catalog" aria-labelledby="catalog-title">
+  <section class="catalog" id="tu-sach" aria-labelledby="catalog-title">
     <div class="catalog__header">
       <h2 class="catalog__title" id="catalog-title">{% if q %}Kết quả cho “{{ q }}”{% else %}Tủ sách{% endif %}</h2>
-      <p class="catalog__count">{{ books|length }} cuốn sách</p>
+      <p class="catalog__count">{{ total }} cuốn sách{% if page.has_other_pages %} · trang {{ page.number }}/{{ page.paginator.num_pages }}{% endif %}</p>
     </div>
 
     {% if books %}
@@ -24,6 +24,7 @@
           {% include "components/book_card.html" with book=book cart_add_url=cart_add_url %}
         {% endfor %}
       </div>
+      {% include "components/pagination.html" with page=page items=page_items query=page_query anchor="tu-sach" q=q category=current_category %}
     {% else %}
       <div class="empty-state">
         {% include "components/icon.html" with name="search" size="lg" %}
