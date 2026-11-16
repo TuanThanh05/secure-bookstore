@@ -11,13 +11,21 @@ from accounts.profile import build_profile
 from core.security_log import log_event
 
 from .forms import ReauthForm, StaffProfileUpdateForm
+from .overview_services import OverviewError, get_overview
 from .services import update_staff_profile
 
 
+# AI-TRACE#399 | Claude Opus 5.5 | Trang Tổng quan: báo cáo cơ bản đọc bằng 3 thủ tục, không lưu cache, chỉ có con số nên không bắt xác thực lại | CẤM XÓA CHÚ THÍCH NÀY
 @staff_required
+@never_cache
 @require_GET
 def index(request):
-    return render(request, "dashboard/index.html")
+    try:
+        overview = get_overview(request.user)
+    except OverviewError as exc:
+        messages.error(request, exc.message)
+        overview = None
+    return render(request, "dashboard/index.html", {"overview": overview})
 
 
 # AI-TRACE#037 | Claude Opus 5.5 | Trang thông tin của nhân viên, mặc định không gửi email và SĐT | CẤM XÓA CHÚ THÍCH NÀY

@@ -40,8 +40,8 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 034 | Claude Opus 5.5 |  | `backend/accounts/profile.py` | `ProfileView` | 9 | Dữ liệu trang thông tin tài khoản, email và SĐT có thể bị giấu | [ ] |
 | 035 | Claude Opus 5.5 |  | `backend/accounts/profile.py` | `build_profile` | 43 | Tạo dữ liệu trang thông tin, chỉ đưa email và SĐT khi được phép | [ ] |
 | 036 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `profile` | 150 | Trang thông tin của khách, nhân viên bị chuyển sang trang quản trị | [ ] |
-| 037 | Claude Opus 5.5 |  | `backend/dashboard/views.py` | `profile` | 23 | Trang thông tin của nhân viên, mặc định không gửi email và SĐT | [ ] |
-| 038 | Claude Opus 5.5 |  | `backend/dashboard/views.py` | `profile_contact` | 31 | Hiện email và SĐT của chính nhân viên sau khi xác thực lại, có ghi log | [ ] |
+| 037 | Claude Opus 5.5 |  | `backend/dashboard/views.py` | `profile` | 31 | Trang thông tin của nhân viên, mặc định không gửi email và SĐT | [ ] |
+| 038 | Claude Opus 5.5 |  | `backend/dashboard/views.py` | `profile_contact` | 39 | Hiện email và SĐT của chính nhân viên sau khi xác thực lại, có ghi log | [ ] |
 | 039 | Claude Opus 5.5 |  | `frontend/templates/account/profile.html` | `<header class="area-header">` | 6 | Bảng thông tin tài khoản của khách, hiện đầy đủ email và SĐT | [ ] |
 | 040 | Claude Opus 5.5 |  | `frontend/templates/dashboard/profile.html` | `<header class="dash-header">` | 6 | Bảng thông tin nhân viên, email và SĐT ẩn sau nút con mắt cần xác thực lại | [ ] |
 | 041 | Claude Opus 5.5 |  | `frontend/static/css/dashboard.css` | `.dash-info` | 49 | Kiểu bảng thông tin tài khoản và ô bị ẩn có nút con mắt | [ ] |
@@ -99,7 +99,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 093 | Claude Opus 5.5 |  | `backend/accounts/tests/test_admin_password_command.py` | `AdminPasswordCommandTests` | 24 | Test lệnh đổi mật khẩu admin: chỉ nhân viên, quy tắc mật khẩu, đăng xuất phiên, log, thư báo, chặn kết nối web | [ ] |
 | 094 | Claude Opus 5.5 |  | `backend/dashboard/forms.py` | `StaffProfileUpdateForm` | 38 | Form sửa họ, tên, SĐT của nhân viên; ô SĐT luôn trống, để trống là giữ số cũ | [ ] |
 | 095 | Claude Opus 5.5 |  | `backend/dashboard/services.py` | `update_staff_profile` | 17 | Lưu họ, tên, SĐT của nhân viên bằng kết nối staff, chỉ ghi cột thay đổi, log tên cột | [ ] |
-| 096 | Claude Opus 5.5 |  | `backend/dashboard/views.py` | `profile_update` | 46 | Nhân viên sửa họ, tên, SĐT của chính mình sau khi xác thực lại, không hiện SĐT cũ | [ ] |
+| 096 | Claude Opus 5.5 |  | `backend/dashboard/views.py` | `profile_update` | 54 | Nhân viên sửa họ, tên, SĐT của chính mình sau khi xác thực lại, không hiện SĐT cũ | [ ] |
 | 097 | Claude Opus 5.5 |  | `frontend/templates/dashboard/profile_update.html` | `<header class="dash-header">` | 6 | Form sửa họ, tên, SĐT của nhân viên; không hiện email và SĐT hiện tại | [ ] |
 | 098 | Claude Opus 5.5 |  | `frontend/static/css/dashboard.css` | `.dash-actions { display: flex; flex-wrap: wrap; gap: var(--s` | 72 | Kiểu form cập nhật thông tin nhân viên và hàng nút thao tác | [ ] |
 | 099 | Claude Opus 5.5 |  | `database/objects/10_trg_accounts_user_guard.sql` | `IF SUBSTRING_INDEX(USER(), '@', 1) = 'app_staff' AND OLD.is_` | 84 | Chặn app_staff sửa dòng của khách hàng, trừ cột is_active do thủ tục khóa/mở khóa đổi | [ ] |
@@ -118,7 +118,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 113 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `rename_category` | 111 | Sửa tên thể loại bằng sp_category_rename, slug đổi theo tên | [ ] |
 | 114 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `delete_category` | 117 | Xóa thể loại bằng sp_category_delete | [ ] |
 | 115 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `_category_id` | 84 | Đổi id thể loại nhận từ request thành số nguyên, sai kiểu thì coi như không tìm thấy | [ ] |
-| 116 | Claude Opus 5.5 |  | `backend/core/management/commands/db_check_grants.py` | `Command` | 91 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi | [ ] |
+| 116 | Claude Opus 5.5 |  | `backend/core/management/commands/db_check_grants.py` | `Command` | 96 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi | [ ] |
 | 117 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `SlugAndNameTests` | 22 | Test tạo slug và chuẩn hóa tên thể loại tiếng Việt | [ ] |
 | 118 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `CategoryProcedureTests` | 48 | Test gọi thủ tục thể loại bằng cursor giả qua kết nối staff, đổi lỗi SIGNAL | [ ] |
 | 119 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `CategoryListTests` | 101 | Test đọc danh sách thể loại qua sp_category_list và lệnh kiểm tra quyền từ chối settings.migrate | [ ] |
@@ -394,3 +394,15 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 389 | Claude Opus 5.5 |  | `frontend/static/css/dashboard.css` | `.dash-order__code { font-family: ui-monospace, SFMono-Regula` | 255 | Kiểu trang quản lý đơn: mã đơn chữ đơn cách, nút bước tiếp theo xác nhận bằng details, hai thẻ thông tin đơn/giao hàng | [ ] |
 | 390 | Claude Opus 5.5 |  | `backend/dashboard/tests/test_orders.py` | `OrderAdminServiceTests` | 39 | Test service quản lý đơn bằng cursor giả: bộ lọc/mã đơn/tên bước sai không xuống CSDL, gọi đúng thủ tục từng bước qua kết nối staff, giải mã thông tin giao hàng, đổi lỗi SIGNAL, nút bước tiếp theo theo trạng thái | [ ] |
 | 391 | Claude Opus 5.5 |  | `backend/dashboard/tests/test_orders.py` | `OrderAdminViewTests` | 132 | Test view quản lý đơn: chỉ nhân viên, danh sách không có thông tin giao hàng, chi tiết cần xác thực lại và ghi log, nút chuyển bước chỉ POST + CSRF, sai bước báo lỗi, mã không có trả 404, chỉ quay lại trang trong mục đơn hàng | [ ] |
+| 392 | Claude Opus 5.5 |  | `database/objects/45_dashboard.sql` | `PROCEDURE sp_staff_dashboard_orders` | 31 | Thủ tục tổng quan đơn hàng: số đơn cần xử lý theo từng bước, đơn mới và đơn hủy hôm nay, doanh thu hôm nay/7 ngày/tháng này theo ngày thanh toán | [ ] |
+| 393 | Claude Opus 5.5 |  | `database/objects/45_dashboard.sql` | `PROCEDURE sp_staff_dashboard_stock` | 76 | Thủ tục tổng quan kho: số sách đang bán sắp hết (1 đến ngưỡng) và hết hàng, 5 cuốn đang bán còn ít nhất | [ ] |
+| 394 | Claude Opus 5.5 |  | `database/objects/45_dashboard.sql` | `PROCEDURE sp_staff_dashboard_security` | 110 | Thủ tục tổng quan bảo mật: số sự kiện mức cảnh báo/nghiêm trọng trong 24 giờ và số lần đăng nhập sai từ đầu ngày, chỉ trả con số | [ ] |
+| 395 | Claude Opus 5.5 |  | `backend/dashboard/overview_services.py` | `OverviewError` | 17 | Lỗi nghiệp vụ khi đọc trang tổng quan, mang mã lỗi và câu tiếng Việt | [ ] |
+| 396 | Claude Opus 5.5 |  | `backend/dashboard/overview_services.py` | `Overview` | 32 | Số liệu trang tổng quan: đơn cần xử lý theo bước, đơn mới/hủy hôm nay, doanh thu, kho, bảo mật | [ ] |
+| 397 | Claude Opus 5.5 |  | `backend/dashboard/overview_services.py` | `period_starts` | 57 | Tính mốc đầu ngày hôm nay, đầu 7 ngày gần nhất (gồm hôm nay) và đầu tháng theo giờ Việt Nam rồi đổi về UTC không múi giờ để truyền xuống thủ tục | [ ] |
+| 398 | Claude Opus 5.5 |  | `backend/dashboard/overview_services.py` | `get_overview` | 86 | Đọc số liệu tổng quan bằng 3 thủ tục (đơn và doanh thu, kho, bảo mật) qua kết nối staff, ngưỡng sắp hết lấy từ LOW_STOCK_THRESHOLD | [ ] |
+| 399 | Claude Opus 5.5 |  | `backend/dashboard/views.py` | `index` | 18 | Trang Tổng quan: báo cáo cơ bản đọc bằng 3 thủ tục, không lưu cache, chỉ có con số nên không bắt xác thực lại | [ ] |
+| 400 | Claude Opus 5.5 |  | `frontend/templates/dashboard/index.html` | `<header class="dash-header">` | 6 | Trang Tổng quan: đơn cần xử lý theo bước (bấm sang Quản lý đơn có lọc sẵn), đơn mới/hủy hôm nay, doanh thu, kho sắp hết/hết hàng và 5 cuốn còn ít nhất, bảo mật 24 giờ | [ ] |
+| 401 | Claude Opus 5.5 |  | `frontend/static/css/dashboard.css` | `.dash-overview { margin-bottom: var(--space-xl); }` | 270 | Kiểu trang Tổng quan: nhóm số liệu có tiêu đề, thẻ số bấm được, thẻ cảnh báo đỏ, dải 4 bước đơn hàng, lưới kho/bảo mật | [ ] |
+| 402 | Claude Opus 5.5 |  | `backend/dashboard/tests/test_overview.py` | `OverviewServiceTests` | 27 | Test service tổng quan: mốc ngày/7 ngày/tháng theo giờ Việt Nam đổi về UTC, gọi đúng 3 thủ tục qua kết nối staff với ngưỡng sắp hết từ settings, đọc nhiều bộ kết quả, đổi lỗi SIGNAL | [ ] |
+| 403 | Claude Opus 5.5 |  | `backend/dashboard/tests/test_overview.py` | `OverviewViewTests` | 73 | Test trang Tổng quan: chỉ nhân viên, hiện các nhóm số liệu và link lọc sẵn, thẻ nghiêm trọng tô đỏ khi có sự kiện, không lưu cache, lỗi nghiệp vụ hiện thông báo | [ ] |

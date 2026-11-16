@@ -266,3 +266,24 @@
 .dash-order__card .dash-info { margin: 0 0 var(--space-md); padding: 0; border: 0; }
 .dash-order__card .dash-info__row { grid-template-columns: 130px 1fr; }
 @media (max-width: 900px) { .dash-order { grid-template-columns: 1fr; } }
+
+/* AI-TRACE#401 | Claude Opus 5.5 | Kiểu trang Tổng quan: nhóm số liệu có tiêu đề, thẻ số bấm được, thẻ cảnh báo đỏ, dải 4 bước đơn hàng, lưới kho/bảo mật | CẤM XÓA CHÚ THÍCH NÀY */
+.dash-overview { margin-bottom: var(--space-xl); }
+.dash-overview__title { margin: 0 0 var(--space-sm); font-size: 18px; }
+.dash-overview__note { margin: var(--space-sm) 0 0; font-size: 13px; color: var(--color-muted); }
+.dash-overview__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }
+.dash-overview__grid .dash-stats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.dash-stat--link { display: block; color: inherit; text-decoration: none; transition: border-color 0.15s ease; }
+.dash-stat--link:hover, .dash-stat--link:focus-visible { border-color: var(--color-primary); }
+.dash-stat--alert { border-color: var(--color-error); background: rgba(186, 26, 26, 0.05); }
+.dash-stat--alert .dash-stat__value { color: var(--color-error); }
+.dash-stat__value--money { font-size: 28px; overflow-wrap: anywhere; }
+.dash-steps { list-style: none; margin: var(--space-md) 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-sm); }
+.dash-steps a { display: flex; justify-content: space-between; align-items: center; gap: var(--space-sm); padding: var(--space-sm) var(--space-md); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-text); text-decoration: none; font-size: 14px; }
+.dash-steps a:hover, .dash-steps a:focus-visible { border-color: var(--color-primary); }
+.dash-steps strong { font-size: 18px; color: var(--color-primary); }
+.dash-table--compact { margin-top: var(--space-md); }
+@media (max-width: 900px) {
+  .dash-overview__grid { grid-template-columns: 1fr; }
+  .dash-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

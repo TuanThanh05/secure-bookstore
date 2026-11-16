@@ -286,3 +286,15 @@ GRANT EXECUTE ON PROCEDURE sp_staff_order_confirm    TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_staff_order_pack       TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_staff_order_ship       TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_staff_order_deliver    TO 'r_staff';
+
+-- ---------------------------------------------------------------------
+-- Trang Tổng quan (database/objects/45_dashboard.sql)
+-- Definer: đọc orders_order, catalog_book, accounts_user, core_securityevent
+-- (đã có cả). r_staff: chỉ gọi 3 thủ tục đọc. r_customer: không có gì.
+-- ---------------------------------------------------------------------
+GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_orders    TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_stock     TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_security  TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_orders    TO 'r_staff';
+GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_stock     TO 'r_staff';
+GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_security  TO 'r_staff';
