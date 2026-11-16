@@ -1,0 +1,16 @@
+{% with action=order.next_action %}
+  {% if action %}
+    {# AI-TRACE#386 | Claude Opus 5.5 | Nút bước tiếp theo của đơn, xác nhận hai bước bằng details (không JS, không nhập mật khẩu), gửi POST tới URL riêng của bước đó | CẤM XÓA CHÚ THÍCH NÀY #}
+    <details class="dash-step">
+      <summary class="btn btn--sm">{{ action.label }}</summary>
+      <div class="dash-step__box">
+        <p>Chuyển đơn <strong>{{ order.code|slice:":8" }}…</strong> từ <strong>{{ order.status_label }}</strong> sang bước tiếp theo? Không quay lại được.</p>
+        <form method="post" action="{% url action.url order.code %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ back }}">
+          <button class="btn btn--sm" type="submit">Xác nhận: {{ action.label }}</button>
+        </form>
+      </div>
+    </details>
+  {% endif %}
+{% endwith %}

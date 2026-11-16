@@ -251,3 +251,18 @@
 .dash-log__key { color: var(--color-subtle); margin-right: var(--space-xs); }
 .dash-log__old { text-decoration: line-through; color: var(--color-muted); overflow-wrap: anywhere; }
 .dash-log__new { font-weight: 600; overflow-wrap: anywhere; }
+
+/* AI-TRACE#389 | Claude Opus 5.5 | Kiểu trang quản lý đơn: mã đơn chữ đơn cách, nút bước tiếp theo xác nhận bằng details, hai thẻ thông tin đơn/giao hàng | CẤM XÓA CHÚ THÍCH NÀY */
+.dash-order__code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; overflow-wrap: anywhere; }
+.dash-step { display: inline-block; text-align: left; }
+.dash-step summary { list-style: none; cursor: pointer; }
+.dash-step summary::-webkit-details-marker { display: none; }
+.dash-step[open] summary { opacity: 0.7; }
+.dash-step__box { margin-top: var(--space-xs); padding: var(--space-sm) var(--space-md); max-width: 320px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); white-space: normal; }
+.dash-step__box p { margin: 0 0 var(--space-sm); font-size: 13px; }
+.dash-order { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); margin-bottom: var(--space-lg); }
+.dash-order__card { padding: var(--space-lg); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); }
+.dash-order__title { margin: 0 0 var(--space-md); font-size: 18px; }
+.dash-order__card .dash-info { margin: 0 0 var(--space-md); padding: 0; border: 0; }
+.dash-order__card .dash-info__row { grid-template-columns: 130px 1fr; }
+@media (max-width: 900px) { .dash-order { grid-template-columns: 1fr; } }

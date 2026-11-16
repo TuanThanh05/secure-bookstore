@@ -1,0 +1,55 @@
+{% extends "layouts/admin.html" %}
+{% load static bookstore %}
+{% block title %}Chi tiết đơn hàng{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
+{% block content %}
+  {# AI-TRACE#388 | Claude Opus 5.5 | Trang chi tiết đơn cho admin: trạng thái, khách, các mốc thời gian, giao dịch thanh toán, thông tin giao hàng (đã ghi log khi xem), sách và tiền, nút bước tiếp theo | CẤM XÓA CHÚ THÍCH NÀY #}
+  <header class="dash-header dash-header--row">
+    <div>
+      <h1 class="dash-header__title">Đơn hàng</h1>
+      <p class="dash-header__desc">Mã đơn <span class="dash-order__code">{{ order.code }}</span></p>
+    </div>
+    <a class="btn btn--secondary" href="{% url 'dashboard:orders' %}">Về danh sách đơn</a>
+  </header>
+
+  <p class="dash-note" role="status">Trang này có thông tin giao hàng của khách. Lần xem này đã được ghi vào nhật ký hệ thống.</p>
+
+  <div class="dash-order">
+    <section class="dash-order__card">
+      <h2 class="dash-order__title">Thông tin đơn</h2>
+      <dl class="dash-info">
+        <div class="dash-info__row"><dt>Trạng thái</dt><dd>{% include "dashboard/partials/order_status.html" %}</dd></div>
+        <div class="dash-info__row"><dt>Khách</dt><dd>{{ order.username }}</dd></div>
+        <div class="dash-info__row"><dt>Ngày đặt</dt><dd>{{ order.created_at|date:"H:i d/m/Y" }}</dd></div>
+        {% if order.paid_at %}<div class="dash-info__row"><dt>Thanh toán lúc</dt><dd>{{ order.paid_at|date:"H:i d/m/Y" }}</dd></div>{% endif %}
+        {% if order.cancelled_at %}<div class="dash-info__row"><dt>Hủy lúc</dt><dd>{{ order.cancelled_at|date:"H:i d/m/Y" }}</dd></div>{% endif %}
+        {% if order.transaction_id %}<div class="dash-info__row"><dt>Giao dịch</dt><dd><span class="dash-order__code">{{ order.transaction_id }}</span>{% if order.payment_provider == "simulated" %} (mô phỏng){% endif %}</dd></div>{% endif %}
+      </dl>
+      {% include "dashboard/partials/order_action.html" %}
+    </section>
+    <section class="dash-order__card">
+      <h2 class="dash-order__title">Giao hàng</h2>
+      <dl class="dash-info">
+        <div class="dash-info__row"><dt>Người nhận</dt><dd>{{ order.shipping_name }}</dd></div>
+        <div class="dash-info__row"><dt>Số điện thoại</dt><dd>{{ order.shipping_phone|default:"Không đọc được" }}</dd></div>
+        <div class="dash-info__row"><dt>Địa chỉ</dt><dd>{{ order.shipping_address|default:"Không đọc được" }}</dd></div>
+      </dl>
+    </section>
+  </div>
+
+  <div class="dash-table-wrap">
+    <table class="dash-table">
+      <thead><tr><th scope="col">Sách</th><th scope="col" class="is-num">Đơn giá</th><th scope="col" class="is-num">SL</th><th scope="col" class="is-num">Thành tiền</th></tr></thead>
+      <tbody>
+        {% for line in order.lines %}
+          <tr><td>{{ line.title }}</td><td class="is-num">{{ line.unit_price|vnd }}</td><td class="is-num">{{ line.quantity }}</td><td class="is-num">{{ line.line_total|vnd }}</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr><th scope="row" colspan="3">Tạm tính</th><td class="is-num">{{ order.subtotal|vnd }}</td></tr>
+        <tr><th scope="row" colspan="3">Phí giao hàng</th><td class="is-num">{{ order.shipping_fee|vnd }}</td></tr>
+        <tr><th scope="row" colspan="3">Tổng cộng</th><td class="is-num"><strong>{{ order.total|vnd }}</strong></td></tr>
+      </tfoot>
+    </table>
+  </div>
+{% endblock %}

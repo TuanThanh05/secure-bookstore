@@ -264,3 +264,25 @@ GRANT EXECUTE ON PROCEDURE sp_payment_simulate       TO 'r_customer';
 -- ---------------------------------------------------------------------
 GRANT EXECUTE ON PROCEDURE sp_order_list_mine        TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_order_list_mine        TO 'r_customer';
+
+-- ---------------------------------------------------------------------
+-- Quản lý đơn hàng của admin (database/objects/44_staff_orders.sql)
+-- Definer: đọc orders_order, orders_orderitem, accounts_user, payments_payment,
+-- đổi trạng thái đơn (đã có cả; trigger 32 chỉ cho đi tới đúng một bước).
+-- r_staff: chỉ gọi 6 thủ tục công khai. sp_staff_order_advance là thủ tục nội
+-- bộ, không cấp cho tài khoản ứng dụng nào.
+-- r_customer: không có gì ở đây.
+-- ---------------------------------------------------------------------
+GRANT EXECUTE ON PROCEDURE sp_staff_order_list       TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_staff_order_get        TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_staff_order_advance    TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_staff_order_confirm    TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_staff_order_pack       TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_staff_order_ship       TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_staff_order_deliver    TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_staff_order_list       TO 'r_staff';
+GRANT EXECUTE ON PROCEDURE sp_staff_order_get        TO 'r_staff';
+GRANT EXECUTE ON PROCEDURE sp_staff_order_confirm    TO 'r_staff';
+GRANT EXECUTE ON PROCEDURE sp_staff_order_pack       TO 'r_staff';
+GRANT EXECUTE ON PROCEDURE sp_staff_order_ship       TO 'r_staff';
+GRANT EXECUTE ON PROCEDURE sp_staff_order_deliver    TO 'r_staff';
