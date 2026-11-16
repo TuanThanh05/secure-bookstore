@@ -26,10 +26,18 @@ from catalog.staff_services import (
     rename_category,
 )
 from core.decorators import recent_auth_required, staff_required
+from core.security_log import log_event
 
 from .catalog_forms import BookCreateForm, BookEditForm, CategoryForm, StockForm, attach_error
 
 BOOKS_PER_PAGE = 20
+
+
+# AI-TRACE#327 | Claude Opus 5.5 | Ghi sự kiện upload_rejected khi ảnh bìa bị từ chối (chỉ mã lỗi, không ghi tên hay nội dung file) | CẤM XÓA CHÚ THÍCH NÀY
+def _log_upload_rejected(request, exc):
+    if isinstance(exc, CoverError):
+        log_event("upload_rejected", request, severity="warning", user=request.user,
+                  username=request.user.get_username(), detail={"field": "cover", "code": exc.code})
 STATUS_FILTERS = {"hien": True, "an": False}
 
 
@@ -85,6 +93,7 @@ def book_create(request):
                 book_id = create_book(request.user, **form.book_fields(), stock=form.cleaned_data["stock"],
                                       cover_file=form.cleaned_data.get("cover"))
             except (BookError, CoverError) as exc:
+                _log_upload_rejected(request, exc)
                 attach_error(form, exc)
             else:
                 messages.success(request, "Đã thêm sách.")
@@ -108,6 +117,7 @@ def book_edit(request, book_id):
                 update_book(request.user, book.id, **form.book_fields(), cover_file=form.cleaned_data.get("cover"),
                             remove_cover=form.cleaned_data["remove_cover"])
             except (BookError, CoverError) as exc:
+                _log_upload_rejected(request, exc)
                 attach_error(form, exc)
             else:
                 messages.success(request, "Đã lưu thông tin sách.")

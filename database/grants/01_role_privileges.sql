@@ -228,3 +228,17 @@ GRANT EXECUTE ON PROCEDURE sp_staff_account_list     TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_staff_account_get      TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_staff_account_lock     TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_staff_account_unlock   TO 'r_staff';
+
+-- ---------------------------------------------------------------------
+-- Nhật ký hệ thống (database/objects/34_trg_orders_audit.sql, 43_logs.sql)
+-- Definer: đọc 2 bảng log cho thủ tục đọc; xóa log cũ hơn 1 năm (chỉ trong
+-- sp_purge_old_logs do Event gọi). Tài khoản ứng dụng vẫn chỉ có INSERT.
+-- r_staff: chỉ gọi 2 thủ tục đọc. sp_purge_old_logs không cấp cho ai (chỉ Event).
+-- ---------------------------------------------------------------------
+GRANT SELECT, DELETE ON core_securityevent           TO 'bookstore_definer'@'localhost';
+GRANT SELECT, DELETE ON core_auditlog                TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_staff_security_events  TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_staff_audit_log        TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_purge_old_logs         TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_staff_security_events  TO 'r_staff';
+GRANT EXECUTE ON PROCEDURE sp_staff_audit_log        TO 'r_staff';
