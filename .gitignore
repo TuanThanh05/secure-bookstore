@@ -32,6 +32,8 @@ logs/
 database/backup/*.sql
 database/backup/*.sql.gz
 database/backup/*.gpg
+backups/
+*.tar.gz.enc
 *.dump
 
 .vscode/

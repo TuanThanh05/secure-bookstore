@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 TABLE_FILE = ROOT / "AI_TRACE.md"
 EXTENSIONS = {".py", ".html", ".js", ".css", ".sql"}
-SKIP_DIRS = {".git", ".venv", "venv", "node_modules", "__pycache__", "media", "staticfiles", "logs"}
+SKIP_DIRS = {".git", ".venv", "venv", "node_modules", "__pycache__", "media", "staticfiles", "logs", "backups"}
 SKIP_FILES = {Path(__file__).resolve()}
 LOCK_TEXT = "CẤM XÓA CHÚ THÍCH NÀY"
 

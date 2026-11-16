@@ -220,6 +220,14 @@ PAYMENT_SIMULATION = env.bool("PAYMENT_SIMULATION", default=False)   # nút "Tha
 PAYMENT_SIMULATE_RATE_LIMIT = 10                    # bấm thanh toán mô phỏng: tối đa 10 lần trong PAYMENT_SIMULATE_RATE_WINDOW
 PAYMENT_SIMULATE_RATE_WINDOW = 600
 
+# Sao lưu CSDL (lệnh db_backup, db_backup_export, db_restore, db_backup_verify – chỉ chạy trên máy chủ).
+# Khóa mã hóa BACKUP_ENCRYPTION_KEY và mật khẩu DB_BACKUP_PASSWORD nằm trong database/.env.db (web không đọc).
+BACKUP_DIR = env("BACKUP_DIR", default=str(REPO_DIR / "backups"))
+BACKUP_OFFSITE_DIR = env("BACKUP_OFFSITE_DIR", default="")         # thư mục thứ hai (ổ khác, USB...), để trống = không chép
+BACKUP_EXPORT_DIR = env("BACKUP_EXPORT_DIR", default=str(REPO_DIR / "backups" / "plain"))
+BACKUP_RETENTION_DAYS = 365                                         # bản sao lưu cũ hơn 1 năm tự xóa
+BACKUP_DUMP_PREFIX = env("BACKUP_DUMP_PREFIX", default="")         # ví dụ: sudo docker compose exec -T db
+
 LOG_DIR = REPO_DIR / "logs"
 LOG_DIR.mkdir(exist_ok=True)
 

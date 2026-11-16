@@ -36,6 +36,11 @@ EVENT_LABELS = dict([
     ("login_blocked_unverified", "Chặn đăng nhập (chưa xác nhận email)"),
     ("sensitive_data_viewed", "Xem dữ liệu nhạy cảm"),
     ("profile_updated", "Sửa hồ sơ"),
+    ("backup_created", "Sao lưu CSDL"),
+    ("backup_failed", "Sao lưu CSDL lỗi"),
+    ("backup_exported", "Xuất bản sao lưu ra .sql trần"),
+    ("restore_performed", "Khôi phục CSDL"),
+    ("restore_verified", "Kiểm tra khôi phục"),
 ])
 SEVERITY_LABELS = {"info": "Thông tin", "warning": "Cảnh báo", "critical": "Nghiêm trọng"}
 TABLE_LABELS = {
