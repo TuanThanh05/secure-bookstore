@@ -3,14 +3,14 @@
 {% block title %}Đơn hàng{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/account-area.css' %}">{% endblock %}
 {% block account_content %}
-  {# AI-TRACE#276 | Claude Opus 5.5 | Trang chi tiết đơn: mã đơn, trạng thái, hạn thanh toán, sách và giá lúc đặt, thông tin giao hàng; nút thanh toán chờ nhánh sau | CẤM XÓA CHÚ THÍCH NÀY #}
+  {# AI-TRACE#276 | Claude Opus 5.5 | Trang chi tiết đơn: mã đơn, trạng thái, hạn thanh toán, sách và giá lúc đặt, thông tin giao hàng; nút thanh toán chờ nhánh sau, hủy đơn khi còn chờ thanh toán | CẤM XÓA CHÚ THÍCH NÀY #}
   <header class="area-header">
     <h1 class="area-header__title">Đơn hàng</h1>
     <p class="area-header__desc">Mã đơn <span class="order__code">{{ order.code }}</span></p>
   </header>
 
   <dl class="area-info area-info--compact">
-    <div class="area-info__row"><dt>Trạng thái</dt><dd><span class="order__status order__status--{{ order.status }}">{% if order.expired %}Quá hạn thanh toán{% else %}{{ order.status_label }}{% endif %}</span></dd></div>
+    <div class="area-info__row"><dt>Trạng thái</dt><dd><span class="order__status order__status--{% if order.expired %}expired{% else %}{{ order.status }}{% endif %}">{% if order.expired %}Quá hạn thanh toán{% else %}{{ order.status_label }}{% endif %}</span></dd></div>
     <div class="area-info__row"><dt>Ngày đặt</dt><dd>{{ order.created_at|date:"H:i d/m/Y" }}</dd></div>
     {% if order.awaiting_payment %}
       <div class="area-info__row"><dt>Hạn thanh toán</dt><dd>{{ order.expires_at|date:"H:i d/m/Y" }}</dd></div>
@@ -39,8 +39,26 @@
   <div class="area-actions order__actions">
     {% if order.awaiting_payment %}
       <button class="btn" type="button" disabled>Thanh toán</button>
-      <p class="cart__note">Chức năng thanh toán sắp có. Đơn đã đặt không sửa được; muốn đổi sách hãy đặt đơn mới sau khi đơn này hết hạn.</p>
+      <p class="cart__note">Chức năng thanh toán sắp có. Đơn đã đặt không sửa được; muốn đổi sách hãy hủy đơn này rồi đặt đơn mới.</p>
+    {% elif order.expired %}
+      <p class="cart__note">Đơn đã quá hạn thanh toán và sẽ được hệ thống tự hủy trong ít phút, sách được trả lại kho.</p>
+    {% elif order.status == "cancelled" %}
+      <p class="cart__note">Đơn đã hủy, sách trong đơn đã được trả lại kho.</p>
     {% endif %}
     <a class="btn btn--secondary" href="{% url 'catalog:home' %}">Tiếp tục xem sách</a>
   </div>
+
+  {% if order.can_cancel %}
+    {# AI-TRACE#289 | Claude Opus 5.5 | Hủy đơn hai bước bằng details (không JS): bấm Hủy đơn mới hiện nút xác nhận gửi POST | CẤM XÓA CHÚ THÍCH NÀY #}
+    <details class="order__cancel">
+      <summary class="btn btn--link">Hủy đơn hàng</summary>
+      <div class="order__cancel-box">
+        <p>Hủy đơn sẽ trả sách lại kho và không hoàn tác được. Bạn chắc chắn muốn hủy?</p>
+        <form method="post" action="{% url 'orders:order_cancel' order.code %}">
+          {% csrf_token %}
+          <button class="btn order__cancel-confirm" type="submit">Xác nhận hủy đơn</button>
+        </form>
+      </div>
+    </details>
+  {% endif %}
 {% endblock %}

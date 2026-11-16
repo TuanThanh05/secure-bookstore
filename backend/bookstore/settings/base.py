@@ -213,6 +213,8 @@ CART_UPDATE_RATE_LIMIT = 60                         # đổi số lượng / g�
 CART_UPDATE_RATE_WINDOW = 60
 ORDER_PLACE_RATE_LIMIT = 5                          # đặt hàng: tối đa 5 lần trong ORDER_PLACE_RATE_WINDOW
 ORDER_PLACE_RATE_WINDOW = 600
+ORDER_CANCEL_RATE_LIMIT = 10                        # hủy đơn: tối đa 10 lần trong ORDER_CANCEL_RATE_WINDOW
+ORDER_CANCEL_RATE_WINDOW = 600
 
 LOG_DIR = REPO_DIR / "logs"
 LOG_DIR.mkdir(exist_ok=True)

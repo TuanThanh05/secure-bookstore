@@ -96,6 +96,19 @@ GRANT TRIGGER         ON orders_orderitem TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_order_get   TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_order_get   TO 'r_customer';
 
+-- Hủy đơn và hủy đơn quá hạn (database/objects/33_order_cancel.sql).
+-- Definer: đổi trạng thái đơn (trigger 32 vẫn chỉ cho pending → cancelled),
+-- cộng lại kho (đã có UPDATE catalog_book), gọi thủ tục nội bộ; EVENT để
+-- Event ev_cancel_expired_orders chạy bằng quyền definer.
+-- r_customer: chỉ sp_order_cancel. sp_cancel_expired_orders, sp_order_expire_one
+-- không cấp cho tài khoản ứng dụng nào (chỉ Event gọi).
+GRANT UPDATE                                   ON orders_order TO 'bookstore_definer'@'localhost';
+GRANT EVENT ON *                               TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_order_cancel          TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_order_expire_one      TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_cancel_expired_orders TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_order_cancel          TO 'r_customer';
+
 -- ---------------------------------------------------------------------
 -- Thể loại sách (database/objects/40_category.sql)
 -- Definer: đọc/khóa/ghi catalog_category, đếm sách, ghi nhật ký.

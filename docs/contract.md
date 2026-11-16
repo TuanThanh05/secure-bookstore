@@ -19,7 +19,8 @@ Quy ước:
 | `orders:cart_update` | `/orders/cart/cap-nhat/` | – (redirect về `orders:cart` kèm thông báo) | Như `orders:cart` | – | `book_id`, `quantity` (**số lượng cuối cùng** 1–5; chỉ POST + CSRF) |
 | `orders:cart_remove` | `/orders/cart/go/` | – (redirect về `orders:cart` kèm thông báo) | Như `orders:cart` | – | `book_id` (chỉ POST + CSRF) |
 | `orders:checkout` | `/orders/dat-hang/` | `shop/checkout.html` | Khách đã đăng nhập (ẩn danh → đăng nhập; nhân viên → dashboard); giỏ không rỗng, không có sách ngừng bán/hết hàng; không lưu cache | `form` (`CheckoutForm`), `cart`, `shipping_fee` (30.000), `total` | `shipping_name`, `phone`, `address` (chỉ POST + CSRF; mã chống trùng nằm trong phiên, không có trong form) |
-| `orders:order_detail` | `/orders/don/<code>/` | `shop/order_detail.html` | Chỉ chủ đơn; mã sai mẫu, đơn không có hay đơn của người khác đều 404; không lưu cache | `order` (`Order`: `code`, `status`, `status_label`, `subtotal`, `shipping_fee`, `total`, `shipping_name`, `shipping_phone`, `shipping_address`, `created_at`, `expires_at`, `paid_at`, `cancelled_at`, `awaiting_payment`, `expired`, `lines` là list `OrderLine`) | – (chỉ GET) |
+| `orders:order_detail` | `/orders/don/<code>/` | `shop/order_detail.html` | Chỉ chủ đơn; mã sai mẫu, đơn không có hay đơn của người khác đều 404; không lưu cache | `order` (`Order`: `code`, `status`, `status_label`, `subtotal`, `shipping_fee`, `total`, `shipping_name`, `shipping_phone`, `shipping_address`, `created_at`, `expires_at`, `paid_at`, `cancelled_at`, `awaiting_payment`, `expired`, `can_cancel`, `lines` là list `OrderLine`) | – (chỉ GET) |
+| `orders:order_cancel` | `/orders/don/<code>/huy/` | – (redirect về trang đơn kèm thông báo) | Chỉ chủ đơn (đơn người khác/mã sai → 404); nhân viên → dashboard | – | – (chỉ POST + CSRF, sau bước xác nhận `<details>` trên trang đơn) |
 | `accounts:register` | `/account/register/` | `account/register.html` | Chưa đăng nhập | `form` | `username`, `email`, `password1`, `password2` |
 | `accounts:login` | `/account/login/` | `account/login.html` | Chưa đăng nhập | `form`, `next` | `username`, `password`, `next` |
 | `accounts:logout` | `/account/logout/` | – (redirect) | Đã đăng nhập | – | (chỉ POST + CSRF) |
@@ -227,6 +228,29 @@ get_order(request, code) -> Order
 ## Đọc đơn: `sp_order_get`
 
 `sp_order_get(p_user_id, p_code)` (cùng file 30) trả 2 bộ kết quả: dòng đơn (kể cả `idempotency_key` để Django giải mã, không đưa ra template) và các sách (`book_id`, `book_title`, `unit_price`, `quantity` lúc đặt). Mã sai mẫu, đơn không có hay đơn của người khác đều `ORDER_NOT_FOUND` → 404 như nhau, nên không dò được mã đơn của người khác (IDOR). Trang chi tiết đơn `never_cache` vì có SĐT, địa chỉ.
+
+## Hủy đơn và đơn quá hạn: `sp_order_cancel`, `sp_cancel_expired_orders`, `ev_cancel_expired_orders`
+
+Chốt 2026-11-16 (nhánh A, làm trước khung thanh toán). File `database/objects/33_order_cancel.sql`.
+
+Kho bị trừ ngay khi tạo đơn, nên **hủy đơn = cộng lại đúng số cuốn trong chi tiết đơn**, cùng giao dịch với việc đổi trạng thái sang `cancelled` (ghi `cancelled_at`).
+
+| Ai | Cách | Điều kiện |
+| --- | --- | --- |
+| Khách | Nút **Hủy đơn hàng** trên trang đơn → hộp xác nhận (`<details>`, không JS) → **Xác nhận hủy đơn** (POST) → `sp_order_cancel(user_id, code)` | Đơn của chính mình, đang `pending` (kể cả đã quá hạn mà Event chưa kịp hủy) |
+| Hệ thống | MySQL Event `ev_cancel_expired_orders` mỗi phút → `sp_cancel_expired_orders` → `sp_order_expire_one` từng đơn | Đơn `pending` có `expires_at <= UTC_TIMESTAMP()`, tối đa 200 đơn mỗi lần |
+
+**Không hủy được:** đơn đã thanh toán, đang giao, đã giao, đã hủy → `ORDER_NOT_CANCELLABLE` ("Đơn hàng này không còn hủy được..."). Không có hoàn tiền; trigger khóa đơn cũng chỉ cho `pending → cancelled`.
+
+**Chống race condition:** mỗi lần hủy khóa dòng đơn `FOR UPDATE` rồi mới kiểm tra lại trạng thái. Khách bấm hủy đúng lúc Event chạy, hoặc bấm nhiều lần cùng lúc, thì chỉ một bên hủy được, kho cộng đúng một lần. Thứ tự khóa đơn → sách; `sp_place_order` khóa giỏ → sách và không khóa dòng đơn cũ, nên không deadlock. Thủ tục thanh toán sau này cũng khóa dòng đơn và chỉ nhận khi `expires_at` còn hạn, nên không có đơn vừa "đã thanh toán" vừa "đã hủy".
+
+**Một đơn lỗi không chặn các đơn khác:** mỗi đơn quá hạn hủy trong giao dịch riêng (`sp_order_expire_one` có `ROLLBACK; RESIGNAL`), vòng lặp bắt lỗi rồi đi tiếp; đơn lỗi được thử lại ở phút sau.
+
+**Quyền:** `r_customer` chỉ có `EXECUTE sp_order_cancel`. `sp_cancel_expired_orders`, `sp_order_expire_one` không cấp cho tài khoản ứng dụng nào (chỉ Event gọi). Definer cần `UPDATE orders_order` và **quyền `EVENT` trên CSDL**: thiếu quyền này Event không chạy (log MySQL: "user no longer has EVENT privilege"). Lần đầu chạy `db_apply`, Event có thể chạy trúng khoảng giữa lúc tạo Event và lúc cấp quyền rồi báo lỗi một lần trong log MySQL; phút sau chạy bình thường. Cần `event_scheduler = ON` (`database/config/my.cnf` đã bật). Kiểm tra Event: `SELECT EVENT_NAME, STATUS FROM information_schema.EVENTS;` bằng root.
+
+**Django:** `orders.services.cancel_order(request, code)` lấy user từ phiên, mã đơn sai mẫu không xuống CSDL, giới hạn 10 lần/10 phút (`ORDER_CANCEL_RATE_*`). `Order.can_cancel` = đang `pending`. Trang đơn hiện nhãn: Chờ thanh toán, Quá hạn thanh toán (kèm "sẽ được hệ thống tự hủy trong ít phút"), Đã hủy (kèm thời điểm hủy), Đã thanh toán.
+
+**Đã kiểm tra** (test `orders/tests/test_order_cancel.py`, `db_check_grants` tổng 51 + chạy thật trong sandbox): Event hủy đơn quá hạn và trả kho, không đụng đơn còn hạn; Event chạy được dù `bookstore_definer` bị khóa đăng nhập; khách hủy đơn → kho cộng lại; hủy lần 2, hủy đơn đã thanh toán → `ORDER_NOT_CANCELLABLE`; khách A hủy đơn khách B → 404, đơn B không đổi; GET → 405, thiếu CSRF → 403; `app_customer` gọi `sp_cancel_expired_orders`/`sp_order_expire_one` → 1370; gọi `sp_order_cancel` bằng id quản trị → `NOT_CUSTOMER`. Chạy đồng thời 5 vòng khách hủy + Event cùng một đơn → 1 bên hủy, kho đúng; 3 vòng bấm hủy 4 lần cùng lúc → 1 thành công, kho đúng; một đơn bị khóa ở phiên khác → các đơn quá hạn còn lại vẫn được hủy, đơn bị khóa được hủy ở lần sau.
 
 ## Đơn đã tạo không sửa được: `32_trg_orders_guard.sql`
 

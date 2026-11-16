@@ -25,6 +25,7 @@ ORDER_ERROR_MESSAGES = {
     "BOOK_INACTIVE": "Một số sách đã ngừng bán. Hãy gỡ chúng khỏi giỏ trước khi đặt hàng.",
     "OUT_OF_STOCK": "Một số sách vừa hết hàng hoặc không đủ số lượng, vui lòng kiểm tra lại giỏ.",
     "ORDER_NOT_FOUND": "Không tìm thấy đơn hàng.",
+    "ORDER_NOT_CANCELLABLE": "Đơn hàng này không còn hủy được (đã thanh toán hoặc đã hủy).",
     "RATE_LIMITED": "Bạn thao tác quá nhanh. Hãy thử lại sau ít phút.",
 }
 
@@ -156,6 +157,10 @@ class Order:
     def expired(self):
         return self.status == "pending" and not self.awaiting_payment
 
+    @property
+    def can_cancel(self):
+        return self.status == "pending"
+
 
 def _aware(value):
     if value is None or value.tzinfo is not None:
@@ -203,3 +208,42 @@ def get_order(request, code):
         paid_at=_aware(paid_at), cancelled_at=_aware(cancelled_at),
         lines=tuple(OrderLine(book_id=int(r[0]), title=r[1], unit_price=int(r[2]), quantity=int(r[3])) for r in items),
     )
+
+
+# AI-TRACE#286 | Claude Opus 5.5 | Giới hạn số lần bấm hủy đơn của mỗi khách theo ORDER_CANCEL_RATE_* | CẤM XÓA CHÚ THÍCH NÀY
+def _allow_cancel_order(user):
+    key = f"order-cancel-rate:{user.pk}"
+    window = settings.ORDER_CANCEL_RATE_WINDOW
+    if cache.add(key, 1, window):
+        return True
+    try:
+        count = cache.incr(key)
+    except ValueError:
+        cache.set(key, 1, window)
+        return True
+    return count <= settings.ORDER_CANCEL_RATE_LIMIT
+
+
+# AI-TRACE#287 | Claude Opus 5.5 | Khách hủy đơn chờ thanh toán của chính mình bằng sp_order_cancel; mã đơn sai mẫu không xuống CSDL, kho được cộng lại trong thủ tục | CẤM XÓA CHÚ THÍCH NÀY
+def cancel_order(request, code):
+    user = request.user
+    if not user.is_authenticated or user.is_staff:
+        raise OrderError("NOT_CUSTOMER")
+    if not isinstance(code, str) or not ORDER_CODE_RE.match(code):
+        raise OrderError("ORDER_NOT_FOUND")
+    if connection.in_atomic_block:
+        raise RuntimeError("cancel_order không được gọi bên trong transaction.atomic")
+    if not _allow_cancel_order(user):
+        log_event("rate_limited", request, severity="warning", user=user, username=user.get_username(),
+                  detail={"action": "cancel_order"})
+        raise OrderError("RATE_LIMITED")
+    try:
+        with connection.cursor() as cursor:
+            cursor.callproc("sp_order_cancel", [user.pk, code])
+            while cursor.nextset():
+                pass
+    except OperationalError as exc:
+        signal = _signal_code(exc)
+        if signal is None:
+            raise
+        raise OrderError(signal) from exc

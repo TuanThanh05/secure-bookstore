@@ -120,3 +120,12 @@
 @media (max-width: 900px) {
   .checkout { grid-template-columns: 1fr; }
 }
+
+/* AI-TRACE#290 | Claude Opus 5.5 | Kiểu khối hủy đơn hai bước và nhãn trạng thái đã hủy/quá hạn | CẤM XÓA CHÚ THÍCH NÀY */
+.order__status--cancelled, .order__status--expired { color: var(--color-error); background: rgba(160, 30, 40, 0.1); }
+.order__cancel { margin-top: var(--space-lg); padding-top: var(--space-md); border-top: 1px solid var(--color-border); }
+.order__cancel summary { display: inline-flex; cursor: pointer; list-style: none; color: var(--color-error); padding-left: 0; }
+.order__cancel summary::-webkit-details-marker { display: none; }
+.order__cancel-box { margin-top: var(--space-sm); padding: var(--space-md); border: 1px solid var(--color-error); border-radius: var(--radius-md); background: rgba(160, 30, 40, 0.05); max-width: 520px; }
+.order__cancel-box p { margin: 0 0 var(--space-sm); }
+.order__cancel-confirm { background: var(--color-error); border-color: var(--color-error); }
