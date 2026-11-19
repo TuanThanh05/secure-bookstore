@@ -1,0 +1,58 @@
+{% extends "layouts/auth.html" %}
+{% load static %}
+{% block title %}Hoàn tất đăng ký{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/account.css' %}">{% endblock %}
+{% block extra_js %}<script src="{% static 'js/account.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+  {# AI-TRACE#426 | Claude Opus 5.5 | Trang đăng ký bước 2: email chỉ hiển thị, đặt tên đăng nhập và mật khẩu; báo lỗi khi link hoặc phiên hỏng | CẤM XÓA CHÚ THÍCH NÀY #}
+  <h1 class="auth__title">Hoàn tất đăng ký</h1>
+  {% if error %}
+    <div class="auth-form__alert" role="alert"><p>{{ error }}</p></div>
+    <p class="auth__switch"><a href="{% url 'accounts:register' %}">Đăng ký lại</a></p>
+    <p class="auth__switch"><a href="{% url 'accounts:login' %}">Về trang đăng nhập</a></p>
+  {% else %}
+    <form method="post" class="auth-form" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="auth-form__alert" role="alert">
+          {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="auth-form__field">
+        <span class="auth-form__label">Email</span>
+        <p class="auth-form__static">{{ email }}</p>
+      </div>
+
+      {% for field in form %}
+        <div class="auth-form__field{% if field.errors %} auth-form__field--error{% endif %}">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {% if field.widget_type == "password" %}
+            <div class="password-field">
+              {{ field }}
+              <button type="button" class="password-toggle" aria-controls="{{ field.id_for_label }}"
+                      aria-pressed="false" aria-label="Hiện mật khẩu" hidden>
+                {% include "components/icon.html" with name="visibility" %}
+                {% include "components/icon.html" with name="visibility-off" %}
+              </button>
+            </div>
+          {% else %}
+            {{ field }}
+          {% endif %}
+          {% if field.errors %}
+            <ul class="auth-form__errors" id="{{ field.auto_id }}_error">
+              {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      {% endfor %}
+      {% if form.password1.help_text %}
+        <div class="auth-form__help auth-form__help--wide" id="{{ form.password1.auto_id }}_helptext">{{ form.password1.help_text }}</div>
+      {% endif %}
+
+      <button type="submit" class="btn auth-form__submit">Tạo tài khoản</button>
+    </form>
+  {% endif %}
+{% endblock %}

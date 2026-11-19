@@ -115,8 +115,13 @@ LOGOUT_REDIRECT_URL = "catalog:home"
 
 REAUTH_MAX_AGE = 2 * 60
 
-EMAIL_VERIFY_MAX_AGE = 5 * 60
-EMAIL_RESEND_INTERVAL = 60
+SIGNUP_LINK_MAX_AGE = 5 * 60              # link đăng ký trong thư: bấm trong 5 phút
+SIGNUP_SESSION_MAX_AGE = 5 * 60           # sau khi bấm link: nộp form hoàn tất trong 5 phút
+SIGNUP_EMAIL_LIMIT = 5                    # mỗi email nhận tối đa 5 thư đăng ký (link hoặc thư báo trùng) trong SIGNUP_EMAIL_WINDOW
+SIGNUP_EMAIL_WINDOW = 60 * 60
+SIGNUP_RATE_LIMIT = 5                     # mỗi IP gửi form đăng ký tối đa 5 lần trong SIGNUP_RATE_WINDOW, đếm riêng từng bước
+SIGNUP_RATE_WINDOW = 10 * 60
+EMAIL_RESEND_INTERVAL = 60                # mỗi email nhận tối đa 1 thư mỗi loại trong 60 giây
 PASSWORD_CHANGE_MAX_FAILURES = 5
 PASSWORD_CHANGE_FAILURE_WINDOW = 15 * 60
 

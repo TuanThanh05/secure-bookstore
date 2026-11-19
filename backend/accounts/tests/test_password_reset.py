@@ -105,15 +105,12 @@ class PasswordResetTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(User.objects.get(pk=self.customer.pk).check_password(PASSWORD))
 
-    def test_reset_confirms_email_and_unlocks_axes(self):
-        self.customer.email_verified = False
-        self.customer.save()
+    def test_reset_unlocks_axes(self):
         for _ in range(5):
             Client().post(self.login_url, {"username": "an_nguyen", "password": PASSWORD + "-sai"})
         self.assertTrue(AccessAttempt.objects.filter(username="an_nguyen").exists())
         self.request_reset()
         self.set_new_password(self.link_path())
-        self.assertTrue(User.objects.get(pk=self.customer.pk).email_verified)
         self.assertFalse(AccessAttempt.objects.filter(username="an_nguyen").exists())
         response = Client().post(self.login_url, {"username": "an_nguyen", "password": NEW_PASSWORD})
         self.assertEqual(response.status_code, 302)
@@ -134,10 +131,8 @@ class PasswordResetTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertTrue(SecurityEvent.objects.filter(event_type="rate_limited", detail__kind="password_reset").exists())
 
-    def test_reset_limit_is_separate_from_verification_limit(self):
-        self.customer.email_verified = False
-        self.customer.save()
-        self.client.post(reverse("accounts:resend_verification"), {"email": "an@example.test"})
+    def test_reset_limit_is_separate_from_signup_limit(self):
+        self.client.post(reverse("accounts:register"), {"email": "an@example.test"})
         self.request_reset()
         self.assertEqual(len(mail.outbox), 2)
 

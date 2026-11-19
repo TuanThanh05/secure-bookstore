@@ -63,7 +63,8 @@
 /* --- Một ô nhập --- */
 .auth-form__field { display: grid; gap: 6px; min-width: 0; }
 
-.auth-form__field label {
+.auth-form__field label,
+.auth-form__label {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -207,6 +208,27 @@
 }
 .auth__notice p { margin: 0; }
 .auth__notice p + p { margin-top: var(--space-xs); }
+
+/* AI-TRACE#427 | Claude Opus 5.5 | Dòng giới thiệu trang đăng ký và ô email chỉ hiển thị ở bước hoàn tất | CẤM XÓA CHÚ THÍCH NÀY */
+.auth__lead {
+  margin: 0 0 var(--space-md);
+  color: var(--color-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.auth-form__static {
+  display: flex;
+  align-items: center;
+  min-height: 46px;
+  margin: 0;
+  padding: 0.7rem 1rem;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
 
 /* --- Nút gửi: to, trải ngang, có mũi tên --- */
 .auth-form__submit {

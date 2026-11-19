@@ -21,38 +21,53 @@ from .forms import (
     CustomerPasswordResetForm,
     CustomerReauthForm,
     ProfileUpdateForm,
-    RegisterForm,
-    ResendVerificationForm,
+    SignupCompleteForm,
+    SignupEmailForm,
 )
+from .models import User
 from .profile import build_profile, decrypt_phone
 from .services import (
+    allow_signup_step,
     clear_password_change_failures,
-    find_pending_user,
-    mark_email_verified,
+    complete_signup,
+    email_has_account,
+    pending_signup_email,
     record_password_change_failure,
-    register_account,
-    resend_verification,
+    remember_signup_email,
+    start_signup,
     update_profile,
 )
+from .tokens import read_signup_token
 
-TOKEN_STATUS_MESSAGES = {
-    "expired": "Link xác nhận đã hết hạn.",
-    "invalid": "Link xác nhận không hợp lệ.",
-    "used": "Link xác nhận không còn hiệu lực. Có thể email đã được xác nhận trước đó.",
+SIGNUP_ERRORS = {
+    "expired": "Link đăng ký đã hết hạn.",
+    "invalid": "Link đăng ký không hợp lệ.",
+    "used": "Link đăng ký không còn hiệu lực. Có thể email này đã được dùng để tạo tài khoản.",
+    "session": "Phiên đăng ký đã hết hạn hoặc không tồn tại. Hãy mở lại link trong thư, hoặc đăng ký lại từ đầu.",
 }
+SIGNUP_RATE_MESSAGE = "Bạn thao tác quá nhiều lần. Vui lòng thử lại sau ít phút."
 
+
+def _signup_error(request, reason):
+    return render(request, "account/signup_complete.html", {"error": SIGNUP_ERRORS[reason]}, status=400)
+
+
+# AI-TRACE#422 | Claude Opus 5.5 | Đăng ký bước 1: chỉ nhận email, mọi trường hợp đều chuyển tới trang kiểm tra hộp thư | CẤM XÓA CHÚ THÍCH NÀY
 @require_http_methods(["GET", "POST"])
 def register(request):
     if request.user.is_authenticated:
         return redirect("catalog:home")
 
     if request.method == "POST":
-        form = RegisterForm(request.POST)
+        form = SignupEmailForm(request.POST)
         if form.is_valid():
-            register_account(request, form)
-            return redirect("accounts:check_email")
+            if allow_signup_step(request, "start"):
+                start_signup(request, form.cleaned_data["email"])
+                return redirect("accounts:check_email")
+            form.add_error(None, SIGNUP_RATE_MESSAGE)
+            return render(request, "account/register.html", {"form": form}, status=429)
     else:
-        form = RegisterForm()
+        form = SignupEmailForm()
 
     return render(request, "account/register.html", {"form": form})
 
@@ -60,35 +75,56 @@ def register(request):
 # AI-TRACE#024 | Claude Opus 5.5 | Trang báo kiểm tra hộp thư, giống nhau cho mọi trường hợp | CẤM XÓA CHÚ THÍCH NÀY
 @require_GET
 def check_email(request):
-    return render(request, "account/check_email.html", {"verify_minutes": settings.EMAIL_VERIFY_MAX_AGE // 60})
+    return render(request, "account/check_email.html", {"link_minutes": settings.SIGNUP_LINK_MAX_AGE // 60})
 
 
-# AI-TRACE#025 | Claude Opus 5.5 | Xác nhận email: GET chỉ hiện nút, POST có CSRF mới kích hoạt | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#423 | Claude Opus 5.5 | Mở link đăng ký: kiểm tra mã, cất email vào phiên rồi chuyển sang địa chỉ không chứa mã | CẤM XÓA CHÚ THÍCH NÀY
+@never_cache
+@require_GET
+def signup_confirm(request, token):
+    if request.user.is_authenticated:
+        return redirect("catalog:home")
+    result = read_signup_token(token)
+    status = result.status
+    if status == "valid" and email_has_account(result.email):
+        status = "used"
+    if status != "valid":
+        log_event("register_link_invalid", request, severity="warning", detail={"reason": status},
+                  path=reverse("accounts:signup_confirm", args=["-"]))
+        return _signup_error(request, status)
+    remember_signup_email(request, result.email)
+    return redirect("accounts:signup_complete")
+
+
+# AI-TRACE#424 | Claude Opus 5.5 | Đăng ký bước 2: đặt tên đăng nhập, mật khẩu cho email trong phiên, xong thì về đăng nhập | CẤM XÓA CHÚ THÍCH NÀY
+@never_cache
 @require_http_methods(["GET", "POST"])
-def verify_email(request, token):
-    status, user = find_pending_user(token)
-    if user is None:
-        log_event("email_verify_failed", request, severity="warning", detail={"reason": status})
-        return render(request, "account/verify_email.html",
-                      {"error": TOKEN_STATUS_MESSAGES[status], "expired": status == "expired"}, status=400)
-    if request.method == "POST":
-        mark_email_verified(request, user)
-        messages.success(request, "Email đã được xác nhận. Mời bạn đăng nhập.")
-        return redirect("accounts:login")
-    return render(request, "account/verify_email.html", {"username": user.username})
+def signup_complete(request):
+    if request.user.is_authenticated:
+        return redirect("catalog:home")
+    email = pending_signup_email(request)
+    if email is None:
+        log_event("register_link_invalid", request, severity="warning", detail={"reason": "session"})
+        return _signup_error(request, "session")
 
-
-# AI-TRACE#026 | Claude Opus 5.5 | Gửi lại thư xác nhận, trả lời giống nhau dù email có tồn tại hay không | CẤM XÓA CHÚ THÍCH NÀY
-@require_http_methods(["GET", "POST"])
-def resend_verification_view(request):
     if request.method == "POST":
-        form = ResendVerificationForm(request.POST)
+        form = SignupCompleteForm(request.POST, email=email)
+        if not allow_signup_step(request, "complete"):
+            form.add_error(None, SIGNUP_RATE_MESSAGE)
+            return render(request, "account/signup_complete.html", {"form": form, "email": email}, status=429)
         if form.is_valid():
-            resend_verification(request, form.cleaned_data["email"])
-            return redirect("accounts:check_email")
-    else:
-        form = ResendVerificationForm()
-    return render(request, "account/resend_verification.html", {"form": form})
+            outcome = complete_signup(request, form, email)
+            if outcome == "created":
+                messages.success(request, "Tạo tài khoản thành công. Mời bạn đăng nhập.")
+                return redirect("accounts:login")
+            if outcome == "email_taken":
+                return _signup_error(request, "used")
+            form.add_error("username", User._meta.get_field("username").error_messages["unique"])
+        return render(request, "account/signup_complete.html", {"form": form, "email": email}, status=400)
+
+    form = SignupCompleteForm(email=email)
+    return render(request, "account/signup_complete.html", {"form": form, "email": email})
+
 
 # AI-TRACE#050 | Claude Opus 5.5 | Trang quên mật khẩu: nhập email, ghi log, trả lời giống nhau cho mọi email | CẤM XÓA CHÚ THÍCH NÀY
 class CustomerPasswordResetView(PasswordResetView):
@@ -109,7 +145,7 @@ def password_reset_done(request):
                   {"reset_minutes": settings.PASSWORD_RESET_TIMEOUT // 60})
 
 
-# AI-TRACE#052 | Claude Opus 5.5 | Đặt mật khẩu mới từ link: chặn nhân viên, xác nhận email, mở khóa axes, báo thư | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#052 | Claude Opus 5.5 | Đặt mật khẩu mới từ link: chặn nhân viên, xác nhận email, mở khóa axes, báo thư | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi đổi sang đăng ký bằng email
 class CustomerPasswordResetConfirmView(PasswordResetConfirmView):
     template_name = "account/password_reset_confirm.html"
     success_url = reverse_lazy("accounts:login")
@@ -130,9 +166,6 @@ class CustomerPasswordResetConfirmView(PasswordResetConfirmView):
     def form_valid(self, form):
         response = super().form_valid(form)
         user = form.user
-        if not user.email_verified:
-            user.email_verified = True
-            user.save(update_fields=["email_verified"])
         axes_reset(username=user.get_username())
         log_event("password_changed", self.request, username=user.get_username(), detail={"via": "reset"})
         send_password_changed_email(self.request, user, via="reset")

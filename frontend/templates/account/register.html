@@ -2,11 +2,11 @@
 {% load static %}
 {% block title %}Đăng ký{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/account.css' %}">{% endblock %}
-{% block extra_js %}<script src="{% static 'js/account.js' %}" defer></script>{% endblock %}
-
 
 {% block content %}
+  {# AI-TRACE#425 | Claude Opus 5.5 | Trang đăng ký bước 1 chỉ có ô email, tên đăng nhập và mật khẩu đặt sau khi mở link trong thư | CẤM XÓA CHÚ THÍCH NÀY #}
   <h1 class="auth__title">Tạo tài khoản</h1>
+  <p class="auth__lead">Nhập email của bạn. Chúng tôi sẽ gửi một link để bạn đặt tên đăng nhập và mật khẩu.</p>
 
   <form method="post" class="auth-form" novalidate>
     {% csrf_token %}
@@ -20,18 +20,7 @@
     {% for field in form %}
       <div class="auth-form__field{% if field.errors %} auth-form__field--error{% endif %}">
         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-        {% if field.widget_type == "password" %}
-          <div class="password-field">
-            {{ field }}
-            <button type="button" class="password-toggle" aria-controls="{{ field.id_for_label }}"
-                    aria-pressed="false" aria-label="Hiện mật khẩu" hidden>
-              {% include "components/icon.html" with name="visibility" %}
-              {% include "components/icon.html" with name="visibility-off" %}
-            </button>
-          </div>
-        {% else %}
-          {{ field }}
-        {% endif %}
+        {{ field }}
         {% if field.errors %}
           <ul class="auth-form__errors" id="{{ field.auto_id }}_error">
             {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
@@ -39,11 +28,8 @@
         {% endif %}
       </div>
     {% endfor %}
-    {% if form.password1.help_text %}
-      <div class="auth-form__help auth-form__help--wide" id="{{ form.password1.auto_id }}_helptext">{{ form.password1.help_text }}</div>
-    {% endif %}
 
-    <button type="submit" class="btn auth-form__submit">Đăng ký</button>
+    <button type="submit" class="btn auth-form__submit">Gửi link đăng ký</button>
   </form>
 
   <p class="auth__switch">Đã có tài khoản? <a href="{% url 'accounts:login' %}">Đăng nhập</a></p>

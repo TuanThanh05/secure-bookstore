@@ -21,14 +21,14 @@ Quy ước:
 | `orders:checkout` | `/orders/dat-hang/` | `shop/checkout.html` | Khách đã đăng nhập (ẩn danh → đăng nhập; nhân viên → dashboard); giỏ không rỗng, không có sách ngừng bán/hết hàng; không lưu cache | `form` (`CheckoutForm`), `cart`, `shipping_fee` (30.000), `total` | `shipping_name`, `phone`, `address` (chỉ POST + CSRF; mã chống trùng nằm trong phiên, không có trong form) |
 | `orders:order_detail` | `/orders/don/<code>/` | `shop/order_detail.html` | Chỉ chủ đơn; mã sai mẫu, đơn không có hay đơn của người khác đều 404; không lưu cache | `order` (`Order`: `code`, `status`, `status_label`, `subtotal`, `shipping_fee`, `total`, `shipping_name`, `shipping_phone`, `shipping_address`, `created_at`, `expires_at`, `paid_at`, `cancelled_at`, `awaiting_payment`, `expired`, `can_cancel`, `lines` là list `OrderLine`) | – (chỉ GET) |
 | `orders:order_cancel` | `/orders/don/<code>/huy/` | – (redirect về trang đơn kèm thông báo) | Chỉ chủ đơn (đơn người khác/mã sai → 404); nhân viên → dashboard | – | – (chỉ POST + CSRF, sau bước xác nhận `<details>` trên trang đơn) |
-| `accounts:register` | `/account/register/` | `account/register.html` | Chưa đăng nhập | `form` | `username`, `email`, `password1`, `password2` |
+| `accounts:register` | `/account/register/` | `account/register.html` | Chưa đăng nhập | `form` (`SignupEmailForm`) | `email` (bước 1: không tạo tài khoản, chỉ gửi thư; mỗi IP 5 lần/10 phút → 429) |
 | `accounts:login` | `/account/login/` | `account/login.html` | Chưa đăng nhập | `form`, `next` | `username`, `password`, `next` |
 | `accounts:logout` | `/account/logout/` | – (redirect) | Đã đăng nhập | – | (chỉ POST + CSRF) |
-| `accounts:check_email` | `/account/kiem-tra-email/` | `account/check_email.html` | Mọi người | `verify_minutes` | – |
-| `accounts:verify_email` | `/account/xac-nhan-email/<token>/` | `account/verify_email.html` | Mọi người (có link trong thư) | `username` (link hợp lệ) hoặc `error`, `expired` (link hỏng, trả 400) | Chỉ POST + CSRF mới xác nhận; GET chỉ hiện nút |
-| `accounts:resend_verification` | `/account/gui-lai-xac-nhan/` | `account/resend_verification.html` | Mọi người | `form` | `email` (luôn chuyển tới `check_email`, dù email có tồn tại hay không) |
+| `accounts:check_email` | `/account/kiem-tra-email/` | `account/check_email.html` | Mọi người | `link_minutes` | – |
+| `accounts:signup_confirm` | `/account/dang-ky/xac-nhan/<token>/` | – (redirect `signup_complete`) hoặc `account/signup_complete.html` với `error` (400) | Chưa đăng nhập, có link trong thư (hạn 5 phút) | `error` khi link sai/hết hạn/đã dùng | – (chỉ GET; link hợp lệ thì cất email vào phiên mới rồi chuyển đi, không tạo gì trong CSDL) |
+| `accounts:signup_complete` | `/account/dang-ky/hoan-tat/` | `account/signup_complete.html` | Chưa đăng nhập, phiên có email từ link (hạn 5 phút kể từ lúc bấm link); không lưu cache | `form` (`SignupCompleteForm`), `email` (chỉ hiển thị) hoặc `error` (400) | `username`, `password1`, `password2` (POST + CSRF; email lấy từ phiên, không nhận từ form; mỗi IP 5 lần/10 phút → 429) |
 
-Đăng ký thành công hay email đã có tài khoản đều chuyển tới `accounts:check_email` (không lộ email nào đã đăng ký). Khách chưa xác nhận email đăng nhập đúng mật khẩu thì nhận lỗi `email_unverified`; nhân viên được miễn.
+Bước 1 với email mới hay email đã có tài khoản đều chuyển tới `accounts:check_email` (không lộ email nào đã đăng ký): email mới nhận link, email đã có nhận thư báo kèm link đăng nhập và quên mật khẩu. Tài khoản chỉ được tạo ở bước 2 và có `email_verified = 1` ngay. Chi tiết và lý do: `docs/dang-ky-tai-khoan.md`.
 
 ## BookCard: một cuốn sách hiển thị trên lưới
 
