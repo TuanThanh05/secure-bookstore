@@ -81,13 +81,13 @@ def clear_signup(request):
     request.session.pop(SIGNUP_SESSION_KEY, None)
 
 
-# AI-TRACE#421 | Claude Opus 5.5 | Bước 2 đăng ký: tạo tài khoản đã xác nhận email, chặn trùng bằng UNIQUE khi nộp cùng lúc | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#421 | Claude Opus 5.5 | Bước 2 đăng ký: tạo tài khoản đã xác nhận email, chặn trùng bằng UNIQUE khi nộp cùng lúc | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi tách app_auth
 def complete_signup(request, form, email):
     if email_has_account(email):
         clear_signup(request)
         return "email_taken"
     try:
-        with transaction.atomic():
+        with transaction.atomic(using=settings.AUTH_DB_ALIAS):
             user = form.save()
     except IntegrityError:
         if email_has_account(email):

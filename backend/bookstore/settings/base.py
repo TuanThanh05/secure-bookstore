@@ -98,10 +98,21 @@ DATABASES = {
         "PASSWORD": env("DB_SESSION_PASSWORD"),
         "TEST": {"MIRROR": "default"},
     },
+    "auth": {                             # chỉ lệnh GHI bảng accounts_user (core.db_routers.AccountWriteRouter)
+        **_DB_COMMON,
+        "USER": env("DB_AUTH_USER", default="app_auth"),
+        "PASSWORD": env("DB_AUTH_PASSWORD"),
+        "TEST": {"MIRROR": "default"},
+    },
 }
 
 SESSION_DB_ALIAS = "session"
-DATABASE_ROUTERS = ["core.db_routers.SessionRouter", "core.db_routers.MigrateOnDefaultRouter"]
+AUTH_DB_ALIAS = "auth"
+DATABASE_ROUTERS = [
+    "core.db_routers.SessionRouter",
+    "core.db_routers.AccountWriteRouter",
+    "core.db_routers.MigrateOnDefaultRouter",
+]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

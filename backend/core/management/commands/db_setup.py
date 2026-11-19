@@ -7,8 +7,8 @@ Chạy lại nhiều lần không hỏng gì.
 Việc nó làm:
   1. Tạo CSDL (utf8mb4) nếu chưa có.
   2. Cài component validate_password, đặt chính sách MEDIUM, tối thiểu 12 ký tự.
-  3. Tạo role r_customer, r_staff, r_session (quyền cụ thể cấp sau, bằng db_apply).
-  4. Tạo/cập nhật app_customer, app_staff, app_session, bookstore_migrate theo ĐỊA CHỈ MÀ
+  3. Tạo role r_customer, r_staff, r_session, r_auth (quyền cụ thể cấp sau, bằng db_apply).
+  4. Tạo/cập nhật app_customer, app_staff, app_session, app_auth, bookstore_migrate theo ĐỊA CHỈ MÀ
      MYSQL THẤY MÁY NÀY KẾT NỐI TỪ (Docker: 172.28.0.1, cài thường: 127.0.0.1
      hoặc localhost) và bookstore_definer (khóa đăng nhập).
 """
@@ -34,6 +34,7 @@ class Command(BaseCommand):
         default = db_settings()
         staff = self._alias_settings("staff")
         session = self._alias_settings("session")
+        auth = self._alias_settings("auth")
         db_name = default["NAME"]
 
         root_password = admin_secret("MYSQL_ROOT_PASSWORD", f"Mật khẩu MySQL của {options['root_user']}: ")
@@ -67,7 +68,7 @@ class Command(BaseCommand):
                 cur.execute("SET PERSIST validate_password.length = 12")
 
                 # 4. Role
-                cur.execute("CREATE ROLE IF NOT EXISTS 'r_customer', 'r_staff', 'r_session'")
+                cur.execute("CREATE ROLE IF NOT EXISTS 'r_customer', 'r_staff', 'r_session', 'r_auth'")
 
                 # 5. Tài khoản ứng dụng và tài khoản migrate
                 self._upsert_user(cur, default["USER"], host, default["PASSWORD"], 50, "DB_CUSTOMER_PASSWORD")
@@ -78,6 +79,9 @@ class Command(BaseCommand):
 
                 self._upsert_user(cur, session["USER"], host, session["PASSWORD"], 50, "DB_SESSION_PASSWORD")
                 self._grant_role(cur, "r_session", session["USER"], host)
+
+                self._upsert_user(cur, auth["USER"], host, auth["PASSWORD"], 30, "DB_AUTH_PASSWORD")
+                self._grant_role(cur, "r_auth", auth["USER"], host)
 
                 self._upsert_user(cur, "bookstore_migrate", host, migrate_password, 5, "DB_MIGRATE_PASSWORD")
                 # Chỉ tạo/sửa BẢNG. Không FILE, SUPER, PROCESS, GRANT OPTION, không tạo trigger/thủ tục.
@@ -92,13 +96,13 @@ class Command(BaseCommand):
                     ("bookstore_migrate", host),
                 )
 
-                self._warn_other_hosts(cur, [default["USER"], staff["USER"], session["USER"], "bookstore_migrate"], host)
+                self._warn_other_hosts(cur, [default["USER"], staff["USER"], session["USER"], auth["USER"], "bookstore_migrate"], host)
         finally:
             conn.close()
 
         self.stdout.write(self.style.SUCCESS(
-            f"Xong: CSDL `{db_name}`, role r_customer/r_staff/r_session, tài khoản "
-            f"{default['USER']}, {staff['USER']}, {session['USER']}, bookstore_migrate @ {host}, "
+            f"Xong: CSDL `{db_name}`, role r_customer/r_staff/r_session/r_auth, tài khoản "
+            f"{default['USER']}, {staff['USER']}, {session['USER']}, {auth['USER']}, bookstore_migrate @ {host}, "
             "bookstore_definer (khóa)."
         ))
         self.stdout.write("Tiếp theo: python manage.py migrate --settings=bookstore.settings.migrate")
@@ -149,7 +153,7 @@ class Command(BaseCommand):
 
     def _warn_other_hosts(self, cur, users, host):
         cur.execute(
-            "SELECT user, host FROM mysql.user WHERE user IN (%s, %s, %s, %s) AND host <> %s",
+            "SELECT user, host FROM mysql.user WHERE user IN (%s, %s, %s, %s, %s) AND host <> %s",
             (*users, host),
         )
         for user, other in cur.fetchall():

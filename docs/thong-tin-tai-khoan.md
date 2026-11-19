@@ -63,6 +63,7 @@ Luồng: trang Thông tin tài khoản → nút **Cập nhật thông tin** → 
 - **Chỉ sửa được họ, tên, SĐT.** Form là `forms.Form` liệt kê 3 ô (không phải `ModelForm`), service `update_profile` chỉ gán đúng 3 cột và lưu bằng `save(update_fields=...)`. Gửi thêm `username`, `email`, `is_staff` trong request cũng bị bỏ qua (chống mass assignment).
 - **Kiểm tra đầu vào ở server:** họ/tên tối đa 50 ký tự, chỉ chữ cái (có dấu), khoảng trắng, `-`, `'`; SĐT Việt Nam 10 số bắt đầu 03/05/07/08/09, chấp nhận dấu cách, dấu chấm, `+84` rồi chuẩn hóa về dạng `09xxxxxxxx`.
 - **Cả GET lẫn POST** đều cần xác thực lại còn hạn: để quá 2 phút rồi mới bấm Lưu thì bị chuyển sang trang xác thực lại, dữ liệu không được lưu.
+- **Ghi bằng kết nối `auth` (`app_auth`)**, không phải `app_customer` (chỉ còn đọc). Trigger chỉ cho đổi họ, tên, SĐT, mật khẩu, `last_login` của khách; xem `docs/quyen-ghi-tai-khoan.md`.
 - **Log** `profile_updated` chỉ ghi tên cột thay đổi (`detail.fields`), không ghi giá trị (không lộ SĐT trong log). Không thay đổi gì thì không ghi log. Loại sự kiện mới được thêm vào CHECK bằng `database/schema/04_...` + migration `core/0005`.
 - Nhân viên vào 2 trang này bị chuyển sang trang thông tin quản trị (luồng sửa thông tin admin làm riêng).
 

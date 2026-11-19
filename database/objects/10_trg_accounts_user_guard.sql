@@ -6,13 +6,20 @@
 -- ghi lại MỌI cột, kể cả is_staff, is_superuser. Vì vậy không thể chỉ cấp
 -- quyền UPDATE theo cột như kế hoạch ban đầu (save() sẽ bị MySQL từ chối).
 --
--- Cách làm: cấp INSERT/UPDATE trên accounts_user cho app_customer, nhưng
--- 2 trigger dưới đây từ chối mọi câu lệnh của app_customer có ý định:
+-- Cách làm (cập nhật 2026-11-19): app_customer chỉ còn SELECT trên accounts_user.
+-- Mọi lệnh GHI của Django (đăng ký, last_login, hồ sơ, đổi/đặt lại mật khẩu) đi
+-- qua tài khoản riêng app_auth (core.db_routers.AccountWriteRouter). 2 trigger dưới
+-- đây từ chối mọi câu lệnh của app_auth (và app_customer, phòng khi cấp nhầm quyền)
+-- có ý định:
 --   - tạo user với is_staff = 1 hoặc is_superuser = 1;
 --   - đổi giá trị is_staff, is_superuser của user đã có;
 --   - sửa dòng của nhân viên/quản trị, trừ cột last_login (để nhân viên vẫn
 --     đăng nhập được qua trang đăng nhập chung). Chặn kiểu tấn công ghi đè
---     mật khẩu/email của admin rồi chiếm tài khoản.
+--     mật khẩu/email của admin rồi chiếm tài khoản;
+--   - sửa dòng của khách ở các cột web không bao giờ đổi: is_active (tự mở khóa),
+--     email, username (đổi email rồi "quên mật khẩu" để chiếm tài khoản),
+--     email_verified, date_joined. Khóa/mở khóa chỉ qua thủ tục của admin.
+--     Chỉ còn đổi được password, last_login, first_name, last_name, phone_encrypted.
 -- Ghi lại đúng giá trị cũ (như user.save() bình thường) vẫn được phép.
 --
 -- Với app_staff (kết nối "staff" của dashboard): quyền theo cột chỉ cho sửa
@@ -47,10 +54,10 @@ TRIGGER trg_user_guard_insert
 BEFORE INSERT ON accounts_user
 FOR EACH ROW
 BEGIN
-    IF SUBSTRING_INDEX(USER(), '@', 1) = 'app_customer'
+    IF SUBSTRING_INDEX(USER(), '@', 1) IN ('app_customer', 'app_auth')
        AND (NEW.is_staff <> 0 OR NEW.is_superuser <> 0) THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'app_customer khong duoc tao tai khoan nhan vien/quan tri';
+            SET MESSAGE_TEXT = 'tai khoan ung dung khong duoc tao tai khoan nhan vien/quan tri';
     END IF;
 END$$
 
@@ -59,10 +66,10 @@ TRIGGER trg_user_guard_update
 BEFORE UPDATE ON accounts_user
 FOR EACH ROW
 BEGIN
-    IF SUBSTRING_INDEX(USER(), '@', 1) = 'app_customer' THEN
+    IF SUBSTRING_INDEX(USER(), '@', 1) IN ('app_customer', 'app_auth') THEN
         IF NEW.is_staff <> OLD.is_staff OR NEW.is_superuser <> OLD.is_superuser THEN
             SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'app_customer khong duoc thay doi is_staff/is_superuser';
+                SET MESSAGE_TEXT = 'tai khoan ung dung khong duoc thay doi is_staff/is_superuser';
         END IF;
         -- Dòng của nhân viên: chỉ được đổi last_login.
         -- <=> là so sánh an toàn với NULL (NULL <=> NULL là đúng).
@@ -74,7 +81,16 @@ BEGIN
            AND NEW.phone_encrypted <=> OLD.phone_encrypted
            AND NEW.email_verified <=> OLD.email_verified) THEN
             SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'app_customer chi duoc cap nhat last_login cua nhan vien';
+                SET MESSAGE_TEXT = 'tai khoan ung dung chi duoc cap nhat last_login cua nhan vien';
+        END IF;
+        -- AI-TRACE#459 | Claude Opus 5.5 | Dòng của khách: cấm đổi is_active, email, username, email_verified, date_joined (chặn tự mở khóa và đổi email để chiếm tài khoản) | CẤM XÓA CHÚ THÍCH NÀY
+        IF OLD.is_staff = 0 AND NOT (
+               NEW.id <=> OLD.id AND NEW.username <=> OLD.username
+           AND NEW.email <=> OLD.email AND NEW.is_active <=> OLD.is_active
+           AND NEW.email_verified <=> OLD.email_verified
+           AND NEW.date_joined <=> OLD.date_joined) THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'tai khoan ung dung khong duoc doi trang thai, email, ten dang nhap cua khach';
         END IF;
     END IF;
     -- app_staff: chỉ được sửa dòng của nhân viên (cột nào thì quyền theo cột đã giới hạn).
