@@ -6,11 +6,13 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.cache import never_cache
+from django.views.decorators.csp import csp_override
 from django.views.decorators.http import require_GET, require_http_methods
 from axes.utils import reset as axes_reset
 from django.contrib.auth.views import LogoutView, PasswordResetConfirmView, PasswordResetView
 from django.urls import reverse_lazy
 
+from core.captcha import captcha_site_key, verify_captcha
 from core.decorators import mark_recent_auth
 from core.security_log import log_event
 
@@ -46,13 +48,23 @@ SIGNUP_ERRORS = {
     "session": "Phiên đăng ký đã hết hạn hoặc không tồn tại. Hãy mở lại link trong thư, hoặc đăng ký lại từ đầu.",
 }
 SIGNUP_RATE_MESSAGE = "Bạn thao tác quá nhiều lần. Vui lòng thử lại sau ít phút."
+CAPTCHA_MESSAGES = {
+    "unavailable": "Hệ thống xác minh đang gặp sự cố. Vui lòng thử lại sau ít phút.",
+}
+CAPTCHA_DEFAULT_MESSAGE = "Chưa xác minh được bạn không phải robot. Vui lòng làm lại bước xác minh rồi gửi lại."
 
 
 def _signup_error(request, reason):
     return render(request, "account/signup_complete.html", {"error": SIGNUP_ERRORS[reason]}, status=400)
 
 
-# AI-TRACE#422 | Claude Opus 5.5 | Đăng ký bước 1: chỉ nhận email, mọi trường hợp đều chuyển tới trang kiểm tra hộp thư | CẤM XÓA CHÚ THÍCH NÀY
+def _register_page(request, form, status=200):
+    context = {"form": form, "turnstile_site_key": captcha_site_key(), "turnstile_action": settings.TURNSTILE_ACTION}
+    return render(request, "account/register.html", context, status=status)
+
+
+# AI-TRACE#422 | Claude Opus 5.5 | Đăng ký bước 1: chỉ nhận email, mọi trường hợp đều chuyển tới trang kiểm tra hộp thư | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thêm Cloudflare Turnstile
+@csp_override(settings.SIGNUP_CSP)
 @require_http_methods(["GET", "POST"])
 def register(request):
     if request.user.is_authenticated:
@@ -61,15 +73,19 @@ def register(request):
     if request.method == "POST":
         form = SignupEmailForm(request.POST)
         if form.is_valid():
-            if allow_signup_step(request, "start"):
-                start_signup(request, form.cleaned_data["email"])
-                return redirect("accounts:check_email")
-            form.add_error(None, SIGNUP_RATE_MESSAGE)
-            return render(request, "account/register.html", {"form": form}, status=429)
+            if not allow_signup_step(request, "start"):
+                form.add_error(None, SIGNUP_RATE_MESSAGE)
+                return _register_page(request, form, status=429)
+            captcha = verify_captcha(request, settings.TURNSTILE_ACTION)
+            if not captcha.ok:
+                form.add_error(None, CAPTCHA_MESSAGES.get(captcha.reason, CAPTCHA_DEFAULT_MESSAGE))
+                return _register_page(request, form, status=503 if captcha.reason == "unavailable" else 400)
+            start_signup(request, form.cleaned_data["email"])
+            return redirect("accounts:check_email")
     else:
         form = SignupEmailForm()
 
-    return render(request, "account/register.html", {"form": form})
+    return _register_page(request, form)
 
 
 # AI-TRACE#024 | Claude Opus 5.5 | Trang báo kiểm tra hộp thư, giống nhau cho mọi trường hợp | CẤM XÓA CHÚ THÍCH NÀY

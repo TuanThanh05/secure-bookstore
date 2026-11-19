@@ -122,6 +122,10 @@ SIGNUP_EMAIL_WINDOW = 60 * 60
 SIGNUP_RATE_LIMIT = 5                     # mỗi IP gửi form đăng ký tối đa 5 lần trong SIGNUP_RATE_WINDOW, đếm riêng từng bước
 SIGNUP_RATE_WINDOW = 10 * 60
 EMAIL_RESEND_INTERVAL = 60                # mỗi email nhận tối đa 1 thư mỗi loại trong 60 giây
+TURNSTILE_SITE_KEY = env("TURNSTILE_SITE_KEY", default="")       # để trống cả hai thì Turnstile tắt (máy dev, CI)
+TURNSTILE_SECRET_KEY = env("TURNSTILE_SECRET_KEY", default="")
+TURNSTILE_ACTION = "signup"               # khớp data-action của widget, Siteverify trả lại để kiểm tra
+TURNSTILE_TIMEOUT = 5                     # giây chờ Siteverify; quá hạn thì từ chối, không gửi thư
 PASSWORD_CHANGE_MAX_FAILURES = 5
 PASSWORD_CHANGE_FAILURE_WINDOW = 15 * 60
 
@@ -183,6 +187,13 @@ SECURE_CSP = {
     "base-uri": [CSP.SELF],
     "form-action": [CSP.SELF],
     "frame-ancestors": [CSP.NONE],
+}
+
+TURNSTILE_ORIGIN = "https://challenges.cloudflare.com"
+SIGNUP_CSP = {                            # ngoại lệ duy nhất: chỉ trang đăng ký bước 1 được tải script + iframe Turnstile
+    **SECURE_CSP,
+    "script-src": [CSP.SELF, TURNSTILE_ORIGIN],
+    "frame-src": [TURNSTILE_ORIGIN],
 }
 
 # ---------------------------------------------------------------------

@@ -1,3 +1,7 @@
+import re
+
+from django.core.exceptions import ImproperlyConfigured
+
 from .base import *
 
 DEBUG = False
@@ -16,3 +20,8 @@ SECURE_HSTS_PRELOAD = False
 SILENCED_SYSTEM_CHECKS = ["security.W021"]
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+if not (TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY):
+    raise ImproperlyConfigured("Máy chủ thật phải có TURNSTILE_SITE_KEY và TURNSTILE_SECRET_KEY.")
+if re.match(r"^[1-3]x0+AA$", TURNSTILE_SECRET_KEY):
+    raise ImproperlyConfigured("Không dùng secret key thử của Cloudflare trên máy chủ thật.")

@@ -53,6 +53,8 @@ Kẻ tấn công nhập email nạn nhân ở bước 1 thì chỉ có một th�
 | Mỗi IP, bước 1 | 5 lần / 10 phút → 429 | `SIGNUP_RATE_LIMIT`, `SIGNUP_RATE_WINDOW`, `services.allow_signup_step(request, "start")` |
 | Mỗi IP, bước 3 | 5 lần / 10 phút → 429 | như trên, `"complete"` |
 
+Thêm một lớp nữa ở bước 1: **Cloudflare Turnstile** (CAPTCHA), kiểm tra sau giới hạn theo IP và trước giới hạn theo email – xem `docs/captcha-turnstile.md`.
+
 Vượt giới hạn thư theo email thì vẫn hiện trang "Kiểm tra hộp thư" như bình thường (không lộ gì), chỉ ghi log `rate_limited`. Vượt giới hạn theo IP thì báo "thao tác quá nhiều lần" (không liên quan email nào).
 
 **Hạn chế đã biết:** bộ đếm nằm trong cache bộ nhớ mặc định của Django. Khởi động lại web thì về 0; chạy nhiều tiến trình thì mỗi tiến trình đếm riêng. Khi triển khai thật nên dùng cache chung (ví dụ Redis). Sau Nginx cần lấy IP thật (xem `claude/HANDOFF.md`, mục triển khai).

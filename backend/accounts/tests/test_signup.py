@@ -9,6 +9,7 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from accounts.models import User
+from core.captcha import NO_CAPTCHA
 from accounts.services import SIGNUP_SESSION_KEY
 from accounts.tokens import make_signup_token
 from core.models import SecurityEvent
@@ -20,6 +21,7 @@ LINK_RE = re.compile(r"https?://[^\s]+(/account/dang-ky/xac-nhan/[^/\s]+/)")
 
 
 # AI-TRACE#431 | Claude Opus 5.5 | Test đăng ký bắt đầu bằng email: chống chiếm tài khoản trước, phiên, link, giới hạn | CẤM XÓA CHÚ THÍCH NÀY
+@override_settings(**NO_CAPTCHA)
 class SignupTests(TestCase):
     def setUp(self):
         cache.clear()

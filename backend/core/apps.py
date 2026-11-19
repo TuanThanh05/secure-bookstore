@@ -7,4 +7,4 @@ class CoreConfig(AppConfig):
     verbose_name = "Lõi dùng chung"
     
     def ready(self):
-        from . import security_log
+        from . import captcha, security_log

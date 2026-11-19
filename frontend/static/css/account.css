@@ -230,6 +230,12 @@
   overflow-wrap: anywhere;
 }
 
+/* AI-TRACE#439 | Claude Opus 5.5 | Chỗ cho ô Cloudflare Turnstile trải hết bề ngang form, giữ chỗ để form không nhảy khi ô hiện ra | CẤM XÓA CHÚ THÍCH NÀY */
+.auth-form__captcha {
+  grid-column: 1 / -1;
+  min-height: 65px;
+}
+
 /* --- Nút gửi: to, trải ngang, có mũi tên --- */
 .auth-form__submit {
   width: 100%;
