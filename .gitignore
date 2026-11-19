@@ -40,3 +40,7 @@ database/backup/*.gpg
 *~
 .DS_Store
 Thumbs.db
+
+# Bản sao lưu CSDL – không bao giờ commit
+backups/
+*.tar.gz.enc
