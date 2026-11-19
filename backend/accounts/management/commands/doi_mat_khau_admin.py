@@ -11,12 +11,13 @@ from django.utils import timezone
 from accounts.emails import send_staff_password_changed_email
 from accounts.models import User
 from core.security_log import log_event
+from core.session_store import SessionStore
 
 MAX_TRIES = 3
 WRONG_SETTINGS = "Lệnh này phải chạy với --settings=bookstore.settings.migrate (tài khoản web không được đổi mật khẩu nhân viên)."
 
 
-# AI-TRACE#091 | Claude Opus 5.5 | Lệnh máy chủ đổi mật khẩu nhân viên: kiểm tra quy tắc mật khẩu, đăng xuất mọi phiên, ghi log, gửi thư báo | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#091 | Claude Opus 5.5 | Lệnh máy chủ đổi mật khẩu nhân viên: kiểm tra quy tắc mật khẩu, đăng xuất mọi phiên, ghi log, gửi thư báo | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi băm khóa phiên
 class Command(BaseCommand):
     help = "Đổi mật khẩu tài khoản nhân viên/quản trị. Chạy trên máy chủ: --settings=bookstore.settings.migrate"
 
@@ -47,7 +48,7 @@ class Command(BaseCommand):
     def _end_sessions(self, user):
         ended = 0
         for session in Session.objects.filter(expire_date__gt=timezone.now()).iterator():
-            if session.get_decoded().get("_auth_user_id") == str(user.pk):
+            if SessionStore.decode_row(session).get("_auth_user_id") == str(user.pk):
                 session.delete()
                 ended += 1
         return ended

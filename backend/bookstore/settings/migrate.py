@@ -36,3 +36,7 @@ DATABASES["default"] = {**DATABASES["default"], **_migrate_account}
 # "staff" cũng dùng tài khoản migrate: khi chạy test, "staff" trỏ vào CSDL tạm
 # test_bookstore (TEST MIRROR) mà app_staff không có quyền vào.
 DATABASES["staff"] = {**DATABASES["staff"], **_migrate_account}
+DATABASES["session"] = {**DATABASES["session"], **_migrate_account}
+# Lệnh quản trị và test đọc/ghi bảng phiên bằng kết nối "default" (tài khoản migrate);
+# chỉ web lúc chạy mới dùng kết nối "session" (app_session).
+SESSION_DB_ALIAS = "default"

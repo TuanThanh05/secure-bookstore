@@ -13,6 +13,7 @@ from django.urls import reverse
 
 from accounts.models import User
 from core.models import SecurityEvent
+from core.session_store import SessionStore
 
 GETPASS = "accounts.management.commands.doi_mat_khau_admin.getpass.getpass"
 
@@ -57,7 +58,7 @@ class AdminPasswordCommandTests(TestCase):
         customer_client.force_login(self.customer)
         out, _, _ = self.run_command([self.new, self.new])
         self.assertIn("Đã đăng xuất 1 phiên", out)
-        remaining = [s.get_decoded().get("_auth_user_id") for s in Session.objects.all()]
+        remaining = [SessionStore.decode_row(s).get("_auth_user_id") for s in Session.objects.all()]
         self.assertNotIn(str(self.staff.pk), remaining)
         self.assertIn(str(self.customer.pk), remaining)
         response = staff_client.get(reverse("dashboard:profile"))
