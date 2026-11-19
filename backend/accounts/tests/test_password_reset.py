@@ -6,10 +6,11 @@ from unittest import mock
 from axes.models import AccessAttempt
 from django.core import mail
 from django.core.cache import cache
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from accounts.models import User
+from core.captcha import NO_CAPTCHA
 from core.models import SecurityEvent
 
 PASSWORD = secrets.token_urlsafe(12) + "-Aa9"
@@ -19,6 +20,7 @@ LINK_RE = re.compile(r"https?://[^\s]+(/account/dat-lai-mat-khau/[^/\s]+/[^/\s]+
 
 
 # AI-TRACE#056 | Claude Opus 5.5 | Test luồng quên mật khẩu: gửi link, đặt lại, link hết hạn, chặn nhân viên | CẤM XÓA CHÚ THÍCH NÀY
+@override_settings(**NO_CAPTCHA)
 class PasswordResetTests(TestCase):
     def setUp(self):
         cache.clear()

@@ -30,6 +30,7 @@ EVENT_LABELS = dict([
     ("register_success", "Đăng ký"),
     ("register_existing_email", "Đăng ký trùng email"),
     ("register_link_invalid", "Link đăng ký không hợp lệ"),
+    ("captcha_failed", "CAPTCHA không đạt"),
     ("email_sent", "Đã gửi email"),
     ("email_send_failed", "Gửi email lỗi"),
     ("sensitive_data_viewed", "Xem dữ liệu nhạy cảm"),
