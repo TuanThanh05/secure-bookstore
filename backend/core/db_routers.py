@@ -24,3 +24,30 @@ class SessionRouter:
 
     def db_for_write(self, model, **hints):
         return self._alias(model)
+
+
+# AI-TRACE#456 | Claude Opus 5.5 | Mọi lệnh ghi bảng tài khoản đi qua kết nối riêng (app_auth); app_customer chỉ còn đọc, SQL injection ở trang khác không tạo/sửa được tài khoản | CẤM XÓA CHÚ THÍCH NÀY
+class AccountWriteRouter:
+    def _is_account(self, model):
+        return model._meta.label == settings.AUTH_USER_MODEL
+
+    def _from_auth(self, hints):
+        instance = hints.get("instance")
+        return instance is not None and instance._state.db == settings.AUTH_DB_ALIAS
+
+    def db_for_read(self, model, **hints):
+        if settings.AUTH_DB_ALIAS != "default" and self._from_auth(hints):
+            return "default"
+        return None
+
+    def db_for_write(self, model, **hints):
+        if self._is_account(model):
+            return settings.AUTH_DB_ALIAS
+        if settings.AUTH_DB_ALIAS != "default" and self._from_auth(hints):
+            return "default"
+        return None
+
+    def allow_relation(self, obj1, obj2, **hints):
+        if {obj1._state.db, obj2._state.db} <= {"default", settings.AUTH_DB_ALIAS}:
+            return True
+        return None

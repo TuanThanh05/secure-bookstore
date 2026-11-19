@@ -1,5 +1,5 @@
 -- =====================================================================
--- Cấp quyền cho 3 vai trò r_customer, r_staff, r_session và cho bookstore_definer
+-- Cấp quyền cho 4 vai trò r_customer, r_staff, r_session, r_auth và cho bookstore_definer
 -- (chương 6.2). Root chạy file này SAU khi `python manage.py migrate` đã
 -- tạo bảng (MySQL không cho cấp quyền trên bảng chưa tồn tại), bằng:
 --
@@ -40,8 +40,15 @@ GRANT SELECT ON auth_group_permissions         TO 'r_customer';
 GRANT SELECT ON accounts_user_groups           TO 'r_customer';
 GRANT SELECT ON accounts_user_user_permissions TO 'r_customer';
 
--- Đăng ký, đăng nhập, đổi mật khẩu. Trigger trg_user_guard_* chặn leo thang quyền.
-GRANT SELECT, INSERT, UPDATE ON accounts_user  TO 'r_customer';
+-- Tài khoản: r_customer CHỈ ĐỌC (đăng nhập, request.user, kiểm tra trùng email/tên).
+-- Mọi lệnh GHI (đăng ký, last_login, hồ sơ, đổi/đặt lại mật khẩu) đi qua r_auth
+-- (core.db_routers.AccountWriteRouter). Trước đây r_customer có INSERT, UPDATE nên
+-- SQL injection ở bất kỳ trang nào cũng tự mở khóa, đổi email/mật khẩu của khách khác,
+-- hoặc tạo tài khoản "đã xác nhận" mang email người khác. Câu REVOKE gỡ quyền cũ trên
+-- CSDL đã cài trước đó; IF EXISTS để chạy lại không báo lỗi.
+-- AI-TRACE#457 | Claude Opus 5.5 | app_customer chỉ còn đọc bảng tài khoản, thu hồi INSERT/UPDATE cũ | CẤM XÓA CHÚ THÍCH NÀY
+GRANT SELECT ON accounts_user                  TO 'r_customer';
+REVOKE IF EXISTS INSERT, UPDATE ON accounts_user FROM 'r_customer';
 
 -- Lịch sử mật khẩu: chỉ ĐỌC để so sánh mật khẩu mới với 5 mã băm gần nhất.
 -- Không cấp INSERT/UPDATE/DELETE: việc ghi do trigger làm, nên dù có lỗi
@@ -69,6 +76,15 @@ GRANT SELECT, INSERT, UPDATE         ON axes_accesslog               TO 'r_custo
 -- ---------------------------------------------------------------------
 -- AI-TRACE#452 | Claude Opus 5.5 | Cấp cho r_session đúng 4 quyền trên bảng phiên, không quyền nào khác | CẤM XÓA CHÚ THÍCH NÀY
 GRANT SELECT, INSERT, UPDATE, DELETE ON django_session TO 'r_session';
+
+-- ---------------------------------------------------------------------
+-- r_auth: kết nối "auth" (app_auth), chỉ lệnh ghi bảng tài khoản của Django dùng.
+-- Trigger trg_user_guard_* giới hạn thêm: không tạo/nâng nhân viên, dòng nhân viên chỉ
+-- đổi last_login, dòng khách không đổi is_active/email/username/email_verified/date_joined.
+-- Không quyền nào khác: lộ app_auth cũng không đụng được sách, đơn, phiên, nhật ký.
+-- ---------------------------------------------------------------------
+-- AI-TRACE#458 | Claude Opus 5.5 | Cấp cho r_auth đúng SELECT/INSERT/UPDATE trên bảng tài khoản | CẤM XÓA CHÚ THÍCH NÀY
+GRANT SELECT, INSERT, UPDATE ON accounts_user TO 'r_auth';
 
 -- ---------------------------------------------------------------------
 -- r_staff: kết nối "staff" (app_staff), chỉ app dashboard dùng

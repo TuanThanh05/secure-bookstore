@@ -61,7 +61,7 @@ jobs:
           print(f"DJANGO_SECRET_KEY={secrets.token_urlsafe(50)}")
           import base64
           print(f"FIELD_ENCRYPTION_KEY={base64.b64encode(secrets.token_bytes(32)).decode()}")
-          for name in ("DB_CUSTOMER_PASSWORD", "DB_STAFF_PASSWORD", "DB_SESSION_PASSWORD", "DB_MIGRATE_PASSWORD"):
+          for name in ("DB_CUSTOMER_PASSWORD", "DB_STAFF_PASSWORD", "DB_SESSION_PASSWORD", "DB_AUTH_PASSWORD", "DB_MIGRATE_PASSWORD"):
               print(f"{name}={strong()}")
           PY
 
@@ -77,7 +77,7 @@ jobs:
         working-directory: backend
         run: python manage.py db_apply
 
-      - name: Kiểm tra phân quyền trên CSDL thật (app_customer, app_staff, app_session)
+      - name: Kiểm tra phân quyền trên CSDL thật (app_customer, app_staff, app_session, app_auth)
         working-directory: backend
         run: python manage.py db_check_grants
 

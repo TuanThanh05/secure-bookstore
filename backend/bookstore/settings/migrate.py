@@ -40,3 +40,7 @@ DATABASES["session"] = {**DATABASES["session"], **_migrate_account}
 # Lệnh quản trị và test đọc/ghi bảng phiên bằng kết nối "default" (tài khoản migrate);
 # chỉ web lúc chạy mới dùng kết nối "session" (app_session).
 SESSION_DB_ALIAS = "default"
+DATABASES["auth"] = {**DATABASES["auth"], **_migrate_account}
+# Tương tự: lệnh quản trị (createsuperuser, doi_mat_khau_admin) và test ghi bảng tài khoản
+# bằng "default"; chỉ web lúc chạy mới dùng kết nối "auth" (app_auth).
+AUTH_DB_ALIAS = "default"

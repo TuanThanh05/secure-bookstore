@@ -84,7 +84,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 096 | Claude Opus 5.5 |  | `backend/dashboard/views.py` | `profile_update` | 54 | Nhân viên sửa họ, tên, SĐT của chính mình sau khi xác thực lại, không hiện SĐT cũ | [ ] |
 | 097 | Claude Opus 5.5 |  | `frontend/templates/dashboard/profile_update.html` | `<header class="dash-header">` | 6 | Form sửa họ, tên, SĐT của nhân viên; không hiện email và SĐT hiện tại | [ ] |
 | 098 | Claude Opus 5.5 |  | `frontend/static/css/dashboard.css` | `.dash-actions { display: flex; flex-wrap: wrap; gap: var(--s` | 72 | Kiểu form cập nhật thông tin nhân viên và hàng nút thao tác | [ ] |
-| 099 | Claude Opus 5.5 |  | `database/objects/10_trg_accounts_user_guard.sql` | `IF SUBSTRING_INDEX(USER(), '@', 1) = 'app_staff' AND OLD.is_` | 84 | Chặn app_staff sửa dòng của khách hàng, trừ cột is_active do thủ tục khóa/mở khóa đổi | [ ] |
+| 099 | Claude Opus 5.5 |  | `database/objects/10_trg_accounts_user_guard.sql` | `IF SUBSTRING_INDEX(USER(), '@', 1) = 'app_staff' AND OLD.is_` | 100 | Chặn app_staff sửa dòng của khách hàng, trừ cột is_active do thủ tục khóa/mở khóa đổi | [ ] |
 | 100 | Claude Opus 5.5 |  | `backend/dashboard/tests/test_profile_update.py` | `StaffProfileUpdateTests` | 19 | Test nhân viên cập nhật họ, tên, SĐT: xác thực lại, không lộ SĐT cũ, để trống giữ số, chặn mass assignment | [ ] |
 | 101 | Claude Opus 5.5 |  | `database/objects/40_category.sql` | `PROCEDURE sp_category_list` | 54 | Thủ tục trả danh sách thể loại kèm tổng số sách và số sách đang hiện, chỉ cho nhân viên | [ ] |
 | 102 | Claude Opus 5.5 |  | `database/objects/40_category.sql` | `PROCEDURE sp_category_create` | 71 | Thủ tục thêm thể loại: kiểm tra nhân viên và đầu vào, chặn trùng, ghi nhật ký | [ ] |
@@ -100,7 +100,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 113 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `rename_category` | 111 | Sửa tên thể loại bằng sp_category_rename, slug đổi theo tên | [ ] |
 | 114 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `delete_category` | 117 | Xóa thể loại bằng sp_category_delete | [ ] |
 | 115 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `_category_id` | 84 | Đổi id thể loại nhận từ request thành số nguyên, sai kiểu thì coi như không tìm thấy | [ ] |
-| 116 | Claude Opus 5.5 |  | `backend/core/management/commands/db_check_grants.py` | `Command` | 105 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi (đã viết lại bởi Claude Opus 5.5 khi thêm app_session) | [ ] |
+| 116 | Claude Opus 5.5 |  | `backend/core/management/commands/db_check_grants.py` | `Command` | 117 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi (đã viết lại bởi Claude Opus 5.5 khi thêm app_session) | [ ] |
 | 117 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `SlugAndNameTests` | 22 | Test tạo slug và chuẩn hóa tên thể loại tiếng Việt | [ ] |
 | 118 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `CategoryProcedureTests` | 48 | Test gọi thủ tục thể loại bằng cursor giả qua kết nối staff, đổi lỗi SIGNAL | [ ] |
 | 119 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `CategoryListTests` | 101 | Test đọc danh sách thể loại qua sp_category_list và lệnh kiểm tra quyền từ chối settings.migrate | [ ] |
@@ -405,7 +405,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 418 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `email_has_account` | 56 | Email đã có tài khoản chưa (link đăng ký chỉ dùng được khi chưa có) | [ ] |
 | 419 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `remember_signup_email` | 61 | Cất email đã chứng minh vào phiên mới (đổi session ID) kèm thời điểm bấm link | [ ] |
 | 420 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `pending_signup_email` | 67 | Lấy email đăng ký đang chờ trong phiên, quá hạn hoặc sai dạng thì xóa và trả None | [ ] |
-| 421 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `complete_signup` | 84 | Bước 2 đăng ký: tạo tài khoản đã xác nhận email, chặn trùng bằng UNIQUE khi nộp cùng lúc | [ ] |
+| 421 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `complete_signup` | 84 | Bước 2 đăng ký: tạo tài khoản đã xác nhận email, chặn trùng bằng UNIQUE khi nộp cùng lúc (đã viết lại bởi Claude Opus 5.5 khi tách app_auth) | [ ] |
 | 422 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `register` | 66 | Đăng ký bước 1: chỉ nhận email, mọi trường hợp đều chuyển tới trang kiểm tra hộp thư (đã viết lại bởi Claude Opus 5.5 khi thêm Cloudflare Turnstile) | [ ] |
 | 423 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `signup_confirm` | 97 | Mở link đăng ký: kiểm tra mã, cất email vào phiên rồi chuyển sang địa chỉ không chứa mã | [ ] |
 | 424 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `signup_complete` | 115 | Đăng ký bước 2: đặt tên đăng nhập, mật khẩu cho email trong phiên, xong thì về đăng nhập | [ ] |
@@ -435,8 +435,13 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 448 | Claude Opus 5.5 |  | `backend/core/db_routers.py` | `SessionRouter` | 17 | Mọi đọc/ghi bảng phiên django_session đi qua kết nối riêng (app_session), app_customer không còn đụng vào phiên | [ ] |
 | 449 | Claude Opus 5.5 |  | `backend/core/middleware.py` | `remember_staff_login` | 47 | Ghi giờ đăng nhập của nhân viên vào phiên (phần đã ký, không sửa được từ bảng) để giới hạn thời gian tuyệt đối | [ ] |
 | 450 | Claude Opus 5.5 |  | `backend/core/middleware.py` | `StaffSessionLimitMiddleware` | 54 | Phiên nhân viên quá 1 giờ kể từ lúc đăng nhập thì đăng xuất dù vẫn thao tác; thiếu giờ đăng nhập cũng coi là hết hạn | [ ] |
-| 451 | Claude Opus 5.5 |  | `database/grants/01_role_privileges.sql` | `REVOKE IF EXISTS SELECT, INSERT, UPDATE, DELETE ON django_se` | 55 | Thu hồi mọi quyền của r_customer trên bảng phiên django_session | [ ] |
-| 452 | Claude Opus 5.5 |  | `database/grants/01_role_privileges.sql` | `GRANT SELECT, INSERT, UPDATE, DELETE ON django_session TO 'r` | 70 | Cấp cho r_session đúng 4 quyền trên bảng phiên, không quyền nào khác | [ ] |
+| 451 | Claude Opus 5.5 |  | `database/grants/01_role_privileges.sql` | `REVOKE IF EXISTS SELECT, INSERT, UPDATE, DELETE ON django_se` | 62 | Thu hồi mọi quyền của r_customer trên bảng phiên django_session | [ ] |
+| 452 | Claude Opus 5.5 |  | `database/grants/01_role_privileges.sql` | `GRANT SELECT, INSERT, UPDATE, DELETE ON django_session TO 'r` | 77 | Cấp cho r_session đúng 4 quyền trên bảng phiên, không quyền nào khác | [ ] |
 | 453 | Claude Opus 5.5 |  | `backend/core/tests/test_session_store.py` | `HashedSessionStoreTests` | 22 | Test bộ lưu phiên: bảng chỉ có mã băm cookie, chép session_data sang dòng khác bị từ chối, xóa/kiểm tra tồn tại theo mã băm | [ ] |
 | 454 | Claude Opus 5.5 |  | `backend/core/tests/test_session_store.py` | `SessionRouterTests` | 80 | Test router: bảng phiên đi theo SESSION_DB_ALIAS, bảng khác không bị đổi kết nối | [ ] |
 | 455 | Claude Opus 5.5 |  | `backend/core/tests/test_session_store.py` | `StaffSessionLimitTests` | 94 | Test giới hạn 1 giờ cho phiên nhân viên: quá giờ thì đăng xuất kèm log lý do, khách không bị giới hạn | [ ] |
+| 456 | Claude Opus 5.5 |  | `backend/core/db_routers.py` | `AccountWriteRouter` | 29 | Mọi lệnh ghi bảng tài khoản đi qua kết nối riêng (app_auth); app_customer chỉ còn đọc, SQL injection ở trang khác không tạo/sửa được tài khoản | [ ] |
+| 457 | Claude Opus 5.5 |  | `database/grants/01_role_privileges.sql` | `GRANT SELECT ON accounts_user                  TO 'r_custome` | 49 | app_customer chỉ còn đọc bảng tài khoản, thu hồi INSERT/UPDATE cũ | [ ] |
+| 458 | Claude Opus 5.5 |  | `database/grants/01_role_privileges.sql` | `GRANT SELECT, INSERT, UPDATE ON accounts_user TO 'r_auth';` | 86 | Cấp cho r_auth đúng SELECT/INSERT/UPDATE trên bảng tài khoản | [ ] |
+| 459 | Claude Opus 5.5 |  | `database/objects/10_trg_accounts_user_guard.sql` | `IF OLD.is_staff = 0 AND NOT (` | 86 | Dòng của khách: cấm đổi is_active, email, username, email_verified, date_joined (chặn tự mở khóa và đổi email để chiếm tài khoản) | [ ] |
+| 460 | Claude Opus 5.5 |  | `backend/core/tests/test_account_router.py` | `AccountWriteRouterTests` | 15 | Test router ghi tài khoản: ghi User đi qua "auth", đọc vẫn "default", bảng khác không đổi kết nối | [ ] |

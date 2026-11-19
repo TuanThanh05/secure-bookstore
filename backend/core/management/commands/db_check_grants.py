@@ -99,12 +99,24 @@ CHECKS = (
     ("session", "app_session đọc accounts_user", "SELECT id FROM accounts_user LIMIT 1", 1142),
     ("session", "app_session đọc core_securityevent", "SELECT id FROM core_securityevent LIMIT 1", 1142),
     ("session", "app_session gọi sp_category_list", "CALL sp_category_list()", 1370),
+    ("default", "app_customer đọc accounts_user (đăng nhập)", "SELECT id, password FROM accounts_user LIMIT 1", ALLOWED),
+    ("default", "app_customer tạo tài khoản", "INSERT INTO accounts_user (username) SELECT username FROM accounts_user WHERE 1 = 0", 1142),
+    ("default", "app_customer tự mở khóa (is_active)", "UPDATE accounts_user SET is_active = is_active WHERE 1 = 0", 1142),
+    ("default", "app_customer đổi mật khẩu", "UPDATE accounts_user SET password = password WHERE 1 = 0", 1142),
+    ("auth", "app_auth đọc accounts_user", "SELECT id, password FROM accounts_user LIMIT 1", ALLOWED),
+    ("auth", "app_auth tạo tài khoản (không ghi dòng nào)", "INSERT INTO accounts_user (username) SELECT username FROM accounts_user WHERE 1 = 0", ALLOWED),
+    ("auth", "app_auth đổi mật khẩu (không đổi dòng nào)", "UPDATE accounts_user SET password = password WHERE 1 = 0", ALLOWED),
+    ("auth", "app_auth xóa tài khoản", "DELETE FROM accounts_user WHERE 1 = 0", 1142),
+    ("auth", "app_auth đọc catalog_book", "SELECT id FROM catalog_book LIMIT 1", 1142),
+    ("auth", "app_auth đọc django_session", "SELECT session_key FROM django_session LIMIT 1", 1142),
+    ("auth", "app_auth sửa accounts_passwordhistory", "DELETE FROM accounts_passwordhistory WHERE 1 = 0", 1142),
+    ("auth", "app_auth gọi sp_category_list", "CALL sp_category_list()", 1370),
 )
 
 
 # AI-TRACE#116 | Claude Opus 5.5 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thêm app_session
 class Command(BaseCommand):
-    help = "Kiểm tra phân quyền MySQL thật của app_customer, app_staff, app_session (chạy sau db_apply, không dùng settings.migrate)."
+    help = "Kiểm tra phân quyền MySQL thật của app_customer, app_staff, app_session, app_auth (chạy sau db_apply, không dùng settings.migrate)."
 
     def _run(self, alias, sql):
         try:
@@ -117,9 +129,9 @@ class Command(BaseCommand):
         return ALLOWED
 
     def handle(self, *args, **options):
-        users = {alias: connections[alias].settings_dict.get("USER") for alias in ("default", "staff", "session")}
+        users = {alias: connections[alias].settings_dict.get("USER") for alias in ("default", "staff", "session", "auth")}
         if len(set(users.values())) < len(users):
-            raise CommandError("default, staff, session đang dùng chung tài khoản MySQL. Không chạy lệnh này với settings.migrate.")
+            raise CommandError("default, staff, session, auth đang dùng chung tài khoản MySQL. Không chạy lệnh này với settings.migrate.")
 
         failed = 0
         for alias, label, sql, expected in CHECKS:
