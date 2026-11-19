@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from core.security_log import log_event
 
-from .tokens import make_email_token
+from .tokens import make_signup_token
 
 
 # AI-TRACE#016 | Claude Opus 5.5 | Giới hạn mỗi địa chỉ email chỉ nhận một thư mỗi loại trong một khoảng thời gian | CẤM XÓA CHÚ THÍCH NÀY
@@ -34,12 +34,12 @@ def _send(request, kind, user_or_none, email, subject, template, context):
     return True
 
 
-# AI-TRACE#018 | Claude Opus 5.5 | Gửi thư chứa link xác nhận email có hạn dùng | CẤM XÓA CHÚ THÍCH NÀY
-def send_verification_email(request, user):
-    link = request.build_absolute_uri(reverse("accounts:verify_email", args=[make_email_token(user)]))
-    context = {"username": user.username, "link": link, "minutes": settings.EMAIL_VERIFY_MAX_AGE // 60}
-    return _send(request, "verify", user, user.email, "Xác nhận email – Secure Bookstore",
-                 "account/email/verify_email.txt", context)
+# AI-TRACE#414 | Claude Opus 5.5 | Gửi thư chứa link tiếp tục đăng ký có hạn dùng tới đúng email vừa nhập | CẤM XÓA CHÚ THÍCH NÀY
+def send_signup_link_email(request, email):
+    link = request.build_absolute_uri(reverse("accounts:signup_confirm", args=[make_signup_token(email)]))
+    context = {"link": link, "minutes": settings.SIGNUP_LINK_MAX_AGE // 60}
+    return _send(request, "signup", None, email, "Tiếp tục đăng ký tài khoản – Secure Bookstore",
+                 "account/email/signup_link.txt", context)
 
 
 # AI-TRACE#019 | Claude Opus 5.5 | Báo cho chủ email biết có người dùng email này để đăng ký lại | CẤM XÓA CHÚ THÍCH NÀY
@@ -47,6 +47,7 @@ def send_existing_account_email(request, user):
     context = {
         "username": user.username,
         "login_link": request.build_absolute_uri(reverse("accounts:login")),
+        "reset_link": request.build_absolute_uri(reverse("accounts:password_reset")),
     }
     return _send(request, "existing_notice", user, user.email, "Có người vừa đăng ký bằng email của bạn – Secure Bookstore",
                  "account/email/existing_account.txt", context)

@@ -4,13 +4,13 @@
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/account.css' %}">{% endblock %}
 
 {% block content %}
-  {# AI-TRACE#027 | Claude Opus 5.5 | Trang kiểm tra hộp thư dùng chung cho đăng ký và gửi lại thư | CẤM XÓA CHÚ THÍCH NÀY #}
+  {# AI-TRACE#027 | Claude Opus 5.5 | Trang kiểm tra hộp thư dùng chung cho đăng ký và gửi lại thư | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi đổi sang đăng ký bằng email #}
   <h1 class="auth__title">Kiểm tra hộp thư</h1>
   <div class="auth__notice">
-    <p>Nếu thông tin hợp lệ, chúng tôi đã gửi một thư tới địa chỉ email bạn vừa nhập.</p>
-    <p>Mở thư và bấm vào link để xác nhận email. Link chỉ có hiệu lực trong {{ verify_minutes }} phút.</p>
-    <p>Không thấy thư? Hãy xem cả mục Thư rác / Quảng cáo.</p>
+    <p>Nếu email hợp lệ, chúng tôi đã gửi một thư tới địa chỉ bạn vừa nhập.</p>
+    <p>Mở thư và bấm vào link để tiếp tục đăng ký. Link chỉ có hiệu lực trong {{ link_minutes }} phút. Sau khi bấm link, bạn có {{ link_minutes }} phút để đặt tên đăng nhập và mật khẩu.</p>
+    <p>Không thấy thư? Hãy xem cả mục Thư rác / Quảng cáo, hoặc đăng ký lại sau một phút.</p>
   </div>
-  <p class="auth__switch"><a href="{% url 'accounts:resend_verification' %}">Gửi lại thư xác nhận</a></p>
+  <p class="auth__switch"><a href="{% url 'accounts:register' %}">Đăng ký lại</a></p>
   <p class="auth__switch"><a href="{% url 'accounts:login' %}">Về trang đăng nhập</a></p>
 {% endblock %}

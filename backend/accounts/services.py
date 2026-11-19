@@ -1,68 +1,104 @@
+import hashlib
+import time
+
 from django.conf import settings
-from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.db import IntegrityError, transaction
 
 from core.security_log import log_event
 
-from .emails import send_existing_account_email, send_verification_email
+from .emails import send_existing_account_email, send_signup_link_email
 from .models import User
 from .profile import decrypt_phone, encrypt_phone
-from .tokens import read_email_token
+
+SIGNUP_SESSION_KEY = "accounts:signup"
 
 
-# AI-TRACE#020 | Claude Opus 5.5 | Đăng ký: email mới thì tạo tài khoản, email đã có thì xử lý y hệt bề ngoài | CẤM XÓA CHÚ THÍCH NÀY
-def register_account(request, form):
-    email = form.cleaned_data["email"]
+def _count_within(key, limit, window):
+    if cache.add(key, 1, window):
+        return True
+    try:
+        count = cache.incr(key)
+    except ValueError:
+        cache.set(key, 1, window)
+        return True
+    return count <= limit
+
+
+# AI-TRACE#415 | Claude Opus 5.5 | Giới hạn số lần gửi form đăng ký của mỗi IP, đếm riêng từng bước | CẤM XÓA CHÚ THÍCH NÀY
+def allow_signup_step(request, step):
+    ip = request.META.get("REMOTE_ADDR") or "unknown"
+    allowed = _count_within(f"accounts:signup-rate:{step}:{ip}", settings.SIGNUP_RATE_LIMIT, settings.SIGNUP_RATE_WINDOW)
+    if not allowed:
+        log_event("rate_limited", request, severity="warning", detail={"kind": f"signup_{step}"})
+    return allowed
+
+
+# AI-TRACE#416 | Claude Opus 5.5 | Giới hạn số thư đăng ký gửi tới một email trong một giờ, tính cả thư báo trùng | CẤM XÓA CHÚ THÍCH NÀY
+def _allow_signup_mail(email):
+    digest = hashlib.sha256(email.lower().encode("utf-8")).hexdigest()
+    return _count_within(f"accounts:signup-mail:{digest}", settings.SIGNUP_EMAIL_LIMIT, settings.SIGNUP_EMAIL_WINDOW)
+
+
+# AI-TRACE#417 | Claude Opus 5.5 | Bước 1 đăng ký: không ghi CSDL, email mới nhận link, email đã có nhận thư báo | CẤM XÓA CHÚ THÍCH NÀY
+def start_signup(request, email):
     existing = User.objects.filter(email__iexact=email).first()
-    if existing is None:
-        try:
-            with transaction.atomic():
-                user = form.save()
-        except IntegrityError:
-            existing = User.objects.filter(email__iexact=email).first()
-            if existing is None:
-                raise
-        else:
-            log_event("register_success", request, username=user.username)
-            send_verification_email(request, user)
-            return
-    make_password(form.cleaned_data["password1"])
-    log_event("register_existing_email", request, severity="warning", username=form.cleaned_data.get("username"))
-    if existing.is_active and not existing.email_verified and not existing.is_staff:
-        send_verification_email(request, existing)
-    else:
-        send_existing_account_email(request, existing)
-
-
-# AI-TRACE#021 | Claude Opus 5.5 | Tìm tài khoản ứng với mã xác nhận, chỉ khi còn chờ xác nhận | CẤM XÓA CHÚ THÍCH NÀY
-def find_pending_user(token):
-    result = read_email_token(token)
-    if result.status != "valid":
-        return result.status, None
-    user = (
-        User.objects.filter(pk=result.user_id, email__iexact=result.email, is_active=True,
-                            is_staff=False, email_verified=False)
-        .first()
-    )
-    if user is None:
-        return "used", None
-    return "valid", user
-
-
-# AI-TRACE#022 | Claude Opus 5.5 | Đánh dấu email đã xác nhận, chỉ cập nhật đúng một cột | CẤM XÓA CHÚ THÍCH NÀY
-def mark_email_verified(request, user):
-    user.email_verified = True
-    user.save(update_fields=["email_verified"])
-    log_event("email_verified", request, username=user.username)
-
-
-# AI-TRACE#023 | Claude Opus 5.5 | Gửi lại thư xác nhận nếu tài khoản tồn tại và chưa xác nhận | CẤM XÓA CHÚ THÍCH NÀY
-def resend_verification(request, email):
-    user = User.objects.filter(email__iexact=email, is_active=True, is_staff=False, email_verified=False).first()
-    if user is None:
+    if not _allow_signup_mail(email):
+        log_event("rate_limited", request, severity="warning", detail={"kind": "signup_email"})
         return
-    send_verification_email(request, user)
+    if existing is None:
+        send_signup_link_email(request, email)
+        return
+    log_event("register_existing_email", request, severity="warning")
+    send_existing_account_email(request, existing)
+
+
+# AI-TRACE#418 | Claude Opus 5.5 | Email đã có tài khoản chưa (link đăng ký chỉ dùng được khi chưa có) | CẤM XÓA CHÚ THÍCH NÀY
+def email_has_account(email):
+    return User.objects.filter(email__iexact=email).exists()
+
+
+# AI-TRACE#419 | Claude Opus 5.5 | Cất email đã chứng minh vào phiên mới (đổi session ID) kèm thời điểm bấm link | CẤM XÓA CHÚ THÍCH NÀY
+def remember_signup_email(request, email):
+    request.session.cycle_key()
+    request.session[SIGNUP_SESSION_KEY] = {"email": email, "at": int(time.time())}
+
+
+# AI-TRACE#420 | Claude Opus 5.5 | Lấy email đăng ký đang chờ trong phiên, quá hạn hoặc sai dạng thì xóa và trả None | CẤM XÓA CHÚ THÍCH NÀY
+def pending_signup_email(request):
+    data = request.session.get(SIGNUP_SESSION_KEY)
+    if isinstance(data, dict):
+        email, started = data.get("email"), data.get("at")
+        if isinstance(email, str) and isinstance(started, int):
+            age = int(time.time()) - started
+            if 0 <= age <= settings.SIGNUP_SESSION_MAX_AGE:
+                return email
+    clear_signup(request)
+    return None
+
+
+def clear_signup(request):
+    request.session.pop(SIGNUP_SESSION_KEY, None)
+
+
+# AI-TRACE#421 | Claude Opus 5.5 | Bước 2 đăng ký: tạo tài khoản đã xác nhận email, chặn trùng bằng UNIQUE khi nộp cùng lúc | CẤM XÓA CHÚ THÍCH NÀY
+def complete_signup(request, form, email):
+    if email_has_account(email):
+        clear_signup(request)
+        return "email_taken"
+    try:
+        with transaction.atomic():
+            user = form.save()
+    except IntegrityError:
+        if email_has_account(email):
+            clear_signup(request)
+            return "email_taken"
+        if User.objects.filter(username__iexact=form.cleaned_data["username"]).exists():
+            return "username_taken"
+        raise
+    clear_signup(request)
+    log_event("register_success", request, username=user.username)
+    return "created"
 
 
 def _password_change_key(user):

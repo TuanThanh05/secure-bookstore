@@ -20,9 +20,11 @@ def _client_info(request):
     return meta.get("REMOTE_ADDR") or "unknown", user_agent, request.method, request.path[:255]
 
 
-def log_event(event_type, request=None, *, severity="info", user=None, username=None, ip_address=None, detail=None):
-    ip, user_agent, method, path = _client_info(request)
+def log_event(event_type, request=None, *, severity="info", user=None, username=None, ip_address=None, detail=None,
+              path=None):
+    ip, user_agent, method, request_path = _client_info(request)
     ip = ip_address or ip
+    path = path or request_path
     user_id = user.pk if user is not None and user.is_authenticated else None
     username = (username or "")[:150] or None
 

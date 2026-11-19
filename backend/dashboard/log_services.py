@@ -29,11 +29,9 @@ EVENT_LABELS = dict([
     ("invalid_input", "Đầu vào bất thường"),
     ("register_success", "Đăng ký"),
     ("register_existing_email", "Đăng ký trùng email"),
+    ("register_link_invalid", "Link đăng ký không hợp lệ"),
     ("email_sent", "Đã gửi email"),
     ("email_send_failed", "Gửi email lỗi"),
-    ("email_verified", "Xác nhận email"),
-    ("email_verify_failed", "Xác nhận email sai"),
-    ("login_blocked_unverified", "Chặn đăng nhập (chưa xác nhận email)"),
     ("sensitive_data_viewed", "Xem dữ liệu nhạy cảm"),
     ("profile_updated", "Sửa hồ sơ"),
 ])

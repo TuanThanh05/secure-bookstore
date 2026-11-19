@@ -1,0 +1,12 @@
+{% autoescape off %}Xin chào,
+
+Có người vừa dùng địa chỉ email này để bắt đầu đăng ký tài khoản tại Secure Bookstore. Nếu đó là bạn, mở link dưới đây để đặt tên đăng nhập và mật khẩu:
+
+{{ link }}
+
+Link chỉ có hiệu lực trong {{ minutes }} phút. Hết hạn thì vào trang đăng ký và nhập lại email để nhận link mới.
+
+Nếu bạn không đăng ký, hãy bỏ qua thư này. Chưa có tài khoản nào được tạo bằng email của bạn, và không ai tạo được nếu không có link trong thư này.
+
+Secure Bookstore
+{% endautoescape %}
