@@ -76,9 +76,9 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 088 | Claude Opus 5.5 |  | `backend/accounts/models.py` | `PasswordHistory` | 58 | Model chỉ đọc cho bảng lịch sử mã băm mật khẩu do trigger ghi | [ ] |
 | 089 | Claude Opus 5.5 |  | `backend/accounts/validators.py` | `PasswordHistoryValidator` | 7 | Chặn mật khẩu mới trùng một trong N mật khẩu gần nhất, tính cả mật khẩu đang dùng | [ ] |
 | 090 | Claude Opus 5.5 |  | `backend/accounts/tests/test_password_history.py` | `PasswordHistoryTests` | 18 | Test chặn dùng lại 5 mật khẩu gần nhất, tính cả mật khẩu hiện tại, qua validator và trang đổi mật khẩu | [ ] |
-| 091 | Claude Opus 5.5 |  | `backend/accounts/management/commands/doi_mat_khau_admin.py` | `Command` | 19 | Lệnh máy chủ đổi mật khẩu nhân viên: kiểm tra quy tắc mật khẩu, đăng xuất mọi phiên, ghi log, gửi thư báo | [ ] |
+| 091 | Claude Opus 5.5 |  | `backend/accounts/management/commands/doi_mat_khau_admin.py` | `Command` | 20 | Lệnh máy chủ đổi mật khẩu nhân viên: kiểm tra quy tắc mật khẩu, đăng xuất mọi phiên, ghi log, gửi thư báo (đã viết lại bởi Claude Opus 5.5 khi băm khóa phiên) | [ ] |
 | 092 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_staff_password_changed_email` | 74 | Báo cho nhân viên biết mật khẩu vừa được đổi bằng lệnh trên máy chủ, không kèm link | [ ] |
-| 093 | Claude Opus 5.5 |  | `backend/accounts/tests/test_admin_password_command.py` | `AdminPasswordCommandTests` | 24 | Test lệnh đổi mật khẩu admin: chỉ nhân viên, quy tắc mật khẩu, đăng xuất phiên, log, thư báo, chặn kết nối web | [ ] |
+| 093 | Claude Opus 5.5 |  | `backend/accounts/tests/test_admin_password_command.py` | `AdminPasswordCommandTests` | 25 | Test lệnh đổi mật khẩu admin: chỉ nhân viên, quy tắc mật khẩu, đăng xuất phiên, log, thư báo, chặn kết nối web | [ ] |
 | 094 | Claude Opus 5.5 |  | `backend/dashboard/forms.py` | `StaffProfileUpdateForm` | 38 | Form sửa họ, tên, SĐT của nhân viên; ô SĐT luôn trống, để trống là giữ số cũ | [ ] |
 | 095 | Claude Opus 5.5 |  | `backend/dashboard/services.py` | `update_staff_profile` | 17 | Lưu họ, tên, SĐT của nhân viên bằng kết nối staff, chỉ ghi cột thay đổi, log tên cột | [ ] |
 | 096 | Claude Opus 5.5 |  | `backend/dashboard/views.py` | `profile_update` | 54 | Nhân viên sửa họ, tên, SĐT của chính mình sau khi xác thực lại, không hiện SĐT cũ | [ ] |
@@ -100,7 +100,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 113 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `rename_category` | 111 | Sửa tên thể loại bằng sp_category_rename, slug đổi theo tên | [ ] |
 | 114 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `delete_category` | 117 | Xóa thể loại bằng sp_category_delete | [ ] |
 | 115 | Claude Opus 5.5 |  | `backend/catalog/staff_services.py` | `_category_id` | 84 | Đổi id thể loại nhận từ request thành số nguyên, sai kiểu thì coi như không tìm thấy | [ ] |
-| 116 | Claude Opus 5.5 |  | `backend/core/management/commands/db_check_grants.py` | `Command` | 96 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi | [ ] |
+| 116 | Claude Opus 5.5 |  | `backend/core/management/commands/db_check_grants.py` | `Command` | 105 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi (đã viết lại bởi Claude Opus 5.5 khi thêm app_session) | [ ] |
 | 117 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `SlugAndNameTests` | 22 | Test tạo slug và chuẩn hóa tên thể loại tiếng Việt | [ ] |
 | 118 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `CategoryProcedureTests` | 48 | Test gọi thủ tục thể loại bằng cursor giả qua kết nối staff, đổi lỗi SIGNAL | [ ] |
 | 119 | Claude Opus 5.5 |  | `backend/catalog/tests/test_staff_categories.py` | `CategoryListTests` | 101 | Test đọc danh sách thể loại qua sp_category_list và lệnh kiểm tra quyền từ chối settings.migrate | [ ] |
@@ -313,7 +313,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 326 | Claude Opus 5.5 |  | `backend/core/views.py` | `csrf_failure` | 34 | Trang lỗi CSRF ghi sự kiện csrf_failed (lý do của Django chỉ vào log, không hiện cho người dùng) | [ ] |
 | 327 | Claude Opus 5.5 |  | `backend/dashboard/catalog_views.py` | `_log_upload_rejected` | 36 | Ghi sự kiện upload_rejected khi ảnh bìa bị từ chối (chỉ mã lỗi, không ghi tên hay nội dung file) | [ ] |
 | 328 | Claude Opus 5.5 |  | `backend/orders/views.py` | `_log_order_probe` | 157 | Ghi idor_attempt khi khách mở/hủy đơn bằng mã đúng định dạng nhưng không phải đơn của mình (hoặc không có); người dùng vẫn chỉ thấy 404 | [ ] |
-| 329 | Claude Opus 5.5 |  | `backend/core/middleware.py` | `DbPermissionDeniedMiddleware` | 14 | Middleware ghi db_permission_denied (mức critical) khi MySQL từ chối câu lệnh vì thiếu quyền – dấu hiệu tấn công hoặc lỗi phân quyền; lỗi vẫn đi tiếp thành trang 500 | [ ] |
+| 329 | Claude Opus 5.5 |  | `backend/core/middleware.py` | `DbPermissionDeniedMiddleware` | 25 | Middleware ghi db_permission_denied (mức critical) khi MySQL từ chối câu lệnh vì thiếu quyền – dấu hiệu tấn công hoặc lỗi phân quyền; lỗi vẫn đi tiếp thành trang 500 | [ ] |
 | 330 | Claude Opus 5.5 |  | `backend/dashboard/log_services.py` | `LogError` | 56 | Lỗi khi đọc nhật ký hệ thống, mang mã lỗi và câu tiếng Việt | [ ] |
 | 331 | Claude Opus 5.5 |  | `backend/dashboard/log_services.py` | `SecurityEventRow` | 86 | Một dòng nhật ký bảo mật cho template: nhãn tiếng Việt, mức độ, người dùng, IP, đường dẫn, chi tiết dạng cặp khóa–giá trị | [ ] |
 | 332 | Claude Opus 5.5 |  | `backend/dashboard/log_services.py` | `AuditRow` | 119 | Một dòng nhật ký thay đổi dữ liệu: bảng, hành động, danh sách thay đổi cũ → mới, nguồn (khách/hệ thống/quản trị), người thực hiện | [ ] |
@@ -429,3 +429,14 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 442 | Claude Opus 5.5 |  | `backend/core/tests/test_captcha.py` | `VerifyCaptchaTests` | 32 | Test xác minh Turnstile với Siteverify giả: đạt, thiếu, bị từ chối, dùng lại, sai hostname/action, timeout | [ ] |
 | 443 | Claude Opus 5.5 |  | `backend/core/tests/test_captcha.py` | `TurnstileCheckTests` | 142 | Test cảnh báo khi chạy web với Turnstile tắt hoặc dùng key thử | [ ] |
 | 444 | Claude Opus 5.5 |  | `backend/accounts/tests/test_signup_captcha.py` | `SignupCaptchaTests` | 30 | Test trang đăng ký có Turnstile: CSP riêng trang, thiếu token, Cloudflare lỗi, vẫn giữ giới hạn tần suất | [ ] |
+| 445 | Claude Opus 5.5 |  | `backend/core/session_store.py` | `stored_key` | 11 | Khóa lưu trong bảng phiên là SHA-256 của cookie (cắt 40 ký tự cho vừa cột), đọc bảng không ra cookie dùng được | [ ] |
+| 446 | Claude Opus 5.5 |  | `backend/core/session_store.py` | `SessionStore` | 16 | Bộ lưu phiên: bảng chỉ giữ mã băm của cookie, chữ ký session_data gắn với đúng dòng nên chép sang dòng khác là vô hiệu | [ ] |
+| 447 | Claude Opus 5.5 |  | `backend/core/session_store.py` | `SessionStore.decode_row` | 40 | Đọc một dòng phiên lấy thẳng từ bảng (lệnh quản trị) bằng đúng khóa đã băm của dòng đó | [ ] |
+| 448 | Claude Opus 5.5 |  | `backend/core/db_routers.py` | `SessionRouter` | 17 | Mọi đọc/ghi bảng phiên django_session đi qua kết nối riêng (app_session), app_customer không còn đụng vào phiên | [ ] |
+| 449 | Claude Opus 5.5 |  | `backend/core/middleware.py` | `remember_staff_login` | 47 | Ghi giờ đăng nhập của nhân viên vào phiên (phần đã ký, không sửa được từ bảng) để giới hạn thời gian tuyệt đối | [ ] |
+| 450 | Claude Opus 5.5 |  | `backend/core/middleware.py` | `StaffSessionLimitMiddleware` | 54 | Phiên nhân viên quá 1 giờ kể từ lúc đăng nhập thì đăng xuất dù vẫn thao tác; thiếu giờ đăng nhập cũng coi là hết hạn | [ ] |
+| 451 | Claude Opus 5.5 |  | `database/grants/01_role_privileges.sql` | `REVOKE IF EXISTS SELECT, INSERT, UPDATE, DELETE ON django_se` | 55 | Thu hồi mọi quyền của r_customer trên bảng phiên django_session | [ ] |
+| 452 | Claude Opus 5.5 |  | `database/grants/01_role_privileges.sql` | `GRANT SELECT, INSERT, UPDATE, DELETE ON django_session TO 'r` | 70 | Cấp cho r_session đúng 4 quyền trên bảng phiên, không quyền nào khác | [ ] |
+| 453 | Claude Opus 5.5 |  | `backend/core/tests/test_session_store.py` | `HashedSessionStoreTests` | 22 | Test bộ lưu phiên: bảng chỉ có mã băm cookie, chép session_data sang dòng khác bị từ chối, xóa/kiểm tra tồn tại theo mã băm | [ ] |
+| 454 | Claude Opus 5.5 |  | `backend/core/tests/test_session_store.py` | `SessionRouterTests` | 80 | Test router: bảng phiên đi theo SESSION_DB_ALIAS, bảng khác không bị đổi kết nối | [ ] |
+| 455 | Claude Opus 5.5 |  | `backend/core/tests/test_session_store.py` | `StaffSessionLimitTests` | 94 | Test giới hạn 1 giờ cho phiên nhân viên: quá giờ thì đăng xuất kèm log lý do, khách không bị giới hạn | [ ] |

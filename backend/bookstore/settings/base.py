@@ -40,6 +40,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "core.middleware.StaffSessionLimitMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "axes.middleware.AxesMiddleware", 
     "core.middleware.DbPermissionDeniedMiddleware",
@@ -91,9 +92,16 @@ DATABASES = {
         "PASSWORD": env("DB_STAFF_PASSWORD"),
         "TEST": {"MIRROR": "default"},
     },
+    "session": {                          # chỉ bảng django_session (core.db_routers.SessionRouter)
+        **_DB_COMMON,
+        "USER": env("DB_SESSION_USER", default="app_session"),
+        "PASSWORD": env("DB_SESSION_PASSWORD"),
+        "TEST": {"MIRROR": "default"},
+    },
 }
 
-DATABASE_ROUTERS = ["core.db_routers.MigrateOnDefaultRouter"]
+SESSION_DB_ALIAS = "session"
+DATABASE_ROUTERS = ["core.db_routers.SessionRouter", "core.db_routers.MigrateOnDefaultRouter"]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -156,12 +164,14 @@ PASSWORD_RESET_TIMEOUT = 5 * 60
 # ---------------------------------------------------------------------
 # Phiên làm việc và cookie (mục A)
 # ---------------------------------------------------------------------
+SESSION_ENGINE = "core.session_store"       # bảng chỉ lưu mã băm của cookie, chữ ký gắn với dòng
 SESSION_COOKIE_NAME = "bs_sid"            # không lộ tên mặc định "sessionid" của Django
 SESSION_COOKIE_HTTPONLY = True            # JavaScript không đọc được session ID
 SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_AGE = 60 * 30              # 30 phút
 SESSION_SAVE_EVERY_REQUEST = True         # ...tính từ lần thao tác cuối (hết hạn khi không hoạt động)
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+STAFF_SESSION_MAX_AGE = 60 * 60           # phiên nhân viên/admin tối đa 1 giờ kể từ lúc đăng nhập, dù vẫn thao tác
 
 CSRF_COOKIE_NAME = "bs_csrftoken"
 CSRF_COOKIE_HTTPONLY = True             

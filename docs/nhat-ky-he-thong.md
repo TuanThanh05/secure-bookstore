@@ -17,7 +17,7 @@ Tài khoản ứng dụng (`app_customer`, `app_staff`) chỉ có **INSERT** tr�
 
 | Nhóm | Sự kiện (`event_type`) | Mức độ |
 | --- | --- | --- |
-| Đăng nhập | `login_success` (cả xác thực lại: `detail.step_up`), `login_failed`, `logout`, `account_locked` (axes khóa tạm) | info / warning / critical |
+| Đăng nhập | `login_success` (cả xác thực lại: `detail.step_up`), `login_failed`, `logout` (phiên nhân viên quá 1 giờ: `detail.reason = "absolute_timeout"`, xem `docs/phien-dang-nhap.md`), `account_locked` (axes khóa tạm) | info / warning / critical |
 | Tài khoản | `register_success`, `register_existing_email`, `register_link_invalid`, `captcha_failed`, `email_sent`, `email_send_failed`, `password_changed`, `password_reset_requested`, `profile_updated` | info / warning |
 | Truy cập | `access_denied` (403), `sensitive_data_viewed`, `rate_limited`, `invalid_input` | info / warning |
 | **Mới (2026-11-16)** | `csrf_failed` – thiếu/sai CSRF (`detail.reason` của Django, không hiện cho người dùng) | warning |

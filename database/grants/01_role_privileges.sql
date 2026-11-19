@@ -1,5 +1,5 @@
 -- =====================================================================
--- Cấp quyền cho 2 vai trò r_customer, r_staff và cho bookstore_definer
+-- Cấp quyền cho 3 vai trò r_customer, r_staff, r_session và cho bookstore_definer
 -- (chương 6.2). Root chạy file này SAU khi `python manage.py migrate` đã
 -- tạo bảng (MySQL không cho cấp quyền trên bảng chưa tồn tại), bằng:
 --
@@ -48,14 +48,27 @@ GRANT SELECT, INSERT, UPDATE ON accounts_user  TO 'r_customer';
 -- SQL injection, kẻ tấn công cũng không xóa được lịch sử để dùng lại mật khẩu cũ.
 GRANT SELECT ON accounts_passwordhistory       TO 'r_customer';
 
--- Phiên đăng nhập (SESSION_ENGINE mặc định lưu trong CSDL)
-GRANT SELECT, INSERT, UPDATE, DELETE ON django_session TO 'r_customer';
+-- Phiên đăng nhập: KHÔNG cấp cho r_customer nữa (chuyển sang r_session bên dưới).
+-- Trước đây r_customer có cả 4 quyền trên django_session, nên SQL injection qua
+-- app_customer đọc được cookie của admin (phát hiện số 13). Câu dưới gỡ quyền cũ
+-- trên CSDL đã cài trước đó; IF EXISTS để chạy lại không báo lỗi.
+-- AI-TRACE#451 | Claude Opus 5.5 | Thu hồi mọi quyền của r_customer trên bảng phiên django_session | CẤM XÓA CHÚ THÍCH NÀY
+REVOKE IF EXISTS SELECT, INSERT, UPDATE, DELETE ON django_session FROM 'r_customer';
 
 -- Nhật ký bảo mật: chỉ được ghi thêm, không đọc/sửa/xóa
 GRANT INSERT ON core_securityevent             TO 'r_customer';
 GRANT SELECT, INSERT, UPDATE, DELETE ON axes_accessattempt           TO 'r_customer';
 GRANT SELECT, INSERT, UPDATE, DELETE ON axes_accessattemptexpiration TO 'r_customer';
 GRANT SELECT, INSERT, UPDATE         ON axes_accesslog               TO 'r_customer';
+
+-- ---------------------------------------------------------------------
+-- r_session: kết nối "session" (app_session), chỉ bộ lưu phiên của Django dùng
+-- (core.session_store + core.db_routers.SessionRouter). Đúng một bảng, không gì khác:
+-- lộ app_session cũng không đụng được sách, đơn, tài khoản; còn bảng phiên chỉ chứa
+-- mã băm của cookie nên đọc được cũng không dùng làm cookie được.
+-- ---------------------------------------------------------------------
+-- AI-TRACE#452 | Claude Opus 5.5 | Cấp cho r_session đúng 4 quyền trên bảng phiên, không quyền nào khác | CẤM XÓA CHÚ THÍCH NÀY
+GRANT SELECT, INSERT, UPDATE, DELETE ON django_session TO 'r_session';
 
 -- ---------------------------------------------------------------------
 -- r_staff: kết nối "staff" (app_staff), chỉ app dashboard dùng

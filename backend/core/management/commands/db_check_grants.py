@@ -90,12 +90,21 @@ CHECKS = (
     ("default", "app_customer DELETE accounts_passwordhistory", "DELETE FROM accounts_passwordhistory WHERE 1 = 0", 1142),
     ("staff", "app_staff đổi email trong accounts_user", "UPDATE accounts_user SET email = email WHERE 1 = 0", 1143),
     ("default", "app_customer đọc core_auditlog", "SELECT id FROM core_auditlog LIMIT 1", 1142),
+    ("default", "app_customer đọc django_session (lấy cookie admin)", "SELECT session_key FROM django_session LIMIT 1", 1142),
+    ("default", "app_customer sửa django_session", "UPDATE django_session SET expire_date = expire_date WHERE 1 = 0", 1142),
+    ("default", "app_customer xóa django_session", "DELETE FROM django_session WHERE 1 = 0", 1142),
+    ("staff", "app_staff đọc django_session", "SELECT session_key FROM django_session LIMIT 1", 1142),
+    ("session", "app_session đọc django_session", "SELECT session_key FROM django_session LIMIT 1", ALLOWED),
+    ("session", "app_session thêm/sửa/xóa django_session (không đổi gì)", "UPDATE django_session SET expire_date = expire_date WHERE 1 = 0", ALLOWED),
+    ("session", "app_session đọc accounts_user", "SELECT id FROM accounts_user LIMIT 1", 1142),
+    ("session", "app_session đọc core_securityevent", "SELECT id FROM core_securityevent LIMIT 1", 1142),
+    ("session", "app_session gọi sp_category_list", "CALL sp_category_list()", 1370),
 )
 
 
-# AI-TRACE#116 | Claude Opus 5.5 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#116 | Claude Opus 5.5 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thêm app_session
 class Command(BaseCommand):
-    help = "Kiểm tra phân quyền MySQL thật của app_customer và app_staff (chạy sau db_apply, không dùng settings.migrate)."
+    help = "Kiểm tra phân quyền MySQL thật của app_customer, app_staff, app_session (chạy sau db_apply, không dùng settings.migrate)."
 
     def _run(self, alias, sql):
         try:
@@ -108,9 +117,9 @@ class Command(BaseCommand):
         return ALLOWED
 
     def handle(self, *args, **options):
-        users = {alias: connections[alias].settings_dict.get("USER") for alias in ("default", "staff")}
-        if users["default"] == users["staff"]:
-            raise CommandError("default và staff đang dùng cùng một tài khoản MySQL. Không chạy lệnh này với settings.migrate.")
+        users = {alias: connections[alias].settings_dict.get("USER") for alias in ("default", "staff", "session")}
+        if len(set(users.values())) < len(users):
+            raise CommandError("default, staff, session đang dùng chung tài khoản MySQL. Không chạy lệnh này với settings.migrate.")
 
         failed = 0
         for alias, label, sql, expected in CHECKS:

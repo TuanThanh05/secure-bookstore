@@ -61,7 +61,9 @@ def on_login_failed(sender, credentials, request=None, **kwargs):
 
 @receiver(user_logged_out, dispatch_uid="security_log_logout")
 def on_logout(sender, request, user=None, **kwargs):
-    log_event("logout", request, user=user, username=user.get_username() if user else None)
+    reason = getattr(request, "logout_reason", None)
+    log_event("logout", request, user=user, username=user.get_username() if user else None,
+              detail={"reason": reason} if reason else None)
 
 
 @receiver(user_locked_out, dispatch_uid="security_log_account_locked")
