@@ -22,6 +22,7 @@ from .forms import (
     CustomerPasswordChangeForm,
     CustomerPasswordResetForm,
     CustomerReauthForm,
+    CustomerSetPasswordForm,
     ProfileUpdateForm,
     SignupCompleteForm,
     SignupEmailForm,
@@ -164,6 +165,7 @@ def password_reset_done(request):
 # AI-TRACE#052 | Claude Opus 5.5 | Đặt mật khẩu mới từ link: chặn nhân viên, xác nhận email, mở khóa axes, báo thư | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi đổi sang đăng ký bằng email
 class CustomerPasswordResetConfirmView(PasswordResetConfirmView):
     template_name = "account/password_reset_confirm.html"
+    form_class = CustomerSetPasswordForm
     success_url = reverse_lazy("accounts:login")
     post_reset_login = False
 

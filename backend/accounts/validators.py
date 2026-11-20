@@ -33,3 +33,20 @@ class PasswordHistoryValidator:
 
     def get_help_text(self):
         return f"Mật khẩu không được trùng với {self.history_count} mật khẩu gần nhất (tính cả mật khẩu đang dùng)."
+
+
+# AI-TRACE#464 | Claude Opus 5.5 | Mật khẩu dài tối đa N ký tự (64, theo mức tối thiểu NIST SP 800-63B) để không ai bắt máy chủ băm Argon2 chuỗi khổng lồ | CẤM XÓA CHÚ THÍCH NÀY
+class MaximumLengthValidator:
+    def __init__(self, max_length=64):
+        self.max_length = max_length
+
+    def validate(self, password, user=None):
+        if password is not None and len(password) > self.max_length:
+            raise ValidationError(
+                "Mật khẩu dài tối đa %(max_length)d ký tự.",
+                code="password_too_long",
+                params={"max_length": self.max_length},
+            )
+
+    def get_help_text(self):
+        return f"Mật khẩu dài tối đa {self.max_length} ký tự."

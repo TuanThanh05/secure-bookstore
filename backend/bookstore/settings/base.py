@@ -168,9 +168,14 @@ else:
 EMAIL_TIMEOUT = 10
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="") or EMAIL_HOST_USER or "Secure Bookstore <no-reply@localhost>"
 
+# Mọi ô mật khẩu (kể cả đăng nhập, xác thực lại) cũng bị chặn ở mức này trong form
+# (accounts.forms.cap_password_fields) để không gọi Argon2 với chuỗi quá dài.
+PASSWORD_MAX_LENGTH = 64
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator","OPTIONS": {"min_length": 12},},
+    {"NAME": "accounts.validators.MaximumLengthValidator", "OPTIONS": {"max_length": PASSWORD_MAX_LENGTH}},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
     {"NAME": "accounts.validators.PasswordHistoryValidator", "OPTIONS": {"history_count": 5}},
