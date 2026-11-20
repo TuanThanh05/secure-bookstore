@@ -38,6 +38,7 @@ EVENT_LABELS = dict([
     ("two_factor_enabled", "Bật xác thực 2 bước"),
     ("two_factor_disabled", "Tắt xác thực 2 bước"),
     ("two_factor_recovery_used", "Dùng mã dự phòng"),
+    ("order_hold_abuse", "Giữ kho – khóa tài khoản 24 giờ"),
 ])
 SEVERITY_LABELS = {"info": "Thông tin", "warning": "Cảnh báo", "critical": "Nghiêm trọng"}
 TABLE_LABELS = {

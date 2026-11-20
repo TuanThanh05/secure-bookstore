@@ -27,6 +27,8 @@ ORDER_ERROR_MESSAGES = {
     "ORDER_NOT_FOUND": "Không tìm thấy đơn hàng.",
     "ORDER_NOT_CANCELLABLE": "Đơn hàng này không còn hủy được (đã thanh toán hoặc đã hủy).",
     "RATE_LIMITED": "Bạn thao tác quá nhanh. Hãy thử lại sau ít phút.",
+    "ORDER_TOO_LARGE": f"Mỗi đơn tối đa {settings.ORDER_MAX_ITEMS} cuốn. Hãy bớt sách trong giỏ rồi đặt lại.",
+    "ACCOUNT_LOCKED": "Tài khoản đang bị tạm khóa vì đã hủy hoặc bỏ nhiều đơn chưa thanh toán.",
 }
 
 ORDER_GROUPS = {
@@ -85,7 +87,7 @@ def _allow_place_order(user):
     return count <= settings.ORDER_PLACE_RATE_LIMIT
 
 
-# AI-TRACE#005 | Claude Opus 5.5 | Đặt đơn: user lấy từ phiên, mã hóa SĐT/địa chỉ, giới hạn tần suất rồi gọi sp_place_order và đổi lỗi SIGNAL thành OrderError | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#005 | Claude Opus 5.5 | Đặt đơn: user lấy từ phiên, mã hóa SĐT/địa chỉ, giới hạn tần suất rồi gọi sp_place_order và đổi lỗi SIGNAL thành OrderError | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi truyền thời gian giữ kho và số cuốn tối đa
 def place_order(request, idempotency_key, shipping_name, phone, address):
     user = request.user
     if not user.is_authenticated or user.is_staff:
@@ -100,13 +102,14 @@ def place_order(request, idempotency_key, shipping_name, phone, address):
         raise OrderError("RATE_LIMITED")
     phone_encrypted = encrypt_field(phone, shipping_context("shipping_phone_encrypted", user.pk, idempotency_key))
     address_encrypted = encrypt_field(address, shipping_context("shipping_address_encrypted", user.pk, idempotency_key))
-    params = [user.pk, idempotency_key, shipping_name, phone_encrypted, address_encrypted, None, None]
+    params = [user.pk, idempotency_key, shipping_name, phone_encrypted, address_encrypted,
+              settings.ORDER_HOLD_MINUTES, settings.ORDER_MAX_ITEMS, None, None]
     try:
         with connection.cursor() as cursor:
             cursor.callproc("sp_place_order", params)
             while cursor.nextset():
                 pass
-            cursor.execute("SELECT @_sp_place_order_5, @_sp_place_order_6")
+            cursor.execute("SELECT @_sp_place_order_7, @_sp_place_order_8")
             order_code, created = cursor.fetchone()
     except OperationalError as exc:
         code = _signal_code(exc)
@@ -233,7 +236,7 @@ def _allow_cancel_order(user):
     return count <= settings.ORDER_CANCEL_RATE_LIMIT
 
 
-# AI-TRACE#287 | Claude Opus 5.5 | Khách hủy đơn chờ thanh toán của chính mình bằng sp_order_cancel; mã đơn sai mẫu không xuống CSDL, kho được cộng lại trong thủ tục | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#287 | Claude Opus 5.5 | Khách hủy đơn chờ thanh toán của chính mình bằng sp_order_cancel; mã đơn sai mẫu không xuống CSDL, kho được cộng lại trong thủ tục | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi trả về cờ tài khoản vừa bị khóa vì giữ kho
 def cancel_order(request, code):
     user = request.user
     if not user.is_authenticated or user.is_staff:
@@ -248,14 +251,17 @@ def cancel_order(request, code):
         raise OrderError("RATE_LIMITED")
     try:
         with connection.cursor() as cursor:
-            cursor.callproc("sp_order_cancel", [user.pk, code])
+            cursor.callproc("sp_order_cancel", [user.pk, code, None])
             while cursor.nextset():
                 pass
+            cursor.execute("SELECT @_sp_order_cancel_2")
+            (locked,) = cursor.fetchone()
     except OperationalError as exc:
         signal = _signal_code(exc)
         if signal is None:
             raise
         raise OrderError(signal) from exc
+    return bool(locked)
 
 
 # AI-TRACE#365 | Claude Opus 5.5 | Một dòng trong danh sách đơn của khách: mã, trạng thái, tổng tiền, thời gian, số cuốn và tên cuốn đầu; không chứa thông tin giao hàng | CẤM XÓA CHÚ THÍCH NÀY

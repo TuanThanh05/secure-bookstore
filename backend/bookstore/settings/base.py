@@ -39,8 +39,8 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "core.middleware.InactiveAccountSessionMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "core.middleware.InactiveAccountSessionMiddleware",
     "core.middleware.StaffSessionLimitMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "axes.middleware.AxesMiddleware", 
@@ -282,6 +282,8 @@ CART_UPDATE_RATE_LIMIT = 60                         # đổi số lượng / g�
 CART_UPDATE_RATE_WINDOW = 60
 ORDER_PLACE_RATE_LIMIT = 5                          # đặt hàng: tối đa 5 lần trong ORDER_PLACE_RATE_WINDOW
 ORDER_PLACE_RATE_WINDOW = 600
+ORDER_HOLD_MINUTES = 5                              # giữ kho chờ thanh toán (truyền vào sp_place_order); T3.4 chốt 2026-11-20
+ORDER_MAX_ITEMS = 20                                # tổng số cuốn tối đa của một đơn (truyền vào sp_place_order)
 ORDER_CANCEL_RATE_LIMIT = 10                        # hủy đơn: tối đa 10 lần trong ORDER_CANCEL_RATE_WINDOW
 ORDER_CANCEL_RATE_WINDOW = 600
 PAYMENT_SIMULATION = env.bool("PAYMENT_SIMULATION", default=False)   # nút "Thanh toán (mô phỏng)", tạm thời khi chưa có cổng thật

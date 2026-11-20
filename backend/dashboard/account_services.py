@@ -15,10 +15,11 @@ REASON_MIN_LENGTH = 5
 REASON_MAX_LENGTH = 255
 KEYWORD_MAX_LENGTH = 150
 
-ACCOUNT_STATUSES = ("active", "locked", "temp_locked", "unverified")
+ACCOUNT_STATUSES = ("active", "locked", "auto_locked", "temp_locked", "unverified")
 ACCOUNT_STATUS_LABELS = {
     "active": "Hoạt động",
     "locked": "Đã khóa",
+    "auto_locked": "Khóa tự động (giữ kho)",
     "temp_locked": "Tạm khóa",
     "unverified": "Chưa xác nhận email",
 }
@@ -58,7 +59,7 @@ def mask_phone(phone):
     return f"{phone[:3]}****{phone[-3:]}"
 
 
-# AI-TRACE#299 | Claude Opus 5.5 | Một tài khoản khách cho trang admin: trạng thái, email/SĐT bản đầy đủ và bản che, ngày tạo, lần đăng nhập cuối | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#299 | Claude Opus 5.5 | Một tài khoản khách cho trang admin: trạng thái, email/SĐT bản đầy đủ và bản che, ngày tạo, lần đăng nhập cuối | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi khóa tự động vì giữ kho cũng tính là đang khóa (admin mở được)
 @dataclass(frozen=True)
 class StaffAccount:
     id: int
@@ -75,7 +76,7 @@ class StaffAccount:
 
     @property
     def is_locked(self):
-        return self.status == "locked"
+        return self.status in ("locked", "auto_locked")
 
     @property
     def masked_email(self):

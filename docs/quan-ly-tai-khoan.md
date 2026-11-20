@@ -22,6 +22,7 @@ Bộ lọc: trạng thái (danh sách cố định) và username (tìm gần đ�
 | Trạng thái | Khi nào |
 | --- | --- |
 | Đã khóa | Admin đã khóa (`is_active = 0`) |
+| Khóa tự động (giữ kho) | `auto_locked_until` còn hạn: khách hủy hoặc bỏ 3 đơn chưa thanh toán trong 24 giờ bị khóa 24 giờ (xem `docs/contract.md` mục Hủy đơn – Chống giữ kho). Admin bấm **Mở khóa** để gỡ sớm (cần lý do + mật khẩu như thường) |
 | Tạm khóa | django-axes ghi ≥ `AXES_FAILURE_LIMIT` (5) lần đăng nhập sai trong `AXES_COOLOFF_TIME` (15 phút) gần nhất. Trang chỉ ghi "Tạm khóa", lý do xem trong log |
 | Chưa xác nhận email | `email_verified = 0` |
 | Hoạt động | Còn lại |

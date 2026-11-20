@@ -4,7 +4,8 @@
 --                            (gộp 3 nhu cầu xem/lọc vào 1 thủ tục)
 --   sp_staff_account_get     xem một tài khoản (trang xác nhận khóa/mở khóa)
 --   sp_staff_account_lock    khóa tài khoản (is_active = 0), có lý do
---   sp_staff_account_unlock  mở khóa (is_active = 1), có lý do
+--   sp_staff_account_unlock  mở khóa (is_active = 1), có lý do; cũng gỡ khóa tự động
+--                            vì giữ kho (chốt 2026-11-20, khi bắt nhầm khách thật)
 --
 -- Chỉ r_staff được EXECUTE. Mỗi thủ tục tự kiểm tra p_actor_id là nhân viên
 -- đang hoạt động (NOT_STAFF). Chỉ thao tác trên tài khoản KHÁCH (is_staff = 0):
@@ -13,6 +14,8 @@
 --
 -- Trạng thái (ưu tiên từ trên xuống):
 --   locked       is_active = 0                       → "Đã khóa"
+--   auto_locked  auto_locked_until > lúc này: tự khóa 24 giờ vì bỏ 3 đơn chưa
+--                thanh toán (33_order_cancel.sql)    → "Khóa tự động (giữ kho)"
 --   temp_locked  axes ghi ≥ p_failure_limit lần sai trong p_cooloff_minutes
 --                phút gần nhất                        → "Tạm khóa" (lý do xem log)
 --   unverified   chưa xác nhận email                  → "Chưa xác nhận email"
@@ -58,7 +61,7 @@ BEGIN
     DECLARE v_pattern VARCHAR(400) DEFAULT NULL;
 
     IF p_actor_id IS NULL OR p_actor_id <= 0
-       OR (p_status IS NOT NULL AND p_status NOT IN ('active', 'locked', 'temp_locked', 'unverified'))
+       OR (p_status IS NOT NULL AND p_status NOT IN ('active', 'locked', 'auto_locked', 'temp_locked', 'unverified'))
        OR (p_keyword IS NOT NULL AND CHAR_LENGTH(p_keyword) > 150)
        OR p_failure_limit IS NULL OR p_failure_limit < 1 OR p_failure_limit > 100
        OR p_cooloff_minutes IS NULL OR p_cooloff_minutes < 1 OR p_cooloff_minutes > 1440
@@ -82,6 +85,7 @@ BEGIN
         SELECT u.id, u.username, u.email, u.phone_encrypted, u.date_joined, u.last_login,
                CASE
                    WHEN u.is_active = 0 THEN 'locked'
+                   WHEN u.auto_locked_until > UTC_TIMESTAMP(6) THEN 'auto_locked'
                    WHEN EXISTS (
                         SELECT 1 FROM axes_accessattempt a
                          WHERE a.username = u.username
@@ -135,6 +139,7 @@ BEGIN
     SELECT u.id, u.username, u.email, u.phone_encrypted,
            CASE
                WHEN u.is_active = 0 THEN 'locked'
+               WHEN u.auto_locked_until > UTC_TIMESTAMP(6) THEN 'auto_locked'
                WHEN EXISTS (
                     SELECT 1 FROM axes_accessattempt a
                      WHERE a.username = u.username
@@ -204,7 +209,7 @@ BEGIN
     COMMIT;
 END$$
 
--- AI-TRACE#296 | Claude Opus 5.5 | Thủ tục admin mở khóa tài khoản khách: kiểm tra lý do, khóa dòng, đặt is_active = 1, ghi core_auditlog kèm lý do cùng giao dịch | CẤM XÓA CHÚ THÍCH NÀY
+-- AI-TRACE#296 | Claude Opus 5.5 | Thủ tục admin mở khóa tài khoản khách: kiểm tra lý do, khóa dòng, đặt is_active = 1, ghi core_auditlog kèm lý do cùng giao dịch | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi gỡ được cả khóa tự động vì giữ kho
 CREATE DEFINER = 'bookstore_definer'@'localhost' PROCEDURE sp_staff_account_unlock(
     IN p_actor_id  BIGINT,
     IN p_user_id   BIGINT,
@@ -215,6 +220,9 @@ MODIFIES SQL DATA
 BEGIN
     DECLARE v_staff  INT DEFAULT 0;
     DECLARE v_active TINYINT DEFAULT NULL;
+    DECLARE v_until  DATETIME(6) DEFAULT NULL;
+    DECLARE v_now    DATETIME(6);
+    DECLARE v_auto   TINYINT DEFAULT 0;
 
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
@@ -236,24 +244,33 @@ BEGIN
     END IF;
 
     START TRANSACTION;
+    SET v_now = UTC_TIMESTAMP(6);
 
-    SELECT is_active INTO v_active
+    SELECT is_active, auto_locked_until INTO v_active, v_until
       FROM accounts_user
      WHERE id = p_user_id AND is_staff = 0
        FOR UPDATE;
     IF v_active IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ACCOUNT_NOT_FOUND';
     END IF;
-    IF v_active = 1 THEN
+    SET v_auto = (v_until IS NOT NULL AND v_until > v_now);
+    IF v_active = 1 AND v_auto = 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'NOT_LOCKED';
     END IF;
 
-    UPDATE accounts_user SET is_active = 1 WHERE id = p_user_id;
+    -- Gỡ khóa tự động: đặt auto_locked_until = lúc này (không để NULL) để
+    -- sp_order_hold_check chỉ đếm đơn bỏ SAU lần mở khóa này, khách không bị
+    -- khóa lại ngay ở lần hủy kế tiếp.
+    UPDATE accounts_user
+       SET is_active = 1,
+           auto_locked_until = IF(v_auto = 1, v_now, auto_locked_until)
+     WHERE id = p_user_id;
 
     INSERT INTO core_auditlog (table_name, record_id, action, old_value, new_value, db_user, app_user_id)
     VALUES ('accounts_user', p_user_id, 'UPDATE',
-            JSON_OBJECT('is_active', 0),
-            JSON_OBJECT('is_active', 1, 'reason', TRIM(p_reason)),
+            JSON_OBJECT('is_active', v_active, 'auto_locked_until', v_until),
+            JSON_OBJECT('is_active', 1, 'auto_locked_until', IF(v_auto = 1, v_now, v_until),
+                        'reason', TRIM(p_reason)),
             USER(), p_actor_id);
 
     COMMIT;

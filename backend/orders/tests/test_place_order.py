@@ -4,6 +4,7 @@ from unittest import mock
 
 from django.core.cache import cache
 from django.db import OperationalError
+from django.conf import settings
 from django.test import SimpleTestCase, override_settings
 
 from core.crypto import decrypt_field
@@ -14,7 +15,7 @@ from orders.services import (ORDER_ERROR_MESSAGES, OrderError, PlaceOrderResult,
 KEY = "0123456789abcdef0123456789abcdef"
 
 
-# AI-TRACE#007 | Claude Opus 5.5 | Test place_order bằng cursor giả: user lấy từ phiên, SĐT/địa chỉ được mã hóa theo ngữ cảnh đơn, giới hạn tần suất, đổi lỗi SIGNAL | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#007 | Claude Opus 5.5 | Test place_order bằng cursor giả: user lấy từ phiên, SĐT/địa chỉ được mã hóa theo ngữ cảnh đơn, giới hạn tần suất, đổi lỗi SIGNAL | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi truyền thời gian giữ kho và số cuốn tối đa
 @override_settings(ORDER_PLACE_RATE_LIMIT=100, ORDER_PLACE_RATE_WINDOW=600)
 class PlaceOrderTests(SimpleTestCase):
     def setUp(self):
@@ -46,11 +47,12 @@ class PlaceOrderTests(SimpleTestCase):
         proc, params = self.cursor.callproc.call_args.args
         self.assertEqual(proc, "sp_place_order")
         self.assertEqual(params[:3], [42, KEY, "Nguyễn An"])
-        self.assertEqual(params[5:], [None, None])
+        self.assertEqual(params[5:], [settings.ORDER_HOLD_MINUTES, settings.ORDER_MAX_ITEMS, None, None])
+        self.assertEqual(params[5:7], [5, 20])
         self.assertNotIn("0901234567", params[3])
         self.assertEqual(decrypt_field(params[3], shipping_context("shipping_phone_encrypted", 42, KEY)), "0901234567")
         self.assertEqual(decrypt_field(params[4], shipping_context("shipping_address_encrypted", 42, KEY)), "12 Nguyễn Huệ, Q.1")
-        self.cursor.execute.assert_called_once_with("SELECT @_sp_place_order_5, @_sp_place_order_6")
+        self.cursor.execute.assert_called_once_with("SELECT @_sp_place_order_7, @_sp_place_order_8")
 
     def test_ciphertext_bound_to_order_context(self):
         self.call()

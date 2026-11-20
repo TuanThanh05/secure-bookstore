@@ -49,16 +49,17 @@ class StaffProfileUpdateForm(ProfileUpdateForm):
 ACCOUNT_STATUS_FILTERS = {
     "hoat-dong": "active",
     "da-khoa": "locked",
+    "khoa-tu-dong": "auto_locked",
     "tam-khoa": "temp_locked",
     "chua-xac-nhan": "unverified",
 }
 
 
-# AI-TRACE#304 | Claude Opus 5.5 | Bộ lọc danh sách tài khoản khách: trạng thái (giá trị cố định) và username (bỏ ký tự điều khiển, tối đa 150 ký tự) | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#304 | Claude Opus 5.5 | Bộ lọc danh sách tài khoản khách: trạng thái (giá trị cố định) và username (bỏ ký tự điều khiển, tối đa 150 ký tự) | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thêm trạng thái khóa tự động vì giữ kho
 class AccountFilterForm(forms.Form):
     trang_thai = forms.ChoiceField(label="Trạng thái", required=False, choices=[
         ("", "Tất cả"), ("hoat-dong", "Hoạt động"), ("da-khoa", "Đã khóa"),
-        ("tam-khoa", "Tạm khóa"), ("chua-xac-nhan", "Chưa xác nhận email")])
+        ("khoa-tu-dong", "Khóa tự động (giữ kho)"), ("tam-khoa", "Tạm khóa"), ("chua-xac-nhan", "Chưa xác nhận email")])
     ten = forms.CharField(label="Username", required=False, max_length=150)
 
     def clean_ten(self):

@@ -3,6 +3,7 @@ from django.core.validators import RegexValidator
 from django.contrib.auth.hashers import check_password
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 
 USERNAME_REGEX = r"^[A-Za-z0-9._-]{3,50}$"
 
@@ -30,6 +31,12 @@ class User(AbstractUser):
 
     phone_encrypted = models.CharField("SĐT (đã mã hóa)", max_length=512, null=True, blank=True)
     email_verified = models.BooleanField("đã xác minh email", default=False)
+    auto_locked_until = models.DateTimeField("khóa tự động đến", null=True, blank=True)
+
+    # AI-TRACE#538 | Claude Opus 5.5 | Tài khoản đang bị khóa tự động vì giữ kho (auto_locked_until còn hạn) | CẤM XÓA CHÚ THÍCH NÀY
+    @property
+    def is_auto_locked(self):
+        return self.auto_locked_until is not None and self.auto_locked_until > timezone.now()
 
     def check_password(self, raw_password):
         if self.is_staff:
