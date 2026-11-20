@@ -104,6 +104,8 @@
           <button class="btn" type="submit">{% if my_review %}Lưu đánh giá{% else %}Gửi đánh giá{% endif %}</button>
         </form>
       </details>
+    {% elif need_purchase %}
+      <p class="reviews__notice">Chỉ khách đã mua và nhận cuốn sách này mới đánh giá được.</p>
     {% elif not user.is_authenticated %}
       <a class="btn" href="{{ login_url }}">Đăng nhập để đánh giá</a>
     {% endif %}

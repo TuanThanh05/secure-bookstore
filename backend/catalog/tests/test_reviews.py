@@ -12,6 +12,7 @@ from catalog.review_services import (
     MyReview,
     PublicReview,
     ReviewError,
+    can_write_review,
     clean_content,
     get_my_review,
     list_reviews,
@@ -159,4 +160,17 @@ class SaveReviewTests(SimpleTestCase):
 
     def test_list_reviews_bad_id_returns_empty_without_database(self):
         self.assertEqual(list_reviews("abc"), [])
+        self.cursor.callproc.assert_not_called()
+
+    def test_can_write_review_asks_database(self):
+        self.cursor.fetchone.return_value = (1,)
+        self.assertTrue(can_write_review(customer(3), "7"))
+        self.cursor.callproc.assert_called_once_with("sp_review_can_write", [3, 7])
+        self.cursor.fetchone.return_value = (0,)
+        self.assertFalse(can_write_review(customer(3), 7))
+
+    def test_can_write_review_refuses_without_database(self):
+        self.assertFalse(can_write_review(SimpleNamespace(is_authenticated=False, is_staff=False), 7))
+        self.assertFalse(can_write_review(SimpleNamespace(is_authenticated=True, is_staff=True), 7))
+        self.assertFalse(can_write_review(customer(), "abc"))
         self.cursor.callproc.assert_not_called()

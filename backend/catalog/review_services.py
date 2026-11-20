@@ -16,6 +16,7 @@ REVIEW_ERROR_MESSAGES = {
     "INVALID_INPUT": "Đánh giá không hợp lệ: chọn từ 1 đến 5 sao và viết nội dung từ 1 đến 2000 ký tự.",
     "NOT_CUSTOMER": "Chỉ khách đã đăng nhập và xác nhận email mới đánh giá được.",
     "BOOK_NOT_FOUND": "Không tìm thấy sách.",
+    "NOT_PURCHASED": "Bạn cần mua và nhận cuốn sách này (đơn ở trạng thái Đã giao) để đánh giá.",
     "RATE_LIMITED": "Bạn gửi đánh giá quá nhiều. Hãy thử lại sau.",
 }
 
@@ -144,6 +145,22 @@ def get_my_review(user, book_id):
     if row is None:
         return None
     return MyReview(rating=int(row[0]), content=row[1], is_visible=bool(row[2]), created_at=row[3], updated_at=row[4])
+
+
+# AI-TRACE#517 | Claude Opus 5.5 | Hỏi CSDL khách đã nhận cuốn sách này chưa (sp_review_can_write) để quyết định hiện form đánh giá | CẤM XÓA CHÚ THÍCH NÀY
+def can_write_review(user, book_id):
+    if not user.is_authenticated or user.is_staff:
+        return False
+    try:
+        book_pk = _int_in_range(book_id, 1, 2**63 - 1, "BOOK_NOT_FOUND")
+    except ReviewError:
+        return False
+    with connection.cursor() as cursor:
+        cursor.callproc("sp_review_can_write", [user.pk, book_pk])
+        row = cursor.fetchone()
+        while cursor.nextset():
+            pass
+    return bool(row and row[0])
 
 
 # AI-TRACE#216 | Claude Opus 5.5 | Danh sách đánh giá đang hiện của một sách bằng sp_review_list, tên đã được che trong CSDL | CẤM XÓA CHÚ THÍCH NÀY

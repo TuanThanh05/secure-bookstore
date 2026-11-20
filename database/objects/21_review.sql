@@ -1,13 +1,17 @@
 -- =====================================================================
 -- Đánh giá sách của khách (catalog_review).
 --
---   sp_review_save      gửi đánh giá; nếu đã có thì SỬA đánh giá cũ
---   sp_review_get_mine  đánh giá của chính mình cho một sách (điền sẵn form sửa)
---   sp_review_list      đánh giá đang hiện của một sách, tên người viết đã che
+--   sp_review_save       gửi đánh giá; nếu đã có thì SỬA đánh giá cũ
+--   sp_review_get_mine   đánh giá của chính mình cho một sách (điền sẵn form sửa)
+--   sp_review_can_write  khách này đã được đánh giá sách này chưa (để hiện form)
+--   sp_review_list       đánh giá đang hiện của một sách, tên người viết đã che
 --
--- Ai được đánh giá (chốt 2026-11-15, cách b): khách đang hoạt động, đã xác
--- nhận email, KHÔNG phải nhân viên. Sau này khi có đơn hàng sẽ siết lại thành
--- "chỉ khách đã mua sách đó" (cách a).
+-- Ai được đánh giá (siết lại 2026-11-20, cách a): khách đang hoạt động, đã xác
+-- nhận email, KHÔNG phải nhân viên, VÀ có ít nhất một đơn ở trạng thái
+-- 'delivered' (admin bấm "Đã giao") chứa đúng cuốn sách đó. Đơn chờ thanh toán,
+-- đã thanh toán, đang giao, đã hủy đều không tính. Trạng thái đơn chỉ đi tới
+-- (trigger 32), nên đã nhận sách thì luôn sửa được đánh giá của mình.
+-- Đánh giá cũ của khách chưa nhận sách đã bị xóa (schema/11, migration core/0012).
 --
 -- Bảo mật:
 --   - p_user_id do Django lấy từ phiên đăng nhập (request.user.pk), không bao
@@ -28,12 +32,14 @@
 --   NOT_CUSTOMER    tài khoản không phải khách hợp lệ (nhân viên, bị khóa,
 --                   chưa xác nhận email, không tồn tại)
 --   BOOK_NOT_FOUND  sách không tồn tại hoặc đang ẩn
+--   NOT_PURCHASED   khách chưa có đơn "Đã giao" chứa cuốn sách này
 --
 -- Root tạo bằng `python manage.py db_apply`. Chạy lại nhiều lần được.
 -- =====================================================================
 
 DROP PROCEDURE IF EXISTS sp_review_save;
 DROP PROCEDURE IF EXISTS sp_review_get_mine;
+DROP PROCEDURE IF EXISTS sp_review_can_write;
 DROP PROCEDURE IF EXISTS sp_review_list;
 
 DELIMITER $$
@@ -89,6 +95,16 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'BOOK_NOT_FOUND';
     END IF;
 
+    -- AI-TRACE#513 | Claude Opus 5.5 | Chỉ khách có đơn "Đã giao" chứa đúng cuốn sách mới được gửi/sửa đánh giá | CẤM XÓA CHÚ THÍCH NÀY
+    IF NOT EXISTS (
+        SELECT 1
+          FROM orders_orderitem i
+          JOIN orders_order o ON o.id = i.order_id
+         WHERE i.book_id = p_book_id AND o.user_id = p_user_id AND o.status = 'delivered'
+    ) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'NOT_PURCHASED';
+    END IF;
+
     SELECT COUNT(*) INTO v_existed
       FROM catalog_review
      WHERE user_id = p_user_id AND book_id = p_book_id;
@@ -117,6 +133,29 @@ BEGIN
     SELECT rating, content, is_visible, created_at, updated_at
       FROM catalog_review
      WHERE user_id = p_user_id AND book_id = p_book_id;
+END$$
+
+-- AI-TRACE#514 | Claude Opus 5.5 | Thủ tục đọc: khách có được đánh giá sách này không (khách hợp lệ, sách đang hiện, đã nhận sách); trả đúng một dòng 0/1 | CẤM XÓA CHÚ THÍCH NÀY
+CREATE DEFINER = 'bookstore_definer'@'localhost' PROCEDURE sp_review_can_write(
+    IN p_user_id  BIGINT,
+    IN p_book_id  BIGINT
+)
+SQL SECURITY DEFINER
+READS SQL DATA
+BEGIN
+    IF p_user_id IS NULL OR p_user_id <= 0 OR p_book_id IS NULL OR p_book_id <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'INVALID_INPUT';
+    END IF;
+
+    SELECT EXISTS (
+               SELECT 1
+                 FROM accounts_user u
+                 JOIN orders_order o ON o.user_id = u.id
+                 JOIN orders_orderitem i ON i.order_id = o.id
+                 JOIN catalog_book b ON b.id = i.book_id
+                WHERE u.id = p_user_id AND u.is_active = 1 AND u.is_staff = 0 AND u.email_verified = 1
+                  AND i.book_id = p_book_id AND b.is_active = 1 AND o.status = 'delivered'
+           ) AS can_write;
 END$$
 
 -- AI-TRACE#212 | Claude Opus 5.5 | Thủ tục trả đánh giá đang hiện của một sách đang bán, che username ngay trong CSDL, mới nhất trước | CẤM XÓA CHÚ THÍCH NÀY

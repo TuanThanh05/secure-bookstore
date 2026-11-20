@@ -9,6 +9,7 @@ from django.urls import reverse
 from accounts.models import User
 from catalog.review_services import MyReview, PublicReview, ReviewError
 from catalog.services import BookCard
+from core.models import SecurityEvent
 
 PASSWORD = secrets.token_urlsafe(12) + "-Aa9"
 VIEWS = "catalog.views"
@@ -18,7 +19,7 @@ REVIEWS = [PublicReview("a*******n", 4, "Hay <script>alert(1)</script>", datetim
            PublicReview("k******e", 5, "Tuyệt", datetime(2026, 11, 14), datetime(2026, 11, 14))]
 
 
-# AI-TRACE#223 | Claude Opus 5.5 | Test trang chi tiết sách và gửi đánh giá: 404 sách ẩn, form theo loại người xem, CSRF, chỉ POST, escape nội dung | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#223 | Claude Opus 5.5 | Test trang chi tiết sách và gửi đánh giá: 404 sách ẩn, form theo loại người xem, CSRF, chỉ POST, escape nội dung | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi chỉ cho khách đã nhận sách đánh giá
 class BookDetailViewTests(TestCase):
     def setUp(self):
         cache.clear()
@@ -27,7 +28,8 @@ class BookDetailViewTests(TestCase):
         self.customer = User.objects.create_user(username="an_nguyen", email="an@example.test", password=PASSWORD, email_verified=True)
         self.staff = User.objects.create_user(username="quan_tri", email="qt@example.test", password=PASSWORD, is_staff=True)
         self.mocks = {}
-        for name, value in {"services.get_public_book": BOOK, "list_reviews": REVIEWS, "get_my_review": None, "save_review": True}.items():
+        for name, value in {"services.get_public_book": BOOK, "list_reviews": REVIEWS, "get_my_review": None, "save_review": True,
+                            "can_write_review": True}.items():
             patcher = mock.patch(f"{VIEWS}.{name}", return_value=value)
             self.mocks[name] = patcher.start()
             self.addCleanup(patcher.stop)
@@ -108,3 +110,40 @@ class BookDetailViewTests(TestCase):
         self.assertNotIn("<script>", html.replace("&lt;script&gt;", ""))
         self.assertNotIn(" style=", html)
         self.assertNotIn(" onclick=", html)
+
+
+# AI-TRACE#518 | Claude Opus 5.5 | Test chỉ khách đã nhận sách mới thấy form và gửi được đánh giá; gửi lén bị chặn ở CSDL thì báo lỗi và ghi log | CẤM XÓA CHÚ THÍCH NÀY
+class ReviewPurchasedOnlyTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.detail = reverse("catalog:book_detail", args=[7])
+        self.submit = reverse("catalog:review_submit", args=[7])
+        self.customer = User.objects.create_user(username="an_nguyen", email="an@example.test", password=PASSWORD,
+                                                 email_verified=True)
+        self.mocks = {}
+        for name, value in {"services.get_public_book": BOOK, "list_reviews": REVIEWS, "get_my_review": None,
+                            "save_review": True, "can_write_review": False}.items():
+            patcher = mock.patch(f"{VIEWS}.{name}", return_value=value)
+            self.mocks[name] = patcher.start()
+            self.addCleanup(patcher.stop)
+        self.client.force_login(self.customer)
+
+    def test_not_purchased_sees_notice_without_form(self):
+        html = self.client.get(self.detail).content.decode()
+        self.assertIn("Chỉ khách đã mua và nhận cuốn sách này mới đánh giá được.", html)
+        self.assertNotIn('action="' + self.submit, html)
+        self.mocks["get_my_review"].assert_not_called()
+        self.mocks["can_write_review"].assert_called_once_with(self.customer, 7)
+
+    def test_purchased_sees_form(self):
+        self.mocks["can_write_review"].return_value = True
+        html = self.client.get(self.detail).content.decode()
+        self.assertIn('action="' + self.submit, html)
+        self.assertNotIn("Chỉ khách đã mua", html)
+
+    def test_forced_post_blocked_by_database_is_logged(self):
+        self.mocks["save_review"].side_effect = ReviewError("NOT_PURCHASED")
+        response = self.client.post(self.submit, {"rating": 5, "content": "Hay"})
+        self.assertRedirects(response, f"{self.detail}#danh-gia", fetch_redirect_response=False)
+        event = SecurityEvent.objects.get(event_type="access_denied")
+        self.assertEqual(event.detail, {"kind": "review_not_purchased", "book_id": 7})

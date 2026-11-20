@@ -213,9 +213,11 @@ GRANT INSERT, UPDATE ON catalog_review               TO 'bookstore_definer'@'loc
 
 GRANT EXECUTE ON PROCEDURE sp_review_save            TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_review_get_mine        TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_review_can_write       TO 'bookstore_definer'@'localhost';
 
 GRANT EXECUTE ON PROCEDURE sp_review_save            TO 'r_customer';
 GRANT EXECUTE ON PROCEDURE sp_review_get_mine        TO 'r_customer';
+GRANT EXECUTE ON PROCEDURE sp_review_can_write       TO 'r_customer';
 
 -- ---------------------------------------------------------------------
 -- Trang chi tiết sách (sp_public_book_get trong objects/20_..., sp_review_list
