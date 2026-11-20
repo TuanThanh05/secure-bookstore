@@ -1,10 +1,18 @@
 import re
 
 from django import forms
+from django.conf import settings
 from django.contrib.auth import authenticate
-from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, PasswordResetForm, UserCreationForm
+from django.contrib.auth.forms import (
+    AuthenticationForm,
+    PasswordChangeForm,
+    PasswordResetForm,
+    SetPasswordForm,
+    UserCreationForm,
+)
 from django.contrib.auth.models import BaseUserManager
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxLengthValidator
 from django.urls import reverse
 
 from .emails import send_password_reset_email
@@ -12,6 +20,17 @@ from .emails import send_password_reset_email
 from .models import User
 
 WRONG_CURRENT_CREDENTIAL = "Mật khẩu hiện tại không đúng."
+TOO_LONG_MESSAGE = "Mật khẩu dài tối đa %(limit_value)d ký tự."
+
+
+# AI-TRACE#465 | Claude Opus 5.5 | Chặn độ dài ô mật khẩu ngay ở form: quá dài thì form báo lỗi, không gọi authenticate hay validator (không băm Argon2) | CẤM XÓA CHÚ THÍCH NÀY
+def cap_password_fields(form, *names):
+    limit = settings.PASSWORD_MAX_LENGTH
+    for name in names:
+        field = form.fields[name]
+        field.max_length = limit
+        field.validators.append(MaxLengthValidator(limit, message=TOO_LONG_MESSAGE))
+        field.widget.attrs["maxlength"] = limit
 
 # AI-TRACE#412 | Claude Opus 5.5 | Bước 1 đăng ký: chỉ một ô email, chuẩn hóa về chữ thường | CẤM XÓA CHÚ THÍCH NÀY
 class SignupEmailForm(forms.Form):
@@ -22,7 +41,7 @@ class SignupEmailForm(forms.Form):
         return BaseUserManager.normalize_email(self.cleaned_data["email"].strip()).lower()
 
 
-# AI-TRACE#413 | Claude Opus 5.5 | Bước 2 đăng ký: tên đăng nhập và mật khẩu, email lấy từ phiên chứ không từ form | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#413 | Claude Opus 5.5 | Bước 2 đăng ký: tên đăng nhập và mật khẩu, email lấy từ phiên chứ không từ form | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi giới hạn độ dài mật khẩu
 class SignupCompleteForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = User
@@ -32,6 +51,7 @@ class SignupCompleteForm(UserCreationForm):
         super().__init__(*args, **kwargs)
         self.instance.email = email
         self.instance.email_verified = True
+        cap_password_fields(self, "password1", "password2")
 
 
 class LoginForm(AuthenticationForm):
@@ -47,6 +67,7 @@ class LoginForm(AuthenticationForm):
         username.max_length = 254
         username.widget.attrs["maxlength"] = 254
         username.label = "Tên đăng nhập hoặc email"
+        cap_password_fields(self, "password")
 
     def clean_username(self):
         value = self.cleaned_data["username"]
@@ -79,7 +100,7 @@ class CustomerPasswordResetForm(PasswordResetForm):
         send_password_reset_email(self._request, context["user"], link)
 
 
-# AI-TRACE#057 | Claude Opus 5.5 | Form đổi mật khẩu: mật khẩu hiện tại và hai ô mật khẩu mới | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#057 | Claude Opus 5.5 | Form đổi mật khẩu: mật khẩu hiện tại và hai ô mật khẩu mới | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi giới hạn độ dài mật khẩu
 class CustomerPasswordChangeForm(PasswordChangeForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -87,6 +108,14 @@ class CustomerPasswordChangeForm(PasswordChangeForm):
         self.fields["old_password"].label = "Mật khẩu hiện tại"
         self.fields["new_password1"].label = "Mật khẩu mới"
         self.fields["new_password2"].label = "Nhập lại mật khẩu mới"
+        cap_password_fields(self, "old_password", "new_password1", "new_password2")
+
+
+# AI-TRACE#466 | Claude Opus 5.5 | Form đặt mật khẩu mới từ link quên mật khẩu, có chặn độ dài ô mật khẩu | CẤM XÓA CHÚ THÍCH NÀY
+class CustomerSetPasswordForm(SetPasswordForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        cap_password_fields(self, "new_password1", "new_password2")
 
 
 NAME_RE = re.compile(r"^[^\W\d_]+(?:[ '\-][^\W\d_]+)*$")
@@ -94,7 +123,7 @@ PHONE_SEPARATORS_RE = re.compile(r"[\s.\-()]")
 PHONE_RE = re.compile(r"^0[35789][0-9]{8}$")
 
 
-# AI-TRACE#073 | Claude Opus 5.5 | Form xác thực lại của khách, nhận tên đăng nhập hoặc email và mật khẩu | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#073 | Claude Opus 5.5 | Form xác thực lại của khách, nhận tên đăng nhập hoặc email và mật khẩu | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi giới hạn độ dài mật khẩu
 class CustomerReauthForm(forms.Form):
     error_messages = {"invalid": "Tên đăng nhập hoặc mật khẩu không đúng."}
 
@@ -107,6 +136,7 @@ class CustomerReauthForm(forms.Form):
         self.user_mismatch = False
         super().__init__(*args, **kwargs)
         self.fields["username"].widget.attrs["autocomplete"] = "username"
+        cap_password_fields(self, "password")
 
     def clean(self):
         cleaned = super().clean()

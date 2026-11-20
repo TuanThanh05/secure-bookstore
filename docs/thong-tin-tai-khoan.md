@@ -95,6 +95,40 @@ Luồng: trang Thông tin tài khoản → nút **Cập nhật thông tin** → 
 - Số 5 xuất hiện ở hai chỗ phải khớp nhau: `OPTIONS history_count` trong `settings/base.py` và `OFFSET 4` trong trigger.
 - **Kiểm thử:** `accounts/tests/test_password_history.py` (7 test). Trigger chỉ kiểm tra được trên CSDL thật vì CSDL test không có trigger: đăng ký 1 dòng, đổi 6 lần còn 5 dòng, sửa cột khác không thêm dòng.
 
+## 8b. Quy tắc mật khẩu và độ dài tối đa 64 ký tự
+
+`AUTH_PASSWORD_VALIDATORS` (`settings/base.py`) có 6 quy tắc. Cả 4 chỗ đặt mật khẩu đều kiểm tra đủ: đăng ký bước 2, đổi mật khẩu, đặt lại mật khẩu, lệnh `doi_mat_khau_admin`.
+
+| Quy tắc | Chặn gì |
+|---|---|
+| `UserAttributeSimilarityValidator` | Mật khẩu giống tên đăng nhập, email, họ tên |
+| `MinimumLengthValidator` (12) | Ngắn hơn 12 ký tự |
+| `accounts.validators.MaximumLengthValidator` (64) | Dài hơn 64 ký tự |
+| `CommonPasswordValidator` | Khoảng 20.000 mật khẩu phổ biến có sẵn trong Django |
+| `NumericPasswordValidator` | Toàn chữ số |
+| `PasswordHistoryValidator` (5) | Trùng 5 mật khẩu gần nhất (mục 8) |
+
+**Vì sao có giới hạn tối đa:**
+- Mỗi lần kiểm tra mật khẩu là một lần băm Argon2, vốn được thiết kế cho chậm. Không có giới hạn thì kẻ tấn công gửi mật khẩu dài hàng trăm nghìn ký tự để máy chủ tốn công băm, một dạng từ chối dịch vụ.
+- Chọn **64** vì đó là mức NIST SP 800-63B yêu cầu phải cho phép tối thiểu. Mức này vẫn đủ chỗ cho mật khẩu do trình quản lý mật khẩu sinh ra và cho cụm mật khẩu dài.
+- Nhóm đã cân nhắc 20 ký tự và bỏ (2026-11-20), vì mức đó chặn đúng kiểu mật khẩu mạnh nhất.
+
+**Vì sao chặn cả ở form, không chỉ ở validator:**
+- Validator chỉ chạy khi **đặt** mật khẩu, và Django chạy **mọi** validator rồi mới gộp lỗi. `PasswordHistoryValidator` vẫn băm chuỗi dài để so với 5 mã băm cũ.
+- Trang đăng nhập và xác thực lại không chạy validator nào, mà gọi thẳng `authenticate()`, tức là băm luôn.
+- Vì vậy `accounts.forms.cap_password_fields` gắn giới hạn 64 vào **mọi ô mật khẩu**: đăng nhập, xác thực lại (khách và admin, kể cả form khóa/mở khóa tài khoản), đăng ký, đổi mật khẩu (cả ô mật khẩu hiện tại), đặt lại mật khẩu (`CustomerSetPasswordForm`).
+- Quá 64 ký tự thì form báo lỗi ngay, không gọi `authenticate()`, `check_password()` hay validator, nên không băm gì cả. Thuộc tính `maxlength` trên ô nhập chỉ để người dùng đỡ gõ thừa; lớp chặn thật nằm ở form.
+- Lần nhập quá dài không bị axes tính là một lần sai. Điều này không mở đường dò mật khẩu, vì không có mật khẩu hợp lệ nào dài hơn 64 ký tự.
+
+**Không có** quy tắc bắt buộc chữ hoa, chữ số, ký tự đặc biệt. NIST khuyên dùng độ dài và danh sách chặn thay vì bắt trộn ký tự, vì bắt trộn thì người dùng đặt kiểu `Password1!`.
+
+**Kiểm thử:** `accounts/tests/test_password_max_length.py`:
+- 64 ký tự thì đăng nhập được, 65 thì bị chặn ở từng form.
+- Dùng mock để chắc chắn `authenticate()` và `validate_password()` không được gọi.
+- Tắt `cap_password_fields` thì 5 test báo lỗi.
+
+**Khi áp dụng:** tài khoản nào đang có mật khẩu dài hơn 64 ký tự sẽ không đăng nhập được nữa. Khách thì dùng "Quên mật khẩu"; admin thì dùng lệnh `doi_mat_khau_admin`.
+
 ## 9. Đổi mật khẩu quản trị viên – chỉ trên máy chủ
 
 ```bash

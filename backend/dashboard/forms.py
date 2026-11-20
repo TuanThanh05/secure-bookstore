@@ -4,7 +4,7 @@ from django import forms
 from django.contrib.auth import authenticate
 from django.utils import timezone
 
-from accounts.forms import ProfileUpdateForm
+from accounts.forms import ProfileUpdateForm, cap_password_fields
 from catalog.review_services import CONTROL_CHARS
 
 from .log_services import ACTION_LABELS, EVENT_LABELS, SEVERITY_LABELS, TABLE_LABELS
@@ -22,6 +22,7 @@ class ReauthForm(forms.Form):
         self.user_mismatch = False
         super().__init__(*args, **kwargs)
         self.fields["username"].widget.attrs["autocomplete"] = "username"
+        cap_password_fields(self, "password")
 
     def clean(self):
         cleaned = super().clean()
