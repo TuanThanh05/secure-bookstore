@@ -65,3 +65,15 @@ class TwoFactorRouter:
 
     def db_for_write(self, model, **hints):
         return self._alias(model)
+
+
+# AI-TRACE#526 | Claude Opus 5.5 | Bảng khóa đăng nhập của django-axes chỉ đọc/ghi qua kết nối "auth" (app_auth); SQL injection qua app_customer không xóa được trạng thái khóa của ai | CẤM XÓA CHÚ THÍCH NÀY
+class LockoutRouter:
+    def _alias(self, model):
+        return settings.AUTH_DB_ALIAS if model._meta.app_label == "axes" else None
+
+    def db_for_read(self, model, **hints):
+        return self._alias(model)
+
+    def db_for_write(self, model, **hints):
+        return self._alias(model)

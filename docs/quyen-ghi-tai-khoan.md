@@ -77,3 +77,14 @@ Bằng `app_customer`: mọi `UPDATE`/`INSERT` trên `accounts_user` → 1142.
 ## 5. Khi triển khai bản này
 
 Thêm `DB_AUTH_USER=app_auth` và `DB_AUTH_PASSWORD` vào `.env`, rồi chạy lại `db_setup`, `migrate`, `db_apply`, `db_check_grants`.
+
+## 6. Bảng khóa đăng nhập django-axes cũng chuyển sang `app_auth` (2026-11-20)
+
+**Lỗ hổng (báo cáo rà soát T3.3):** django-axes ghi/xóa 3 bảng `axes_accessattempt`, `axes_accessattemptexpiration`, `axes_accesslog` (đếm sai, khóa 15 phút, xóa khi đăng nhập đúng/đặt lại mật khẩu/hết hạn) qua kết nối mặc định, nên `r_customer` có `DELETE` trên các bảng đó. SQL injection ở bất kỳ trang nào của khách xóa được trạng thái khóa của mọi tài khoản, kể cả admin → dò mật khẩu không giới hạn. Không thể chỉ thu hồi `DELETE` vì axes cần nó để chạy.
+
+**Cách sửa (giống #44 tách phiên):** `core.db_routers.LockoutRouter` đưa mọi đọc/ghi của app `axes` sang kết nối `auth` (`app_auth`); axes tự mở transaction theo `router.db_for_write`, nên `select_for_update` vẫn nằm đúng transaction. File quyền thu hồi 3 bảng khỏi `r_customer` (`REVOKE IF EXISTS`, gỡ được quyền trên CSDL đã cài) và cấp cho `r_auth`: `SELECT, INSERT, UPDATE, DELETE` trên `axes_accessattempt`, `axes_accessattemptexpiration`; `SELECT, INSERT, UPDATE` trên `axes_accesslog` (không xóa nhật ký). Admin vẫn thấy "Tạm khóa" vì `sp_staff_account_list` đọc qua definer. Test/`settings.migrate` dùng `AUTH_DB_ALIAS = "default"` nên không đổi gì.
+
+**Kiểm tra:** `db_check_grants` thêm 12 dòng (128 tổng): `app_customer`/`app_staff`/`app_session` đọc/xóa bảng axes → 1142; `app_auth` đọc/xóa/ghi → được phép, xóa `axes_accesslog` → 1142. Chạy `db_check_grants` mới trên quyền cũ: 5/128 SAI (4 dòng axes + thanh toán mô phỏng khi cờ tắt). Sandbox (kết nối thật): 5 lần sai → 429, IP khác vẫn đăng nhập được, đăng nhập đúng xóa bộ đếm của IP đó, admin thấy `temp_locked`; `core/tests/test_lockout_router.py`.
+
+**Khi triển khai bản này:** chỉ cần `db_apply` rồi `db_check_grants` (không có biến `.env` mới, không có migration).
+

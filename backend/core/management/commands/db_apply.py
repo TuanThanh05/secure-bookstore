@@ -21,6 +21,14 @@ from django.core.management.base import BaseCommand, CommandError
 from core.dbadmin import admin_secret, connect_admin, db_settings, load_admin_env, split_sql
 
 FOLDERS = ("objects", "grants")
+PAYMENT_GRANT = "GRANT EXECUTE ON PROCEDURE sp_payment_simulate TO 'r_customer'"
+PAYMENT_REVOKE = "REVOKE IF EXISTS EXECUTE ON PROCEDURE sp_payment_simulate FROM 'r_customer'"
+
+
+# AI-TRACE#529 | Claude Opus 5.5 | Quyền gọi sp_payment_simulate của r_customer đi theo cờ PAYMENT_SIMULATION: bật thì cấp, tắt thì thu hồi, để MySQL cũng chặn khi Django tắt | CẤM XÓA CHÚ THÍCH NÀY
+def apply_payment_simulation(cursor, enabled):
+    cursor.execute(PAYMENT_GRANT if enabled else PAYMENT_REVOKE)
+    return "cấp" if enabled else "thu hồi"
 
 
 class Command(BaseCommand):
@@ -53,6 +61,8 @@ class Command(BaseCommand):
                                 f"{path.relative_to(base.parent)}, câu lệnh thứ {number}: {exc.args}"
                             ) from exc
                     self.stdout.write(f"  ✓ {path.relative_to(base.parent)} ({len(statements)} câu lệnh)")
+                action = apply_payment_simulation(cur, settings.PAYMENT_SIMULATION)
+                self.stdout.write(f"  ✓ PAYMENT_SIMULATION={settings.PAYMENT_SIMULATION}: {action} quyền gọi sp_payment_simulate của r_customer")
         finally:
             conn.close()
 

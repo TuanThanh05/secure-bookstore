@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import DatabaseError, connections
 
@@ -66,7 +67,8 @@ CHECKS = (
     ("staff", "app_staff đọc thẳng core_securityevent", "SELECT id FROM core_securityevent LIMIT 1", 1142),
     ("staff", "app_staff xóa core_auditlog", "DELETE FROM core_auditlog WHERE 1 = 0", 1142),
     ("staff", "app_staff gọi sp_purge_old_logs (chỉ Event được gọi)", "CALL sp_purge_old_logs(@n)", 1370),
-    ("default", "app_customer gọi sp_payment_simulate (id sai, không ghi gì)", "CALL sp_payment_simulate(0, NULL, NULL, @t)", SIGNAL),
+    ("default", f"app_customer gọi sp_payment_simulate khi PAYMENT_SIMULATION={settings.PAYMENT_SIMULATION} (id sai, không ghi gì)",
+     "CALL sp_payment_simulate(0, NULL, NULL, @t)", SIGNAL if settings.PAYMENT_SIMULATION else 1370),
     ("staff", "app_staff gọi sp_payment_simulate", "CALL sp_payment_simulate(0, NULL, NULL, @t)", 1370),
     ("default", "app_customer đọc payments_payment", "SELECT id FROM payments_payment LIMIT 1", 1142),
     ("default", "app_customer INSERT thẳng payments_payment", "INSERT INTO payments_payment (order_id, provider, amount, status) SELECT 1, 'simulated', 1, 'failed' FROM DUAL WHERE 1 = 0", 1142),
@@ -121,6 +123,18 @@ CHECKS = (
     ("auth", "app_auth đọc thiết bị 2 bước", "SELECT id, secret_encrypted FROM accounts_totpdevice LIMIT 1", ALLOWED),
     ("auth", "app_auth ghi bước thời gian (không đổi dòng nào)", "UPDATE accounts_totpdevice SET last_used_step = last_used_step WHERE 1 = 0", ALLOWED),
     ("auth", "app_auth đọc mã dự phòng", "SELECT id FROM accounts_recoverycode LIMIT 1", ALLOWED),
+    ("default", "app_customer đọc bảng khóa đăng nhập axes", "SELECT id FROM axes_accessattempt LIMIT 1", 1142),
+    ("default", "app_customer xóa trạng thái khóa đăng nhập (axes)", "DELETE FROM axes_accessattempt WHERE 1 = 0", 1142),
+    ("default", "app_customer xóa hạn khóa axes", "DELETE FROM axes_accessattemptexpiration WHERE 1 = 0", 1142),
+    ("default", "app_customer ghi axes_accesslog", "UPDATE axes_accesslog SET logout_time = logout_time WHERE 1 = 0", 1142),
+    ("staff", "app_staff xóa trạng thái khóa đăng nhập (axes)", "DELETE FROM axes_accessattempt WHERE 1 = 0", 1142),
+    ("session", "app_session đọc bảng khóa đăng nhập axes", "SELECT id FROM axes_accessattempt LIMIT 1", 1142),
+    ("auth", "app_auth đọc bảng khóa đăng nhập axes", "SELECT id FROM axes_accessattempt LIMIT 1", ALLOWED),
+    ("auth", "app_auth xóa trạng thái khóa (không xóa dòng nào)", "DELETE FROM axes_accessattempt WHERE 1 = 0", ALLOWED),
+    ("auth", "app_auth xóa hạn khóa (không xóa dòng nào)", "DELETE FROM axes_accessattemptexpiration WHERE 1 = 0", ALLOWED),
+    ("auth", "app_auth ghi axes_accesslog (không đổi dòng nào)", "UPDATE axes_accesslog SET logout_time = logout_time WHERE 1 = 0", ALLOWED),
+    ("auth", "app_auth xóa axes_accesslog", "DELETE FROM axes_accesslog WHERE 1 = 0", 1142),
+    ("auth", "app_auth gọi sp_payment_simulate", "CALL sp_payment_simulate(0, NULL, NULL, @t)", 1370),
 )
 
 
