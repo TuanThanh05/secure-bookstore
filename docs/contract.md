@@ -63,19 +63,24 @@ Chốt 2026-11-15, thay cho `v_public_books` / `v_public_categories` trong issue
 - **Django:** `catalog/services.py` giữ nguyên `list_categories()` và `list_public_books(category_id=None, q="")`; gọi `callproc` với tham số truyền riêng; `catalog/views.py` và template không đổi.
 - **Kiểm thử:** `catalog/tests/test_public_catalog.py`, `catalog/tests/test_home.py`; `db_check_grants` có 4 dòng cho phần này. Đã chạy trên CSDL thật: sách ẩn và thể loại chỉ có sách ẩn không lộ, đánh giá ẩn không được tính, `' OR 1=1 -- `, `%' UNION SELECT password FROM accounts_user -- `, `%`, `_` đều trả 0 kết quả, không lỗi 500.
 
-## Đánh giá sách: `sp_review_save`, `sp_review_get_mine`
+## Đánh giá sách: `sp_review_save`, `sp_review_get_mine`, `sp_review_can_write`
 
 Chốt 2026-11-15. File: `database/objects/21_review.sql`, `catalog/review_services.py`, `catalog/forms.py`. Phần này chỉ có thủ tục và service; nút gửi và form trên trang làm cùng trang chi tiết sách.
 
-- **Ai được đánh giá:** khách đang hoạt động, đã xác nhận email, không phải nhân viên (cách b). Khi có đơn hàng sẽ siết lại thành "chỉ khách đã mua sách đó" (cách a).
+- **Ai được đánh giá (siết lại 2026-11-20, cách a):** khách đang hoạt động, đã xác nhận email, không phải nhân viên, **và có ít nhất một đơn ở trạng thái `delivered` (admin bấm "Đã giao") chứa đúng cuốn sách đó**. Đơn chờ thanh toán, đã thanh toán, đang giao, đã hủy đều không tính.
+  - Kiểm tra ở hai lớp. `sp_review_save` tự chặn bằng `NOT_PURCHASED`, kể cả khi gọi thẳng thủ tục. Trang chi tiết sách hỏi `sp_review_can_write` để biết có hiện form không; khách chưa nhận sách chỉ thấy dòng "Chỉ khách đã mua và nhận cuốn sách này mới đánh giá được."
+  - Gửi POST lén vẫn bị thủ tục chặn: trang báo lỗi và ghi log `access_denied` với `detail.kind = review_not_purchased`.
+  - Đánh giá cũ của khách chưa nhận sách **đã bị xóa** (`schema/11_review_purchased_only.sql`, migration `core/0012`, không đảo ngược được; nhóm trưởng chốt mức c).
+  - Trạng thái đơn chỉ đi tới, nên đã nhận sách thì luôn sửa được đánh giá của mình. Không có nhãn "Đã mua hàng", vì mọi đánh giá giờ đều của người đã nhận sách.
 - **Mỗi khách một đánh giá cho mỗi sách.** Gửi lại là **sửa** đánh giá cũ (`INSERT ... ON DUPLICATE KEY UPDATE`): bấm hai lần cùng lúc vẫn chỉ một dòng. Sửa không đổi `is_visible`: đánh giá admin đã ẩn thì vẫn ẩn.
 - **Hiện ngay** sau khi gửi; admin ẩn sau nếu vi phạm.
 - **Tên hiển thị** (dùng khi làm danh sách đánh giá): `mask_username()` giữ ký tự đầu và cuối, giữa là dấu sao, ví dụ `an_nguyen` → `a*******n`.
 
 | Thủ tục | Tham số | Trả về / lỗi |
 | --- | --- | --- |
-| `sp_review_save` | `p_user_id`, `p_book_id`, `p_rating` (1–5), `p_content` (1–2000 ký tự sau khi bỏ khoảng trắng), `OUT p_created` | `p_created` = 1 đánh giá mới, 0 là sửa. Lỗi: `INVALID_INPUT`, `NOT_CUSTOMER`, `BOOK_NOT_FOUND` (sách không có hoặc đang ẩn) |
+| `sp_review_save` | `p_user_id`, `p_book_id`, `p_rating` (1–5), `p_content` (1–2000 ký tự sau khi bỏ khoảng trắng), `OUT p_created` | `p_created` = 1 đánh giá mới, 0 là sửa. Lỗi: `INVALID_INPUT`, `NOT_CUSTOMER`, `BOOK_NOT_FOUND` (sách không có hoặc đang ẩn), `NOT_PURCHASED` (chưa có đơn đã giao chứa sách) |
 | `sp_review_get_mine` | `p_user_id`, `p_book_id` | 0 hoặc 1 dòng: `rating`, `content`, `is_visible`, `created_at`, `updated_at` |
+| `sp_review_can_write` | `p_user_id`, `p_book_id` | Đúng 1 dòng `can_write` (0/1): khách hợp lệ, sách đang hiện, có đơn `delivered` chứa sách. Chỉ `r_customer`; `app_staff` gọi → 1370 |
 
 `r_customer` chỉ có `EXECUTE`; ghi thẳng `catalog_review` → 1142. `app_staff` gọi `sp_review_save` → 1370.
 
@@ -99,6 +104,8 @@ mine = get_my_review(request.user, book_id)                 # MyReview hoặc No
 | CSRF, chỉ POST, bắt buộc đăng nhập | Áp dụng ở view khi làm trang chi tiết sách |
 
 Đã chạy trên CSDL thật: gửi mới, sửa, điểm 6, nội dung rỗng, admin gửi, sách không có, sách ẩn, `app_customer` INSERT/UPDATE/DELETE thẳng (1142), giả `user_id` của admin khi gọi thủ tục (`NOT_CUSTOMER`), hai lần bấm cùng lúc (1 dòng), lần thứ 6 trong giờ (`RATE_LIMITED`), sửa đánh giá đã bị ẩn (vẫn ẩn). Test: `catalog/tests/test_reviews.py`.
+
+Đã chạy thêm trên CSDL thật (2026-11-20): migration xóa 3 trên 5 đánh giá thử của khách chưa nhận sách. Bằng `app_customer`: khách đã nhận sách gọi `sp_review_can_write` → 1 và gửi được; sách chưa từng mua, hoặc chỉ có đơn đã hủy → 0 và `NOT_PURCHASED`; ghi thẳng bảng → 1142. Trên web: khách chưa nhận sách không thấy form; gửi POST lén thì bị đưa về trang sách kèm log `access_denied`. Test: `catalog/tests/test_book_detail.py` (`ReviewPurchasedOnlyTests`).
 
 ## Trang chi tiết sách: `sp_public_book_get`, `sp_review_list`
 

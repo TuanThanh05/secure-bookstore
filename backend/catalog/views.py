@@ -6,13 +6,14 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST, require_safe
 
+from core.security_log import log_event
 from core.validators import clean_search_query, parse_positive_int
 
 from orders.cart_services import CART_MAX_PER_BOOK
 
 from . import services
 from .forms import ReviewForm
-from .review_services import ReviewError, get_my_review, list_reviews, save_review
+from .review_services import ReviewError, can_write_review, get_my_review, list_reviews, save_review
 
 
 BOOKS_PER_PAGE = 12
@@ -71,10 +72,11 @@ def about(request):
     return render(request, "shop/about.html")
 
 
-# AI-TRACE#217 | Claude Opus 5.5 | Dựng trang chi tiết sách: thông tin sách, danh sách đánh giá, form đánh giá theo từng loại người xem | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#217 | Claude Opus 5.5 | Dựng trang chi tiết sách: thông tin sách, danh sách đánh giá, form đánh giá theo từng loại người xem | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi chỉ cho khách đã nhận sách đánh giá
 def _render_detail(request, book, form=None, open_form=False, status=200):
     user = request.user
-    can_review = user.is_authenticated and not user.is_staff
+    is_customer = user.is_authenticated and not user.is_staff
+    can_review = is_customer and can_write_review(user, book.id)
     my_review = get_my_review(user, book.id) if can_review else None
     if form is None and can_review:
         initial = {"rating": my_review.rating, "content": my_review.content} if my_review else {}
@@ -85,6 +87,7 @@ def _render_detail(request, book, form=None, open_form=False, status=200):
         "form": form,
         "my_review": my_review,
         "can_review": can_review,
+        "need_purchase": is_customer and not can_review,
         "open_form": open_form,
         "cart_add_url": reverse("orders:cart_add"),
         "cart_max": CART_MAX_PER_BOOK,
@@ -101,7 +104,7 @@ def book_detail(request, book_id):
     return _render_detail(request, book)
 
 
-# AI-TRACE#219 | Claude Opus 5.5 | Nhận form gửi/sửa đánh giá (chỉ POST, CSRF, khách đã đăng nhập); lỗi thì hiện lại form, thành công thì quay về trang sách | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#219 | Claude Opus 5.5 | Nhận form gửi/sửa đánh giá (chỉ POST, CSRF, khách đã đăng nhập); lỗi thì hiện lại form, thành công thì quay về trang sách | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi chỉ cho khách đã nhận sách đánh giá
 @require_POST
 def review_submit(request, book_id):
     detail_url = reverse("catalog:book_detail", args=[book_id])
@@ -118,6 +121,11 @@ def review_submit(request, book_id):
         try:
             created = save_review(request, book.id, form.cleaned_data["rating"], form.cleaned_data["content"])
         except ReviewError as exc:
+            if exc.code == "NOT_PURCHASED":
+                log_event("access_denied", request, severity="warning", user=request.user,
+                          username=request.user.get_username(), detail={"kind": "review_not_purchased", "book_id": book.id})
+                messages.error(request, exc.message)
+                return redirect(f"{detail_url}#danh-gia")
             form.add_error(None, exc.message)
         else:
             messages.success(request, "Cảm ơn bạn đã đánh giá." if created else "Đã cập nhật đánh giá của bạn.")

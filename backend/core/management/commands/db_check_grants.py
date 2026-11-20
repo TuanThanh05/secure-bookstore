@@ -26,6 +26,8 @@ CHECKS = (
     ("default", "app_customer đọc catalog_review", "SELECT id FROM catalog_review LIMIT 1", 1142),
     ("default", "app_customer gọi sp_review_save (đầu vào sai, không ghi gì)", "CALL sp_review_save(0, 0, 0, '', @o)", SIGNAL),
     ("default", "app_customer gọi sp_review_get_mine", "CALL sp_review_get_mine(1, 1)", ALLOWED),
+    ("default", "app_customer gọi sp_review_can_write", "CALL sp_review_can_write(1, 1)", ALLOWED),
+    ("staff", "app_staff gọi sp_review_can_write", "CALL sp_review_can_write(1, 1)", 1370),
     ("default", "app_customer INSERT thẳng catalog_review", "INSERT INTO catalog_review (user_id, book_id, rating, content) SELECT 1, 1, 5, 'x' FROM DUAL WHERE 1 = 0", 1142),
     ("staff", "app_staff gọi sp_review_save", "CALL sp_review_save(0, 0, 0, '', @o)", 1370),
     ("default", "app_customer gọi sp_public_book_get", "CALL sp_public_book_get(1)", ALLOWED),
