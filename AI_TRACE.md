@@ -43,8 +43,8 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 055 | Claude Opus 5.5 |  | `frontend/templates/account/password_reset_confirm.html` | `<h1 class="auth__title">Đặt mật khẩu mới</h1>` | 8 | Trang đặt mật khẩu mới từ link, báo lỗi khi link hết hạn hoặc đã dùng | [ ] |
 | 056 | Claude Opus 5.5 |  | `backend/accounts/tests/test_password_reset.py` | `PasswordResetTests` | 22 | Test luồng quên mật khẩu: gửi link, đặt lại, link hết hạn, chặn nhân viên | [ ] |
 | 057 | Claude Opus 5.5 |  | `backend/accounts/forms.py` | `CustomerPasswordChangeForm` | 82 | Form đổi mật khẩu: mật khẩu hiện tại và hai ô mật khẩu mới | [ ] |
-| 058 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `record_password_change_failure` | 108 | Đếm số lần nhập sai mật khẩu hiện tại khi đổi mật khẩu, trả về tổng số lần | [ ] |
-| 059 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `clear_password_change_failures` | 119 | Xóa bộ đếm nhập sai sau khi đổi mật khẩu thành công | [ ] |
+| 058 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `record_password_change_failure` | 109 | Đếm số lần nhập sai mật khẩu hiện tại khi đổi mật khẩu, trả về tổng số lần | [ ] |
+| 059 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `clear_password_change_failures` | 120 | Xóa bộ đếm nhập sai sau khi đổi mật khẩu thành công | [ ] |
 | 060 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `password_change` | 209 | Đổi mật khẩu cho khách: giữ phiên hiện tại, đăng xuất thiết bị khác, sai nhiều lần thì đăng xuất | [ ] |
 | 061 | Claude Opus 5.5 |  | `frontend/templates/account/password_change.html` | `<header class="area-header">` | 7 | Form đổi mật khẩu trong khu vực tài khoản khách, có nút hiện mật khẩu | [ ] |
 | 062 | Claude Opus 5.5 |  | `frontend/static/css/account-area.css` | `.area-actions { display: flex; flex-wrap: wrap; gap: var(--s` | 35 | Kiểu nút thao tác và form đổi mật khẩu trong khu vực tài khoản | [ ] |
@@ -60,7 +60,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 072 | Claude Opus 5.5 |  | `backend/accounts/decorators.py` | `customer_recent_auth_required` | 24 | Bắt khách xác thực lại trong vài phút gần đây, chuyển tới trang xác thực riêng của khách | [ ] |
 | 073 | Claude Opus 5.5 |  | `backend/accounts/forms.py` | `CustomerReauthForm` | 97 | Form xác thực lại của khách, nhận tên đăng nhập hoặc email và mật khẩu | [ ] |
 | 074 | Claude Opus 5.5 |  | `backend/accounts/forms.py` | `ProfileUpdateForm` | 128 | Form cập nhật họ, tên, SĐT của khách; không có ô username hay email | [ ] |
-| 075 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `update_profile` | 124 | Lưu họ, tên, SĐT đã mã hóa; chỉ ghi cột thay đổi và log tên cột, không log giá trị | [ ] |
+| 075 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `update_profile` | 125 | Lưu họ, tên, SĐT đã mã hóa; chỉ ghi cột thay đổi và log tên cột, không log giá trị | [ ] |
 | 076 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `reauth` | 250 | Trang xác thực lại riêng cho khách, có link quên mật khẩu, next chỉ trỏ trong site | [ ] |
 | 077 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `profile_update` | 272 | Cập nhật họ, tên, SĐT của khách sau khi xác thực lại | [ ] |
 | 078 | Claude Opus 5.5 |  | `database/schema/04_securityevent_profile_updated.sql` | `ALTER TABLE core_securityevent DROP CHECK ck_secevent_type;` | 7 | Thêm loại sự kiện cập nhật hồ sơ vào danh sách cho phép | [ ] |
@@ -337,10 +337,10 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 350 | Claude Opus 5.5 |  | `backend/core/migrations/0007_payment_simulated.py` | `_statements` | 19 | Đọc file SQL cho phép giao dịch thanh toán mô phỏng và chặn một đơn thanh toán hai lần | [ ] |
 | 351 | Claude Opus 5.5 |  | `database/objects/35_payment_simulate.sql` | `PROCEDURE sp_payment_simulate` | 42 | Thủ tục thanh toán mô phỏng: khóa đơn của chính khách, kiểm tra lại trạng thái và hạn, ghi giao dịch 'simulated' với số tiền lấy từ đơn rồi đổi đơn sang paid trong một giao dịch | [ ] |
 | 352 | Claude Opus 5.5 |  | `database/objects/35_payment_simulate.sql` | `CREATE DEFINER = 'bookstore_definer'@'localhost'` | 120 | Trigger cấm sửa và xóa giao dịch thanh toán đã ghi, kể cả root và definer | [ ] |
-| 353 | Claude Opus 5.5 |  | `backend/payments/services.py` | `PaymentError` | 22 | Lỗi nghiệp vụ khi thanh toán, mang mã lỗi và câu tiếng Việt | [ ] |
-| 354 | Claude Opus 5.5 |  | `backend/payments/services.py` | `_allow_simulate` | 30 | Giới hạn số lần bấm thanh toán mô phỏng của mỗi khách theo PAYMENT_SIMULATE_RATE_* | [ ] |
-| 355 | Claude Opus 5.5 |  | `backend/payments/services.py` | `_signal_code` | 44 | Đọc mã lỗi nghiệp vụ thanh toán từ lỗi MySQL 1644 do SIGNAL | [ ] |
-| 356 | Claude Opus 5.5 |  | `backend/payments/services.py` | `simulate_payment` | 57 | Thanh toán mô phỏng: chỉ khi PAYMENT_SIMULATION bật, user lấy từ phiên, mã đơn sai mẫu không xuống CSDL, giới hạn tần suất rồi gọi sp_payment_simulate, trả mã giao dịch | [ ] |
+| 353 | Claude Opus 5.5 |  | `backend/payments/services.py` | `PaymentError` | 23 | Lỗi nghiệp vụ khi thanh toán, mang mã lỗi và câu tiếng Việt | [ ] |
+| 354 | Claude Opus 5.5 |  | `backend/payments/services.py` | `_allow_simulate` | 31 | Giới hạn số lần bấm thanh toán mô phỏng của mỗi khách theo PAYMENT_SIMULATE_RATE_* | [ ] |
+| 355 | Claude Opus 5.5 |  | `backend/payments/services.py` | `_signal_code` | 45 | Đọc mã lỗi nghiệp vụ thanh toán từ lỗi MySQL 1644 do SIGNAL | [ ] |
+| 356 | Claude Opus 5.5 |  | `backend/payments/services.py` | `simulate_payment` | 53 | Thanh toán mô phỏng: chỉ khi PAYMENT_SIMULATION bật, user lấy từ phiên, mã đơn sai mẫu không xuống CSDL, giới hạn tần suất rồi gọi sp_payment_simulate, trả mã giao dịch | [ ] |
 | 357 | Claude Opus 5.5 |  | `backend/payments/views.py` | `simulate` | 12 | Nhận nút thanh toán mô phỏng (chỉ POST, CSRF, sau bước xác nhận trên trang đơn): đơn người khác/mã sai trả 404 và ghi idor_attempt, xong quay về trang đơn | [ ] |
 | 358 | Claude Opus 5.5 |  | `frontend/templates/shop/order_detail.html` | `<details class="order__pay">` | 42 | Thanh toán mô phỏng hai bước bằng details (không JS): bấm nút mới hiện số tiền và nút xác nhận gửi POST | [ ] |
 | 359 | Claude Opus 5.5 |  | `frontend/static/css/account-area.css` | `.order__pay summary { display: inline-flex; cursor: pointer;` | 133 | Kiểu khối thanh toán mô phỏng hai bước trên trang đơn | [ ] |
@@ -399,13 +399,13 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 412 | Claude Opus 5.5 |  | `backend/accounts/forms.py` | `SignupEmailForm` | 16 | Bước 1 đăng ký: chỉ một ô email, chuẩn hóa về chữ thường | [ ] |
 | 413 | Claude Opus 5.5 |  | `backend/accounts/forms.py` | `SignupCompleteForm` | 25 | Bước 2 đăng ký: tên đăng nhập và mật khẩu, email lấy từ phiên chứ không từ form | [ ] |
 | 414 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_signup_link_email` | 37 | Gửi thư chứa link tiếp tục đăng ký có hạn dùng tới đúng email vừa nhập | [ ] |
-| 415 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `allow_signup_step` | 28 | Giới hạn số lần gửi form đăng ký của mỗi IP, đếm riêng từng bước | [ ] |
-| 416 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `_allow_signup_mail` | 37 | Giới hạn số thư đăng ký gửi tới một email trong một giờ, tính cả thư báo trùng | [ ] |
-| 417 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `start_signup` | 43 | Bước 1 đăng ký: không ghi CSDL, email mới nhận link, email đã có nhận thư báo | [ ] |
-| 418 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `email_has_account` | 56 | Email đã có tài khoản chưa (link đăng ký chỉ dùng được khi chưa có) | [ ] |
-| 419 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `remember_signup_email` | 61 | Cất email đã chứng minh vào phiên mới (đổi session ID) kèm thời điểm bấm link | [ ] |
-| 420 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `pending_signup_email` | 67 | Lấy email đăng ký đang chờ trong phiên, quá hạn hoặc sai dạng thì xóa và trả None | [ ] |
-| 421 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `complete_signup` | 84 | Bước 2 đăng ký: tạo tài khoản đã xác nhận email, chặn trùng bằng UNIQUE khi nộp cùng lúc (đã viết lại bởi Claude Opus 5.5 khi tách app_auth) | [ ] |
+| 415 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `allow_signup_step` | 29 | Giới hạn số lần gửi form đăng ký của mỗi IP, đếm riêng từng bước (đã viết lại bởi Claude Opus 5.5 khi đọc IP thật sau Nginx) | [ ] |
+| 416 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `_allow_signup_mail` | 38 | Giới hạn số thư đăng ký gửi tới một email trong một giờ, tính cả thư báo trùng | [ ] |
+| 417 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `start_signup` | 44 | Bước 1 đăng ký: không ghi CSDL, email mới nhận link, email đã có nhận thư báo | [ ] |
+| 418 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `email_has_account` | 57 | Email đã có tài khoản chưa (link đăng ký chỉ dùng được khi chưa có) | [ ] |
+| 419 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `remember_signup_email` | 62 | Cất email đã chứng minh vào phiên mới (đổi session ID) kèm thời điểm bấm link | [ ] |
+| 420 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `pending_signup_email` | 68 | Lấy email đăng ký đang chờ trong phiên, quá hạn hoặc sai dạng thì xóa và trả None | [ ] |
+| 421 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `complete_signup` | 85 | Bước 2 đăng ký: tạo tài khoản đã xác nhận email, chặn trùng bằng UNIQUE khi nộp cùng lúc (đã viết lại bởi Claude Opus 5.5 khi tách app_auth) | [ ] |
 | 422 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `register` | 66 | Đăng ký bước 1: chỉ nhận email, mọi trường hợp đều chuyển tới trang kiểm tra hộp thư (đã viết lại bởi Claude Opus 5.5 khi thêm Cloudflare Turnstile) | [ ] |
 | 423 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `signup_confirm` | 97 | Mở link đăng ký: kiểm tra mã, cất email vào phiên rồi chuyển sang địa chỉ không chứa mã | [ ] |
 | 424 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `signup_complete` | 115 | Đăng ký bước 2: đặt tên đăng nhập, mật khẩu cho email trong phiên, xong thì về đăng nhập | [ ] |
@@ -416,12 +416,12 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 429 | Claude Opus 5.5 |  | `backend/core/migrations/0009_securityevent_signup.py` | `_statements` | 26 | Đọc file SQL đổi danh sách loại sự kiện cho luồng đăng ký bắt đầu bằng email | [ ] |
 | 430 | Claude Opus 5.5 |  | `backend/accounts/tests/test_signup_token.py` | `SignupTokenTests` | 9 | Test mã link đăng ký: hợp lệ, hết hạn, bị sửa, ký sai mục đích, sai dạng | [ ] |
 | 431 | Claude Opus 5.5 |  | `backend/accounts/tests/test_signup.py` | `SignupTests` | 23 | Test đăng ký bắt đầu bằng email: chống chiếm tài khoản trước, phiên, link, giới hạn | [ ] |
-| 432 | Claude Opus 5.5 |  | `backend/core/captcha.py` | `CaptchaResult` | 23 | Kết quả xác minh CAPTCHA gồm đạt hay không, lý do và mã lỗi của Cloudflare | [ ] |
-| 433 | Claude Opus 5.5 |  | `backend/core/captcha.py` | `captcha_enabled` | 31 | Turnstile chỉ bật khi có đủ site key và secret key trong .env | [ ] |
-| 434 | Claude Opus 5.5 |  | `backend/core/captcha.py` | `_siteverify` | 40 | Gọi Siteverify của Cloudflare qua HTTPS bằng urllib có sẵn, có timeout và giới hạn kích thước | [ ] |
-| 435 | Claude Opus 5.5 |  | `backend/core/captcha.py` | `_check_response` | 62 | Đọc phản hồi Siteverify: chỉ nhận success true, đúng hostname và action (key thử thì bỏ qua hai mục này) | [ ] |
-| 436 | Claude Opus 5.5 |  | `backend/core/captcha.py` | `verify_captcha` | 79 | Xác minh token Turnstile của request; lỗi mạng không bỏ qua mà từ chối; log không chứa token hay secret | [ ] |
-| 437 | Claude Opus 5.5 |  | `backend/core/captcha.py` | `check_turnstile` | 101 | Cảnh báo khi chạy web mà Turnstile đang tắt hoặc đang dùng key thử của Cloudflare | [ ] |
+| 432 | Claude Opus 5.5 |  | `backend/core/captcha.py` | `CaptchaResult` | 24 | Kết quả xác minh CAPTCHA gồm đạt hay không, lý do và mã lỗi của Cloudflare | [ ] |
+| 433 | Claude Opus 5.5 |  | `backend/core/captcha.py` | `captcha_enabled` | 32 | Turnstile chỉ bật khi có đủ site key và secret key trong .env | [ ] |
+| 434 | Claude Opus 5.5 |  | `backend/core/captcha.py` | `_siteverify` | 41 | Gọi Siteverify của Cloudflare qua HTTPS bằng urllib có sẵn, có timeout và giới hạn kích thước | [ ] |
+| 435 | Claude Opus 5.5 |  | `backend/core/captcha.py` | `_check_response` | 63 | Đọc phản hồi Siteverify: chỉ nhận success true, đúng hostname và action (key thử thì bỏ qua hai mục này) | [ ] |
+| 436 | Claude Opus 5.5 |  | `backend/core/captcha.py` | `verify_captcha` | 80 | Xác minh token Turnstile của request; lỗi mạng không bỏ qua mà từ chối; log không chứa token hay secret (đã viết lại bởi Claude Opus 5.5 khi đọc IP thật sau Nginx) | [ ] |
+| 437 | Claude Opus 5.5 |  | `backend/core/captcha.py` | `check_turnstile` | 102 | Cảnh báo khi chạy web mà Turnstile đang tắt hoặc đang dùng key thử của Cloudflare | [ ] |
 | 438 | Claude Opus 5.5 |  | `frontend/templates/account/register.html` | `<div class="auth-form__captcha">` | 34 | Ô xác minh Cloudflare Turnstile tự hiện trong form, báo cần JavaScript khi bị tắt | [ ] |
 | 439 | Claude Opus 5.5 |  | `frontend/static/css/account.css` | `.auth-form__captcha` | 233 | Chỗ cho ô Cloudflare Turnstile trải hết bề ngang form, giữ chỗ để form không nhảy khi ô hiện ra | [ ] |
 | 440 | Claude Opus 5.5 |  | `database/schema/09_securityevent_captcha.sql` | `ALTER TABLE core_securityevent DROP CHECK ck_secevent_type;` | 8 | Thêm loại sự kiện CAPTCHA không đạt vào danh sách cho phép | [ ] |
@@ -445,3 +445,6 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 458 | Claude Opus 5.5 |  | `database/grants/01_role_privileges.sql` | `GRANT SELECT, INSERT, UPDATE ON accounts_user TO 'r_auth';` | 86 | Cấp cho r_auth đúng SELECT/INSERT/UPDATE trên bảng tài khoản | [ ] |
 | 459 | Claude Opus 5.5 |  | `database/objects/10_trg_accounts_user_guard.sql` | `IF OLD.is_staff = 0 AND NOT (` | 86 | Dòng của khách: cấm đổi is_active, email, username, email_verified, date_joined (chặn tự mở khóa và đổi email để chiếm tài khoản) | [ ] |
 | 460 | Claude Opus 5.5 |  | `backend/core/tests/test_account_router.py` | `AccountWriteRouterTests` | 15 | Test router ghi tài khoản: ghi User đi qua "auth", đọc vẫn "default", bảng khác không đổi kết nối | [ ] |
+| 461 | Claude Opus 5.5 |  | `backend/core/client_ip.py` | `client_ip` | 15 | IP thật của client: chỉ tin header X-Real-IP khi request đến từ proxy tin cậy (Nginx), còn lại dùng REMOTE_ADDR; header giả từ client bị bỏ qua | [ ] |
+| 462 | Claude Opus 5.5 |  | `backend/core/tests/test_client_ip.py` | `ClientIpTests` | 23 | Test đọc IP thật: chỉ tin X-Real-IP khi đến từ proxy tin cậy, header giả hoặc sai định dạng bị bỏ qua | [ ] |
+| 463 | Claude Opus 5.5 |  | `backend/core/tests/test_client_ip.py` | `LockoutBehindProxyTests` | 51 | Tái hiện phát hiện số 12: sau Nginx kẻ tấn công khóa đăng nhập của admin; sau khi sửa chỉ IP kẻ tấn công bị khóa, log ghi IP thật | [ ] |

@@ -127,6 +127,12 @@ AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = timedelta(minutes=15)
 AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
 AXES_RESET_ON_SUCCESS = True
+AXES_CLIENT_IP_CALLABLE = "core.client_ip.client_ip"   # axes đếm theo IP thật, không theo IP của Nginx
+
+# IP thật của client sau reverse proxy (core/client_ip.py). Chỉ tin header khi
+# REMOTE_ADDR là một proxy trong danh sách này; trống (máy dev) = không tin header nào.
+TRUSTED_PROXY_IPS = env.list("TRUSTED_PROXY_IPS", default=[])
+CLIENT_IP_HEADER = "HTTP_X_REAL_IP"        # Nginx: proxy_set_header X-Real-IP $remote_addr;
 
 LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "catalog:home"

@@ -2,6 +2,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db import OperationalError, connection
 
+from core.client_ip import client_ip
 from core.security_log import log_event
 from orders.services import ORDER_CODE_RE
 
@@ -49,11 +50,6 @@ def _signal_code(exc):
     return None
 
 
-def _client_ip(request):
-    ip = request.META.get("REMOTE_ADDR") or None
-    return ip[:45] if ip else None
-
-
 # AI-TRACE#356 | Claude Opus 5.5 | Thanh toán mô phỏng: chỉ khi PAYMENT_SIMULATION bật, user lấy từ phiên, mã đơn sai mẫu không xuống CSDL, giới hạn tần suất rồi gọi sp_payment_simulate, trả mã giao dịch | CẤM XÓA CHÚ THÍCH NÀY
 def simulate_payment(request, code):
     if not settings.PAYMENT_SIMULATION:
@@ -71,7 +67,7 @@ def simulate_payment(request, code):
         raise PaymentError("RATE_LIMITED")
     try:
         with connection.cursor() as cursor:
-            cursor.callproc("sp_payment_simulate", [user.pk, code, _client_ip(request), None])
+            cursor.callproc("sp_payment_simulate", [user.pk, code, client_ip(request), None])
             while cursor.nextset():
                 pass
             cursor.execute("SELECT @_sp_payment_simulate_3")

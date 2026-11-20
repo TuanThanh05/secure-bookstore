@@ -91,6 +91,7 @@ jobs:
           # Chuỗi giả chỉ để settings prod chạy được: không gọi Cloudflare, không phải key thật
           TURNSTILE_SITE_KEY: ci-not-a-real-site-key
           TURNSTILE_SECRET_KEY: ci-not-a-real-secret-key
+          TRUSTED_PROXY_IPS: 127.0.0.1
         run: python manage.py check --deploy --settings=bookstore.settings.prod --fail-level WARNING
 
       - name: Không quên makemigrations
