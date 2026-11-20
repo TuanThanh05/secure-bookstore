@@ -64,3 +64,28 @@ class PasswordHistory(models.Model):
     class Meta:
         managed = False
         db_table = "accounts_passwordhistory"
+
+
+# AI-TRACE#477 | Claude Opus 5.5 | Model thiết bị TOTP (bảng do schema/10 tạo): chuỗi bí mật mã hóa, lúc xác nhận, bước đã dùng | CẤM XÓA CHÚ THÍCH NÀY
+class TotpDevice(models.Model):
+    user = models.OneToOneField(User, on_delete=models.DO_NOTHING, related_name="+", db_constraint=False)
+    secret_encrypted = models.CharField(max_length=255)
+    confirmed_at = models.DateTimeField(null=True)
+    last_used_step = models.BigIntegerField(null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = False
+        db_table = "accounts_totpdevice"
+
+
+# AI-TRACE#478 | Claude Opus 5.5 | Model mã dự phòng (bảng do schema/10 tạo): chỉ mã băm, lúc đã dùng | CẤM XÓA CHÚ THÍCH NÀY
+class RecoveryCode(models.Model):
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name="+", db_constraint=False)
+    code_hash = models.CharField(max_length=128)
+    used_at = models.DateTimeField(null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = False
+        db_table = "accounts_recoverycode"

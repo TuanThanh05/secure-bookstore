@@ -1,0 +1,36 @@
+{% extends "layouts/auth.html" %}
+{% load static %}
+{% block title %}Xác thực 2 bước{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/account.css' %}">{% endblock %}
+
+{% block content %}
+  {# AI-TRACE#500 | Claude Opus 5.5 | Trang đăng nhập bước 2: nhập mã 6 số (khách được dùng mã dự phòng), có hạn 5 phút | CẤM XÓA CHÚ THÍCH NÀY #}
+  <h1 class="auth__title">Xác thực 2 bước</h1>
+  <p class="auth__lead">Mở ứng dụng Google Authenticator và nhập mã 6 số của Secure Bookstore. Bạn có {{ minutes }} phút.</p>
+
+  <form method="post" class="auth-form" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="auth-form__alert" role="alert">
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+      </div>
+    {% endif %}
+    {% for field in form %}
+      <div class="auth-form__field{% if field.errors %} auth-form__field--error{% endif %}">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}
+        <ul class="auth-form__errors" id="{{ field.auto_id }}_error">
+          {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+    {% endfor %}
+    <button type="submit" class="btn auth-form__submit">Xác nhận</button>
+  </form>
+
+  {% if allow_recovery %}
+    <p class="auth__switch">Mất điện thoại? Nhập một mã dự phòng (dạng XXXXX-XXXXX) vào ô trên.</p>
+  {% endif %}
+  <p class="auth__switch"><a href="{% url 'accounts:login' %}">Đăng nhập lại từ đầu</a></p>
+{% endblock %}

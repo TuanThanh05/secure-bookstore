@@ -1,0 +1,35 @@
+{% extends "layouts/account.html" %}
+{% load static %}
+{% block title %}Tắt xác thực 2 bước{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/account-area.css' %}"><link rel="stylesheet" href="{% static 'css/account.css' %}">{% endblock %}
+{% block account_content %}
+  {# AI-TRACE#503 | Claude Opus 5.5 | Trang tắt 2 bước: mật khẩu hiện tại và mã 6 số hoặc mã dự phòng | CẤM XÓA CHÚ THÍCH NÀY #}
+  <header class="area-header">
+    <h1 class="area-header__title">Tắt xác thực 2 bước</h1>
+    <p class="area-header__desc">Tắt xong, chỉ cần mật khẩu là đăng nhập được. Các mã dự phòng cũ sẽ bị hủy và bạn sẽ nhận thư báo.</p>
+  </header>
+
+  <div class="area-form">
+    <form method="post" class="auth-form" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="auth-form__alert" role="alert">
+          {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+        </div>
+      {% endif %}
+      {% for field in form %}
+        <div class="auth-form__field{% if field.errors %} auth-form__field--error{% endif %}">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}
+            <ul class="auth-form__errors" id="{{ field.auto_id }}_error">
+              {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      {% endfor %}
+      <button type="submit" class="btn auth-form__submit">Tắt xác thực 2 bước</button>
+    </form>
+    <p class="area-form__links"><a href="{% url 'accounts:profile' %}">Hủy, quay lại thông tin tài khoản</a></p>
+  </div>
+{% endblock %}

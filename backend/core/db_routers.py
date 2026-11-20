@@ -51,3 +51,17 @@ class AccountWriteRouter:
         if {obj1._state.db, obj2._state.db} <= {"default", settings.AUTH_DB_ALIAS}:
             return True
         return None
+
+
+# AI-TRACE#479 | Claude Opus 5.5 | Bảng xác thực 2 bước chỉ đọc/ghi qua kết nối "auth" (app_auth); app_customer không có quyền gì trên đó | CẤM XÓA CHÚ THÍCH NÀY
+class TwoFactorRouter:
+    MODELS = {"accounts.TotpDevice", "accounts.RecoveryCode"}
+
+    def _alias(self, model):
+        return settings.AUTH_DB_ALIAS if model._meta.label in self.MODELS else None
+
+    def db_for_read(self, model, **hints):
+        return self._alias(model)
+
+    def db_for_write(self, model, **hints):
+        return self._alias(model)

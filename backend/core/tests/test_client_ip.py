@@ -6,6 +6,7 @@ from django.test import Client, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
 from accounts.models import User
+from accounts.tests.two_factor_helpers import enroll, submit_code
 from core.client_ip import client_ip
 from core.models import SecurityEvent
 
@@ -48,13 +49,15 @@ class ClientIpTests(SimpleTestCase):
         self.assertIsNone(client_ip(request("không phải IP")))
 
 
-# AI-TRACE#463 | Claude Opus 5.5 | Tái hiện phát hiện số 12: sau Nginx kẻ tấn công khóa đăng nhập của admin; sau khi sửa chỉ IP kẻ tấn công bị khóa, log ghi IP thật | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#463 | Claude Opus 5.5 | Tái hiện phát hiện số 12: sau Nginx kẻ tấn công khóa đăng nhập của admin; sau khi sửa chỉ IP kẻ tấn công bị khóa, log ghi IP thật | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thêm xác thực 2 bước
 @override_settings(**BEHIND_NGINX)
 class LockoutBehindProxyTests(TestCase):
     def setUp(self):
         cache.clear()
         self.secret = f"{secrets.token_urlsafe(12)}-qt-Aa9"
-        User.objects.create_user(username="quan_tri", email="qt@example.test", password=self.secret, is_staff=True)
+        admin = User.objects.create_user(username="quan_tri", email="qt@example.test", password=self.secret,
+                                         is_staff=True)
+        self.totp = enroll(admin)
 
     def via_nginx(self, real_ip):
         return Client(REMOTE_ADDR=NGINX, HTTP_X_REAL_IP=real_ip)
@@ -68,7 +71,8 @@ class LockoutBehindProxyTests(TestCase):
         self.fail_five_times(self.via_nginx("198.51.100.66"))
         admin = self.via_nginx("203.0.113.9")
         response = admin.post(reverse("accounts:login"), {"username": "quan_tri", "password": self.secret})
-        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse("accounts:login_two_factor"), fetch_redirect_response=False)
+        submit_code(admin, self.totp)
         self.assertIn("_auth_user_id", admin.session)
 
     def test_attacker_ip_is_locked_and_logged(self):

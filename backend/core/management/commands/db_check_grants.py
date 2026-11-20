@@ -111,6 +111,14 @@ CHECKS = (
     ("auth", "app_auth đọc django_session", "SELECT session_key FROM django_session LIMIT 1", 1142),
     ("auth", "app_auth sửa accounts_passwordhistory", "DELETE FROM accounts_passwordhistory WHERE 1 = 0", 1142),
     ("auth", "app_auth gọi sp_category_list", "CALL sp_category_list()", 1370),
+    ("default", "app_customer đọc chuỗi bí mật 2 bước", "SELECT secret_encrypted FROM accounts_totpdevice LIMIT 1", 1142),
+    ("default", "app_customer đọc mã dự phòng", "SELECT code_hash FROM accounts_recoverycode LIMIT 1", 1142),
+    ("default", "app_customer xóa thiết bị 2 bước", "DELETE FROM accounts_totpdevice WHERE 1 = 0", 1142),
+    ("staff", "app_staff đọc chuỗi bí mật 2 bước", "SELECT secret_encrypted FROM accounts_totpdevice LIMIT 1", 1142),
+    ("session", "app_session đọc chuỗi bí mật 2 bước", "SELECT secret_encrypted FROM accounts_totpdevice LIMIT 1", 1142),
+    ("auth", "app_auth đọc thiết bị 2 bước", "SELECT id, secret_encrypted FROM accounts_totpdevice LIMIT 1", ALLOWED),
+    ("auth", "app_auth ghi bước thời gian (không đổi dòng nào)", "UPDATE accounts_totpdevice SET last_used_step = last_used_step WHERE 1 = 0", ALLOWED),
+    ("auth", "app_auth đọc mã dự phòng", "SELECT id FROM accounts_recoverycode LIMIT 1", ALLOWED),
 )
 
 

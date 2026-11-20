@@ -16,7 +16,7 @@ EVENT_LABELS = dict([
     ("logout", "Đăng xuất"),
     ("password_changed", "Đổi mật khẩu"),
     ("password_reset_requested", "Yêu cầu quên mật khẩu"),
-    ("otp_failed", "Sai mã OTP"),
+    ("otp_failed", "Sai mã xác thực 2 bước"),
     ("access_denied", "Không đủ quyền"),
     ("idor_attempt", "Nghi truy cập dữ liệu người khác"),
     ("db_permission_denied", "MySQL từ chối quyền"),
@@ -35,6 +35,9 @@ EVENT_LABELS = dict([
     ("email_send_failed", "Gửi email lỗi"),
     ("sensitive_data_viewed", "Xem dữ liệu nhạy cảm"),
     ("profile_updated", "Sửa hồ sơ"),
+    ("two_factor_enabled", "Bật xác thực 2 bước"),
+    ("two_factor_disabled", "Tắt xác thực 2 bước"),
+    ("two_factor_recovery_used", "Dùng mã dự phòng"),
 ])
 SEVERITY_LABELS = {"info": "Thông tin", "warning": "Cảnh báo", "critical": "Nghiêm trọng"}
 TABLE_LABELS = {

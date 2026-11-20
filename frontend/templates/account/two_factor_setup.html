@@ -1,0 +1,47 @@
+{% extends "layouts/account.html" %}
+{% load static %}
+{% block title %}Bật xác thực 2 bước{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/account-area.css' %}"><link rel="stylesheet" href="{% static 'css/account.css' %}">{% endblock %}
+{% block account_content %}
+  {# AI-TRACE#501 | Claude Opus 5.5 | Trang cài 2 bước: ảnh QR từ URL riêng, chuỗi bí mật để gõ tay, ô nhập mã xác nhận | CẤM XÓA CHÚ THÍCH NÀY #}
+  <header class="area-header">
+    <h1 class="area-header__title">Bật xác thực 2 bước</h1>
+    <p class="area-header__desc">Làm trong {{ setup_minutes }} phút. Không chụp màn hình hay gửi mã QR này cho ai.</p>
+  </header>
+
+  <ol class="area-2fa__steps">
+    <li>Cài ứng dụng <strong>Google Authenticator</strong> (hoặc ứng dụng TOTP khác) trên điện thoại.</li>
+    <li>Trong ứng dụng, chọn thêm tài khoản và quét mã QR dưới đây.</li>
+    <li>Nhập mã 6 số đang hiện trong ứng dụng rồi bấm Xác nhận.</li>
+  </ol>
+
+  <figure class="area-2fa__qr">
+    <img src="{% url 'accounts:two_factor_qr' %}" width="245" height="245" alt="Mã QR để thêm tài khoản {{ user.get_username }} vào ứng dụng xác thực">
+    <figcaption>Không quét được? Chọn nhập khóa thủ công, tên <strong>{{ issuer }}</strong>, khóa:
+      <code class="area-2fa__secret">{{ secret }}</code></figcaption>
+  </figure>
+
+  <div class="area-form">
+    <form method="post" class="auth-form" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="auth-form__alert" role="alert">
+          {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+        </div>
+      {% endif %}
+      {% for field in form %}
+        <div class="auth-form__field{% if field.errors %} auth-form__field--error{% endif %}">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}
+            <ul class="auth-form__errors" id="{{ field.auto_id }}_error">
+              {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+      {% endfor %}
+      <button type="submit" class="btn auth-form__submit">Xác nhận</button>
+    </form>
+    <p class="area-form__links"><a href="{% url 'accounts:profile' %}">Hủy, quay lại thông tin tài khoản</a></p>
+  </div>
+{% endblock %}

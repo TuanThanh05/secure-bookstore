@@ -122,4 +122,5 @@ Thử tay sau khi dựng Nginx (bước 4):
 
 - Access log của Nginx ghi cả đường dẫn, kể cả link đăng ký và đặt lại mật khẩu. Các mã này chỉ dùng một lần và có hạn, nhưng vẫn nên giữ quyền đọc log ở mức root.
 - Chỉ 1 tiến trình Gunicorn. Muốn nhiều tiến trình thì phải chuyển cache sang chỗ dùng chung (ví dụ Redis) trước.
+- Máy chủ phải đồng bộ giờ (`timedatectl set-ntp true`), nếu không mã xác thực 2 bước sẽ sai (`docs/xac-thuc-2-buoc.md` mục 5).
 - Nếu sau này có thêm một tầng proxy nữa (Cloudflare proxy, load balancer) thì phải xem lại `TRUSTED_PROXY_IPS` và cách Nginx lấy IP (module `real_ip`).

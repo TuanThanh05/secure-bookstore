@@ -40,7 +40,7 @@ cd backend
 python manage.py db_setup                                         # CSDL, role, 4 tài khoản
 python manage.py migrate --settings=bookstore.settings.migrate    # tạo bảng
 python manage.py db_apply                                         # trigger + cấp quyền
-python manage.py createsuperuser --settings=bookstore.settings.migrate
+python manage.py tao_admin <tên> <email> --settings=bookstore.settings.migrate   # admin duy nhất + Google Authenticator
 python manage.py runserver                                        # web chạy bằng app_customer
 ```
 

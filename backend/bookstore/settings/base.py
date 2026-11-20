@@ -110,6 +110,7 @@ SESSION_DB_ALIAS = "session"
 AUTH_DB_ALIAS = "auth"
 DATABASE_ROUTERS = [
     "core.db_routers.SessionRouter",
+    "core.db_routers.TwoFactorRouter",
     "core.db_routers.AccountWriteRouter",
     "core.db_routers.MigrateOnDefaultRouter",
 ]
@@ -152,6 +153,16 @@ TURNSTILE_SECRET_KEY = env("TURNSTILE_SECRET_KEY", default="")
 TURNSTILE_ACTION = "signup"               # khớp data-action của widget, Siteverify trả lại để kiểm tra
 TURNSTILE_TIMEOUT = 5                     # giây chờ Siteverify; quá hạn thì từ chối, không gửi thư
 PASSWORD_CHANGE_MAX_FAILURES = 5
+
+# Xác thực 2 bước bằng ứng dụng (TOTP, RFC 6238) – docs/xac-thuc-2-buoc.md
+TWO_FACTOR_ISSUER = "Secure Bookstore"      # tên hiện trong Google Authenticator
+TWO_FACTOR_VALID_WINDOW = 1                 # chấp nhận lệch ±1 bước (±30 giây) cho đồng hồ điện thoại
+TWO_FACTOR_PENDING_MAX_AGE = 5 * 60         # sau khi đúng mật khẩu, có 5 phút để nhập mã
+TWO_FACTOR_MAX_ATTEMPTS = 5                 # sai 5 lần trong một lượt: hủy lượt, nhập lại mật khẩu
+TWO_FACTOR_USER_MAX_FAILURES = 10           # sai 10 lần/giờ trên một tài khoản: tạm khóa bước 2 của tài khoản đó
+TWO_FACTOR_USER_FAILURE_WINDOW = 60 * 60
+TWO_FACTOR_SETUP_MAX_AGE = 10 * 60          # mã QR khi cài chỉ dùng được trong 10 phút
+RECOVERY_CODE_COUNT = 5
 PASSWORD_CHANGE_FAILURE_WINDOW = 15 * 60
 
 FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY", default="")

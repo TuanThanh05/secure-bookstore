@@ -25,6 +25,9 @@ GRANT SELECT, TRIGGER ON accounts_user TO 'bookstore_definer'@'localhost';
 -- Trigger trg_pwhist_* (objects/11_...): thêm mã băm mới, đọc để tìm dòng
 -- thứ 5, xóa các dòng cũ hơn. Chỉ definer có INSERT/DELETE trên bảng này.
 GRANT SELECT, INSERT, DELETE ON accounts_passwordhistory TO 'bookstore_definer'@'localhost';
+-- Trigger 12 bảo vệ 2 bước của nhân viên (schema/10_two_factor.sql)
+GRANT SELECT, TRIGGER ON accounts_totpdevice   TO 'bookstore_definer'@'localhost';
+GRANT SELECT, TRIGGER ON accounts_recoverycode TO 'bookstore_definer'@'localhost';
 
 -- ---------------------------------------------------------------------
 -- r_customer: kết nối "default" của Django (app_customer)
@@ -85,6 +88,12 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON django_session TO 'r_session';
 -- ---------------------------------------------------------------------
 -- AI-TRACE#458 | Claude Opus 5.5 | Cấp cho r_auth đúng SELECT/INSERT/UPDATE trên bảng tài khoản | CẤM XÓA CHÚ THÍCH NÀY
 GRANT SELECT, INSERT, UPDATE ON accounts_user TO 'r_auth';
+-- Xác thực 2 bước: CHỈ r_auth đụng được 2 bảng này (chuỗi bí mật TOTP mã hóa,
+-- mã băm của mã dự phòng). r_customer, r_staff, r_session không có quyền gì.
+-- Trigger 12 chặn r_auth tạo/xóa/sửa 2 bước của nhân viên.
+-- AI-TRACE#476 | Claude Opus 5.5 | Cấp cho r_auth quyền trên 2 bảng xác thực 2 bước, không cấp cho role nào khác | CẤM XÓA CHÚ THÍCH NÀY
+GRANT SELECT, INSERT, UPDATE, DELETE ON accounts_totpdevice   TO 'r_auth';
+GRANT SELECT, INSERT, UPDATE, DELETE ON accounts_recoverycode TO 'r_auth';
 
 -- ---------------------------------------------------------------------
 -- r_staff: kết nối "staff" (app_staff), chỉ app dashboard dùng
