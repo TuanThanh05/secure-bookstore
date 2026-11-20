@@ -354,3 +354,12 @@ GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_security  TO 'bookstore_definer'@'
 GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_orders    TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_stock     TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_security  TO 'r_staff';
+
+-- ---------------------------------------------------------------------
+-- Chặn dò mật khẩu rải từ một IP (database/objects/46_login_ip_guard.sql).
+-- Definer đã có SELECT core_securityevent. r_customer: chỉ gọi thủ tục đếm
+-- (trang đăng nhập chạy trên kết nối default), không đọc được nhật ký.
+-- ---------------------------------------------------------------------
+-- AI-TRACE#545 | Claude Opus 5.5 | Cấp quyền gọi thủ tục đếm lần đăng nhập sai theo IP cho r_customer | CẤM XÓA CHÚ THÍCH NÀY
+GRANT EXECUTE ON PROCEDURE sp_login_ip_failures      TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_login_ip_failures      TO 'r_customer';

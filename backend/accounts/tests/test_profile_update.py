@@ -14,7 +14,7 @@ PASSWORD = secrets.token_urlsafe(12) + "-Aa9"
 TEST_KEY = base64.b64encode(secrets.token_bytes(32)).decode()
 
 
-# AI-TRACE#083 | Claude Opus 5.5 | Test xác thực lại của khách và cập nhật họ, tên, SĐT mã hóa | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#083 | Claude Opus 5.5 | Test xác thực lại của khách và cập nhật họ, tên, SĐT mã hóa | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ đăng nhập bằng email (T3.2)
 @override_settings(FIELD_ENCRYPTION_KEY=TEST_KEY)
 class ProfileUpdateTests(TestCase):
     def setUp(self):
@@ -61,8 +61,10 @@ class ProfileUpdateTests(TestCase):
         self.assertNotIn("0912345678", str(event.detail))
         self.assertContains(self.client.get(reverse("accounts:profile")), "0912345678")
 
-    def test_reauth_by_email_works(self):
-        self.assertRedirects(self.reauth(username="AN@example.test"), self.update_url, fetch_redirect_response=False)
+    def test_reauth_by_email_is_rejected(self):
+        response = self.reauth(username="AN@example.test")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Tên đăng nhập hoặc mật khẩu không đúng.")
 
     def test_international_prefix_is_normalized(self):
         self.reauth()

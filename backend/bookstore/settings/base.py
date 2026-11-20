@@ -130,6 +130,8 @@ AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = timedelta(minutes=15)
 AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
 AXES_RESET_ON_SUCCESS = True
+LOGIN_IP_FAILURE_LIMIT = 20                         # T3.2: một IP sai >= 20 lần (mọi tài khoản) trong cửa sổ dưới đây thì chặn đăng nhập
+LOGIN_IP_FAILURE_WINDOW_MINUTES = 60
 AXES_CLIENT_IP_CALLABLE = "core.client_ip.client_ip"   # axes đếm theo IP thật, không theo IP của Nginx
 
 # IP thật của client sau reverse proxy (core/client_ip.py). Chỉ tin header khi

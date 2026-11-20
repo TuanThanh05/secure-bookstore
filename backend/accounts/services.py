@@ -3,7 +3,7 @@ import time
 
 from django.conf import settings
 from django.core.cache import cache
-from django.db import IntegrityError, transaction
+from django.db import DatabaseError, IntegrityError, connection, transaction
 
 from core.client_ip import client_ip
 from core.security_log import log_event
@@ -138,3 +138,25 @@ def update_profile(request, user, data):
         user.save(update_fields=changed)
         log_event("profile_updated", request, user=user, username=user.get_username(), detail={"fields": changed})
     return changed
+
+
+SP_DOES_NOT_EXIST = 1305
+
+
+# AI-TRACE#546 | Claude Opus 5.5 | IP đã đăng nhập sai quá ngưỡng (gộp mọi tài khoản) trong cửa sổ gần nhất thì chặn: đếm bằng sp_login_ip_failures trên bảng nhật ký | CẤM XÓA CHÚ THÍCH NÀY
+def login_ip_blocked(request):
+    ip = client_ip(request)
+    if not ip:
+        return False
+    try:
+        with connection.cursor() as cursor:
+            cursor.callproc("sp_login_ip_failures", [ip[:45], settings.LOGIN_IP_FAILURE_WINDOW_MINUTES])
+            (failures,) = cursor.fetchone()
+            while cursor.nextset():
+                pass
+    except DatabaseError as exc:
+        if exc.args and exc.args[0] == SP_DOES_NOT_EXIST:
+            return False
+        raise
+    return failures >= settings.LOGIN_IP_FAILURE_LIMIT
+

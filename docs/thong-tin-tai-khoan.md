@@ -57,7 +57,7 @@ Rủi ro thực tế là **phiên đăng nhập bị chiếm**: quản trị vi�
 
 ## 6. Cập nhật thông tin của khách (họ, tên, SĐT)
 
-Luồng: trang Thông tin tài khoản → nút **Cập nhật thông tin** → nếu chưa xác thực lại trong `REAUTH_MAX_AGE` (2 phút) thì chuyển tới **trang xác thực lại riêng của khách** `accounts:reauth` (`/account/xac-thuc-lai/`) → nhập tên đăng nhập (hoặc email) + mật khẩu → quay về form `accounts:profile_update` (`/account/cap-nhat/`).
+Luồng: trang Thông tin tài khoản → nút **Cập nhật thông tin** → nếu chưa xác thực lại trong `REAUTH_MAX_AGE` (2 phút) thì chuyển tới **trang xác thực lại riêng của khách** `accounts:reauth` (`/account/xac-thuc-lai/`) → nhập tên đăng nhập + mật khẩu (không nhận email, xem `docs/dang-nhap.md`) → quay về form `accounts:profile_update` (`/account/cap-nhat/`).
 
 - **Trang xác thực lại tách riêng khỏi trang của admin** (`accounts/decorators.customer_recent_auth_required`, view `accounts.views.reauth`), cùng cơ chế lưu mốc thời gian trong session của `core/decorators.py`. Bên dưới nút "Xác thực" có link **Quên mật khẩu?**. Nhập sai bị axes đếm; nhập đúng tài khoản người khác bị từ chối và ghi `access_denied`. Tham số `next` chỉ được trỏ trong site.
 - **Chỉ sửa được họ, tên, SĐT.** Form là `forms.Form` liệt kê 3 ô (không phải `ModelForm`), service `update_profile` chỉ gán đúng 3 cột và lưu bằng `save(update_fields=...)`. Gửi thêm `username`, `email`, `is_staff` trong request cũng bị bỏ qua (chống mass assignment).
