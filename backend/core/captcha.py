@@ -9,6 +9,7 @@ from django.conf import settings
 from django.core import checks
 from django.http.request import split_domain_port
 
+from .client_ip import client_ip
 from .security_log import log_event
 
 SITEVERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
@@ -76,7 +77,7 @@ def _check_response(request, data, action):
     return CaptchaResult(True, "verified")
 
 
-# AI-TRACE#436 | Claude Opus 5.5 | Xác minh token Turnstile của request; lỗi mạng không bỏ qua mà từ chối; log không chứa token hay secret | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#436 | Claude Opus 5.5 | Xác minh token Turnstile của request; lỗi mạng không bỏ qua mà từ chối; log không chứa token hay secret | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi đọc IP thật sau Nginx
 def verify_captcha(request, action):
     if not captcha_enabled():
         return CaptchaResult(True, "disabled")
@@ -87,7 +88,7 @@ def verify_captcha(request, action):
         result = CaptchaResult(False, "invalid")
     else:
         try:
-            data = _siteverify(token, request.META.get("REMOTE_ADDR"))
+            data = _siteverify(token, client_ip(request))
         except (urllib.error.URLError, TimeoutError, OSError, ValueError):
             result = CaptchaResult(False, "unavailable")
         else:

@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db import IntegrityError, transaction
 
+from core.client_ip import client_ip
 from core.security_log import log_event
 
 from .emails import send_existing_account_email, send_signup_link_email
@@ -25,9 +26,9 @@ def _count_within(key, limit, window):
     return count <= limit
 
 
-# AI-TRACE#415 | Claude Opus 5.5 | Giới hạn số lần gửi form đăng ký của mỗi IP, đếm riêng từng bước | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#415 | Claude Opus 5.5 | Giới hạn số lần gửi form đăng ký của mỗi IP, đếm riêng từng bước | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi đọc IP thật sau Nginx
 def allow_signup_step(request, step):
-    ip = request.META.get("REMOTE_ADDR") or "unknown"
+    ip = client_ip(request) or "unknown"
     allowed = _count_within(f"accounts:signup-rate:{step}:{ip}", settings.SIGNUP_RATE_LIMIT, settings.SIGNUP_RATE_WINDOW)
     if not allowed:
         log_event("rate_limited", request, severity="warning", detail={"kind": f"signup_{step}"})

@@ -5,6 +5,7 @@ from django.contrib.auth.signals import user_logged_in, user_logged_out, user_lo
 from django.db import DatabaseError
 from django.dispatch import receiver
 
+from .client_ip import client_ip
 from .models import SecurityEvent
 
 logger = logging.getLogger("security")
@@ -17,7 +18,7 @@ def _client_info(request):
         return "unknown", None, None, None
     meta = request.META
     user_agent = (meta.get("HTTP_USER_AGENT") or "")[:255] or None
-    return meta.get("REMOTE_ADDR") or "unknown", user_agent, request.method, request.path[:255]
+    return client_ip(request) or "unknown", user_agent, request.method, request.path[:255]
 
 
 def log_event(event_type, request=None, *, severity="info", user=None, username=None, ip_address=None, detail=None,
