@@ -20,7 +20,7 @@ WEAK = "1234" * 2
 LINK_RE = re.compile(r"https?://[^\s]+(/account/dang-ky/xac-nhan/[^/\s]+/)")
 
 
-# AI-TRACE#431 | Claude Opus 5.5 | Test đăng ký bắt đầu bằng email: chống chiếm tài khoản trước, phiên, link, giới hạn | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#431 | Claude Opus 5.5 | Test đăng ký bắt đầu bằng email: chống chiếm tài khoản trước, phiên, link, giới hạn | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ đăng nhập bằng email (T3.2)
 @override_settings(**NO_CAPTCHA)
 class SignupTests(TestCase):
     def setUp(self):
@@ -71,8 +71,9 @@ class SignupTests(TestCase):
         victim.get(self.link_path())
         self.assertRedirects(self.complete("nannhan", PASSWORD, victim), self.login_url)
         self.assertEqual(list(User.objects.values_list("username", "email")), [("nannhan", "nannhan@example.test")])
-        self.assertFalse(self.can_log_in("nannhan@example.test", ATTACKER_PASSWORD))
-        self.assertTrue(self.can_log_in("nannhan@example.test", PASSWORD))
+        self.assertFalse(self.can_log_in("nannhan", ATTACKER_PASSWORD))
+        self.assertFalse(self.can_log_in("nannhan@example.test", PASSWORD))
+        self.assertTrue(self.can_log_in("nannhan", PASSWORD))
 
     def test_attacker_link_cannot_be_redirected_to_victim_email(self):
         attacker = Client()

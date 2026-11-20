@@ -24,6 +24,7 @@ from .decorators import customer_recent_auth_required, customer_required
 from . import two_factor
 from .emails import send_password_changed_email, send_two_factor_email
 from .forms import (
+    USERNAME_MAX_LENGTH,
     CustomerPasswordChangeForm,
     CustomerPasswordResetForm,
     CustomerReauthForm,
@@ -42,6 +43,7 @@ from .services import (
     clear_password_change_failures,
     complete_signup,
     email_has_account,
+    login_ip_blocked,
     pending_signup_email,
     record_password_change_failure,
     remember_signup_email,
@@ -315,6 +317,8 @@ TWO_FACTOR_PENDING_KEY = "accounts:2fa-pending"
 TWO_FACTOR_EXPIRED = "Phiên đăng nhập 2 bước đã hết hạn. Vui lòng đăng nhập lại."
 TWO_FACTOR_BLOCKED = "Tài khoản đã nhập sai mã xác thực quá nhiều lần. Vui lòng thử lại sau 1 giờ."
 TWO_FACTOR_WRONG = "Mã xác thực không đúng hoặc đã được dùng."
+LOGIN_IP_BLOCKED = ("Có quá nhiều lần đăng nhập sai từ mạng của bạn. "
+                    "Vui lòng thử lại sau ít phút, hoặc dùng \u201cQuên mật khẩu\u201d nếu bạn không nhớ mật khẩu.")
 STAFF_WITHOUT_TWO_FACTOR = ("Tài khoản quản trị chưa cài xác thực 2 bước nên không đăng nhập được trên web. "
                             "Cài bằng lệnh trên máy chủ (xem docs/xac-thuc-2-buoc.md).")
 
@@ -324,6 +328,19 @@ class SecureLoginView(LoginView):
     template_name = "account/login.html"
     authentication_form = LoginForm
     redirect_authenticated_user = True
+
+    # AI-TRACE#547 | Claude Opus 5.5 | IP đã đăng nhập sai quá ngưỡng (mọi tài khoản) thì trả 429 trước khi kiểm mật khẩu, không gọi authenticate, ghi log | CẤM XÓA CHÚ THÍCH NÀY
+    def post(self, request, *args, **kwargs):
+        if not login_ip_blocked(request):
+            return super().post(request, *args, **kwargs)
+        username = request.POST.get("username", "")[:USERNAME_MAX_LENGTH]
+        log_event("rate_limited", request, severity="warning", username=username,
+                  detail={"kind": "login_ip", "limit": settings.LOGIN_IP_FAILURE_LIMIT,
+                          "window_minutes": settings.LOGIN_IP_FAILURE_WINDOW_MINUTES})
+        form = self.get_form_class()(request, initial={"username": username})
+        form.cleaned_data = {}
+        form.add_error(None, LOGIN_IP_BLOCKED)
+        return self.render_to_response(self.get_context_data(form=form), status=429)
 
     def form_valid(self, form):
         user = form.get_user()

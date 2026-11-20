@@ -12,7 +12,7 @@ Trước bản sửa, Django lấy IP người dùng từ `request.META["REMOTE_
 
 Khi chạy sau Nginx, `REMOTE_ADDR` là địa chỉ của chính Nginx (`127.0.0.1`), nên **mọi người dùng trên Internet có chung một IP**. Hậu quả:
 
-1. **Khóa đăng nhập của bất kỳ ai, kể cả admin.** axes khóa theo cặp `username + ip_address`, để người dùng thật ở IP khác vẫn vào được. Mọi người chung IP thì 5 lần sai (dùng tên đăng nhập hoặc email của nạn nhân) là chủ tài khoản ở bất kỳ đâu cũng bị khóa 15 phút. Lặp lại mỗi 15 phút thì admin không bao giờ vào được trên web. Trên máy chủ vẫn mở được bằng lệnh `axes_reset`.
+1. **Khóa đăng nhập của bất kỳ ai, kể cả admin.** axes khóa theo cặp `username + ip_address`, để người dùng thật ở IP khác vẫn vào được. Mọi người chung IP thì 5 lần sai (dùng tên đăng nhập của nạn nhân) là chủ tài khoản ở bất kỳ đâu cũng bị khóa 15 phút. Lặp lại mỗi 15 phút thì admin không bao giờ vào được trên web. Trên máy chủ vẫn mở được bằng lệnh `axes_reset`.
 2. **Chặn đăng ký của cả hệ thống:** giới hạn 5 lần/10 phút/IP (`accounts.services.allow_signup_step`) bị dùng chung cho mọi người.
 3. **Mất dấu vết điều tra:** log và axes ghi toàn `127.0.0.1`. Turnstile và thanh toán mô phỏng cũng nhận sai IP.
 

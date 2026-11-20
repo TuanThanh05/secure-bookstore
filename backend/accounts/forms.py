@@ -21,6 +21,7 @@ from .emails import send_password_reset_email
 
 from .models import User
 
+USERNAME_MAX_LENGTH = 50
 WRONG_CURRENT_CREDENTIAL = "Mật khẩu hiện tại không đúng."
 TOO_LONG_MESSAGE = "Mật khẩu dài tối đa %(limit_value)d ký tự."
 
@@ -56,6 +57,7 @@ class SignupCompleteForm(UserCreationForm):
         cap_password_fields(self, "password1", "password2")
 
 
+# AI-TRACE#543 | Claude Opus 5.5 | Form đăng nhập chỉ nhận tên đăng nhập (không nhận email): chặn dò email ↔ tên đăng nhập qua trạng thái khóa | CẤM XÓA CHÚ THÍCH NÀY
 class LoginForm(AuthenticationForm):
 
     error_messages = {
@@ -66,22 +68,10 @@ class LoginForm(AuthenticationForm):
     def __init__(self, request=None, *args, **kwargs):
         super().__init__(request, *args, **kwargs)
         username = self.fields["username"]
-        username.max_length = 254
-        username.widget.attrs["maxlength"] = 254
-        username.label = "Tên đăng nhập hoặc email"
+        username.max_length = USERNAME_MAX_LENGTH
+        username.widget.attrs["maxlength"] = USERNAME_MAX_LENGTH
+        username.label = "Tên đăng nhập"
         cap_password_fields(self, "password")
-
-    def clean_username(self):
-        value = self.cleaned_data["username"]
-        if "@" in value:
-            username = (
-                User.objects.filter(email__iexact=value)
-                .values_list("username", flat=True)
-                .first()
-            )
-            if username:
-                return username
-        return value
 
     # AI-TRACE#540 | Claude Opus 5.5 | Đúng mật khẩu nhưng tài khoản đang bị khóa tự động vì giữ kho: không cho đăng nhập, báo giờ mở khóa | CẤM XÓA CHÚ THÍCH NÀY
     def confirm_login_allowed(self, user):
@@ -135,7 +125,7 @@ PHONE_RE = re.compile(r"^0[35789][0-9]{8}$")
 class CustomerReauthForm(forms.Form):
     error_messages = {"invalid": "Tên đăng nhập hoặc mật khẩu không đúng."}
 
-    username = forms.CharField(label="Tên đăng nhập hoặc email", max_length=254)
+    username = forms.CharField(label="Tên đăng nhập", max_length=USERNAME_MAX_LENGTH)
     password = forms.CharField(label="Mật khẩu", strip=False,
                                widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}))
 
@@ -151,11 +141,6 @@ class CustomerReauthForm(forms.Form):
         username = cleaned.get("username")
         password = cleaned.get("password")
         if username and password:
-            if "@" in username:
-                username = (
-                    User.objects.filter(email__iexact=username).values_list("username", flat=True).first()
-                    or username
-                )
             user = authenticate(self.request, username=username, password=password)
             if user is None or user.pk != self.request.user.pk:
                 self.user_mismatch = user is not None

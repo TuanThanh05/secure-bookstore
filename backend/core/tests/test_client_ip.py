@@ -64,7 +64,7 @@ class LockoutBehindProxyTests(TestCase):
 
     def fail_five_times(self, client):
         for _ in range(5):
-            client.post(reverse("accounts:login"), {"username": "qt@example.test",
+            client.post(reverse("accounts:login"), {"username": "quan_tri",
                                                     "password": f"sai-{secrets.token_hex(4)}"})
 
     def test_attacker_cannot_lock_out_admin(self):

@@ -141,6 +141,10 @@ CHECKS = (
     ("default", "app_customer tự gỡ khóa giữ kho (auto_locked_until)", "UPDATE accounts_user SET auto_locked_until = NULL WHERE 1 = 0", 1142),
     ("staff", "app_staff đổi auto_locked_until", "UPDATE accounts_user SET auto_locked_until = NULL WHERE 1 = 0", 1143),
     ("default", "app_customer đọc auto_locked_until (đăng nhập cần)", "SELECT auto_locked_until FROM accounts_user LIMIT 1", ALLOWED),
+    ("default", "app_customer gọi sp_login_ip_failures (đếm đăng nhập sai theo IP)", "CALL sp_login_ip_failures('192.0.2.1', 60)", ALLOWED),
+    ("staff", "app_staff gọi sp_login_ip_failures", "CALL sp_login_ip_failures('192.0.2.1', 60)", 1370),
+    ("session", "app_session gọi sp_login_ip_failures", "CALL sp_login_ip_failures('192.0.2.1', 60)", 1370),
+    ("auth", "app_auth gọi sp_login_ip_failures", "CALL sp_login_ip_failures('192.0.2.1', 60)", 1370),
 )
 
 
