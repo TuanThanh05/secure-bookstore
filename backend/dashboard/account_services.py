@@ -7,6 +7,7 @@ from django.db import OperationalError, connections
 
 from accounts.profile import phone_context
 from core.crypto import DecryptionError, decrypt_field
+from core.session_store import end_user_sessions
 
 SIGNAL_ERROR_CODE = 1644
 STAFF_DB = "staff"
@@ -170,9 +171,11 @@ def _clean_reason(reason):
     return text
 
 
-# AI-TRACE#303 | Claude Opus 5.5 | Khóa và mở khóa tài khoản khách qua sp_staff_account_lock/unlock, kèm lý do ghi vào nhật ký | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#303 | Claude Opus 5.5 | Khóa và mở khóa tài khoản khách qua sp_staff_account_lock/unlock, kèm lý do ghi vào nhật ký | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi đăng xuất mọi phiên của tài khoản bị khóa
 def lock_account(actor, user_id, reason):
-    _call("sp_staff_account_lock", [actor.pk, _positive_id(user_id), _clean_reason(reason)])
+    target_id = _positive_id(user_id)
+    _call("sp_staff_account_lock", [actor.pk, target_id, _clean_reason(reason)])
+    return end_user_sessions(target_id)
 
 
 def unlock_account(actor, user_id, reason):

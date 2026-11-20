@@ -39,6 +39,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "core.middleware.InactiveAccountSessionMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "core.middleware.StaffSessionLimitMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",

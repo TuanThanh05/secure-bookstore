@@ -51,7 +51,14 @@ Chốt: mỗi lần khóa hay mở khóa **đều phải nhập lại mật kh�
 
 Cách làm: form xác nhận (`/dashboard/tai-khoan/<id>/khoa/` hoặc `/mo-khoa/`) gồm **Lý do**, **Tên đăng nhập**, **Mật khẩu** của admin. Mật khẩu được kiểm tra bằng `authenticate()` cho đúng lần gửi đó rồi gọi thủ tục ngay; không lưu dấu "đã xác thực" vào phiên, nên lần sau phải nhập lại. Vì đi qua `authenticate()`, nhập sai bị django-axes đếm như đăng nhập sai (5 lần → tạm khóa 15 phút). Nhập tài khoản/mật khẩu của người khác → từ chối + log `access_denied`. Thành công → log `login_success` với `detail.step_up = true`, `action`, `target_id`.
 
-**Sau khi khóa:** khách bị đăng xuất ngay ở lần thao tác tiếp theo (Django `ModelBackend` không trả user có `is_active = 0`) và không đăng nhập được cho tới khi mở khóa.
+**Sau khi khóa:** mọi phiên đang mở của khách bị **xóa ngay** (mọi thiết bị) và khách không đăng nhập được cho tới khi mở khóa. Thông báo cho admin ghi số phiên đã đăng xuất; log `logout` (`detail.reason = "account_locked"`, `target_id`, `sessions_ended`).
+
+**Lỗi đã sửa (2026-11-20, báo cáo rà soát T3.1 / SA-05):** trước đây chỉ đặt `is_active = 0`. Django coi phiên đó là "chưa đăng nhập" nhưng **không xóa** dòng phiên; vì `SESSION_SAVE_EVERY_REQUEST = True`, mỗi request mang cookie đó trong lúc bị khóa còn gia hạn phiên thêm 30 phút. Khi admin **mở khóa**, cookie cũ (có thể đã bị đánh cắp – lý do khóa) lập tức dùng lại được mà không cần mật khẩu. Hai lớp sửa:
+
+1. `lock_account` gọi `core.session_store.end_user_sessions(user_id)` sau khi `sp_staff_account_lock` thành công (đọc từng dòng phiên bằng đúng khóa đã băm, xóa dòng có `_auth_user_id` của khách). Thủ tục báo lỗi thì không xóa gì.
+2. `core.middleware.InactiveAccountSessionMiddleware` (ngay sau `AuthenticationMiddleware`): phiên còn `_auth_user_id` mà người dùng không còn hợp lệ (bị khóa bằng bất kỳ cách nào, kể cả sửa thẳng CSDL) thì `session.flush()` + log `logout` (`detail.reason = "account_inactive"`).
+
+Kiểm tra: `core/tests/test_inactive_session.py` (2/4 test trượt trên code cũ: phiên bị đánh cắp sống lại sau khi mở khóa); sandbox: khóa bằng thủ tục thật → 1 phiên bị xóa, mở khóa → cookie cũ vẫn phải đăng nhập lại; khóa bằng root `UPDATE` (không qua hàm) → middleware vẫn hủy phiên.
 
 ## 4. Bảo mật đã kiểm tra
 

@@ -2,7 +2,7 @@ import time
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import logout
+from django.contrib.auth import SESSION_KEY, logout
 from django.contrib.auth.signals import user_logged_in
 from django.db import DatabaseError
 from django.dispatch import receiver
@@ -71,3 +71,17 @@ class StaffSessionLimitMiddleware:
             return True
         age = int(time.time()) - started
         return not 0 <= age < settings.STAFF_SESSION_MAX_AGE
+
+
+# AI-TRACE#524 | Claude Opus 5.5 | Phiên còn ghi người dùng nhưng tài khoản đã bị khóa (hoặc không còn) thì hủy hẳn phiên, không để phiên được gia hạn rồi sống lại khi mở khóa | CẤM XÓA CHÚ THÍCH NÀY
+class InactiveAccountSessionMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        session = getattr(request, "session", None)
+        if session is not None and SESSION_KEY in session and not request.user.is_authenticated:
+            log_event("logout", request, severity="warning",
+                      detail={"reason": "account_inactive", "user_id": str(session.get(SESSION_KEY))[:20]})
+            session.flush()
+        return self.get_response(request)
