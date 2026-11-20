@@ -18,7 +18,9 @@ PAYMENT_SIMULATION=True
 ```
 
 - `False` hoặc không ghi (mặc định) → nút xám **Thanh toán** kèm "Chưa cấu hình cổng thanh toán"; gửi POST thẳng vào URL cũng bị từ chối ở service, không xuống CSDL.
-- Đổi xong phải khởi động lại `runserver`.
+- Đổi xong phải khởi động lại `runserver` **và chạy lại `python manage.py db_apply --settings=bookstore.settings.migrate`** (từ 2026-11-20), rồi `db_check_grants`.
+
+**Cờ được chặn ở cả 2 lớp (báo cáo rà soát T3.3, sửa 2026-11-20).** Trước đây quyền `EXECUTE` trên `sp_payment_simulate` của `r_customer` được cấp cố định trong `database/grants/01_role_privileges.sql`, nên khi tắt cờ chỉ Django chặn; ai chiếm được kết nối `app_customer` (SQL injection, lộ mật khẩu) vẫn tự gọi thủ tục và đánh dấu đơn của mình là **đã thanh toán** mà không trả tiền. Nay dòng GRANT đó **không còn trong file**: lệnh `db_apply` đọc `PAYMENT_SIMULATION` rồi **cấp** (`True`) hoặc **thu hồi** (`False`, `REVOKE IF EXISTS`) quyền này sau khi chạy các file SQL (`core/management/commands/db_apply.py`, `apply_payment_simulation`), và in ra dòng `PAYMENT_SIMULATION=...: cấp/thu hồi ...`. Cờ tắt → MySQL từ chối với lỗi **1370** kể cả khi gọi thẳng. `db_check_grants` mong đợi kết quả theo đúng cờ (bật → 1644 vì id sai, tắt → 1370). Thu hồi có hiệu lực ngay cả với kết nối đang mở (đã thử).
 
 ## 3. Luồng xử lý
 
@@ -81,7 +83,7 @@ Lỗi nghiệp vụ hiện thông báo tiếng Việt rồi quay về trang đơ
 
 1. Thêm thủ tục ghi nhận của cổng, ghi vào **cùng bảng** `payments_payment` (`provider` = `vnpay`/`momo`, `signature_valid`, mọi lần báo về kể cả bị từ chối), đổi đơn sang `paid` theo đúng các bước 2–7 ở mục 3.
 2. Thêm kiểm tra chữ ký, số tiền, hạn, mã giao dịch dùng một lần; nếu dùng khóa sandbox công khai thì thêm bước server tự tra cứu giao dịch với cổng.
-3. Đặt `PAYMENT_SIMULATION=False`, bỏ `sp_payment_simulate` và dòng `GRANT EXECUTE ... sp_payment_simulate TO 'r_customer'`.
+3. Đặt `PAYMENT_SIMULATION=False` rồi `db_apply` (thu hồi quyền), bỏ `sp_payment_simulate` và hàm `apply_payment_simulation` trong `db_apply`.
 4. Lịch sử đơn và quản lý đơn của admin không phải sửa, vì chỉ đọc trạng thái đơn và bảng `payments_payment`.
 
 ## 7. Đã kiểm tra

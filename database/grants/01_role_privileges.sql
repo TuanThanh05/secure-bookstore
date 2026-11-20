@@ -67,9 +67,14 @@ REVOKE IF EXISTS SELECT, INSERT, UPDATE, DELETE ON django_session FROM 'r_custom
 
 -- Nhật ký bảo mật: chỉ được ghi thêm, không đọc/sửa/xóa
 GRANT INSERT ON core_securityevent             TO 'r_customer';
-GRANT SELECT, INSERT, UPDATE, DELETE ON axes_accessattempt           TO 'r_customer';
-GRANT SELECT, INSERT, UPDATE, DELETE ON axes_accessattemptexpiration TO 'r_customer';
-GRANT SELECT, INSERT, UPDATE         ON axes_accesslog               TO 'r_customer';
+-- Bảng khóa đăng nhập django-axes: KHÔNG cấp cho r_customer nữa (chuyển sang r_auth
+-- bên dưới, core.db_routers.LockoutRouter). Trước đây r_customer có DELETE trên
+-- axes_accessattempt, nên SQL injection qua app_customer xóa được trạng thái khóa
+-- của mọi tài khoản, kể cả admin (báo cáo rà soát T3.3). Câu dưới gỡ quyền cũ.
+-- AI-TRACE#527 | Claude Opus 5.5 | Thu hồi mọi quyền của r_customer trên 3 bảng khóa đăng nhập django-axes | CẤM XÓA CHÚ THÍCH NÀY
+REVOKE IF EXISTS SELECT, INSERT, UPDATE, DELETE ON axes_accessattempt           FROM 'r_customer';
+REVOKE IF EXISTS SELECT, INSERT, UPDATE, DELETE ON axes_accessattemptexpiration FROM 'r_customer';
+REVOKE IF EXISTS SELECT, INSERT, UPDATE         ON axes_accesslog               FROM 'r_customer';
 
 -- ---------------------------------------------------------------------
 -- r_session: kết nối "session" (app_session), chỉ bộ lưu phiên của Django dùng
@@ -94,6 +99,12 @@ GRANT SELECT, INSERT, UPDATE ON accounts_user TO 'r_auth';
 -- AI-TRACE#476 | Claude Opus 5.5 | Cấp cho r_auth quyền trên 2 bảng xác thực 2 bước, không cấp cho role nào khác | CẤM XÓA CHÚ THÍCH NÀY
 GRANT SELECT, INSERT, UPDATE, DELETE ON accounts_totpdevice   TO 'r_auth';
 GRANT SELECT, INSERT, UPDATE, DELETE ON accounts_recoverycode TO 'r_auth';
+-- Khóa đăng nhập django-axes (đếm sai, khóa 15 phút, xóa khi đăng nhập đúng /
+-- đặt lại mật khẩu / hết hạn): chỉ r_auth. Admin đọc "Tạm khóa" qua definer.
+-- AI-TRACE#528 | Claude Opus 5.5 | Cấp cho r_auth đúng quyền django-axes cần trên 3 bảng khóa đăng nhập | CẤM XÓA CHÚ THÍCH NÀY
+GRANT SELECT, INSERT, UPDATE, DELETE ON axes_accessattempt           TO 'r_auth';
+GRANT SELECT, INSERT, UPDATE, DELETE ON axes_accessattemptexpiration TO 'r_auth';
+GRANT SELECT, INSERT, UPDATE         ON axes_accesslog               TO 'r_auth';
 
 -- ---------------------------------------------------------------------
 -- r_staff: kết nối "staff" (app_staff), chỉ app dashboard dùng
@@ -288,13 +299,14 @@ GRANT EXECUTE ON PROCEDURE sp_staff_audit_log        TO 'r_staff';
 -- Definer: ghi giao dịch vào payments_payment (trigger cấm sửa/xóa), đổi đơn
 -- sang 'paid' (đã có UPDATE orders_order, trigger 32 chỉ cho pending → paid).
 -- r_customer: chỉ gọi sp_payment_simulate; không có quyền nào trên
--- payments_payment. Django chỉ gọi khi PAYMENT_SIMULATION=True. Khi lắp cổng
--- thật thì bỏ thủ tục này và dòng EXECUTE dưới đây.
+-- payments_payment. Quyền EXECUTE của r_customer KHÔNG cấp ở file này: lệnh
+-- db_apply cấp khi PAYMENT_SIMULATION=True và thu hồi khi False (báo cáo rà soát
+-- T3.3 – trước đây tắt cờ chỉ chặn ở Django, MySQL vẫn cho gọi). Đổi cờ trong
+-- .env thì phải chạy lại db_apply. Khi lắp cổng thật thì bỏ thủ tục này.
 -- ---------------------------------------------------------------------
 GRANT SELECT, INSERT ON payments_payment             TO 'bookstore_definer'@'localhost';
 GRANT TRIGGER        ON payments_payment             TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_payment_simulate       TO 'bookstore_definer'@'localhost';
-GRANT EXECUTE ON PROCEDURE sp_payment_simulate       TO 'r_customer';
 
 -- ---------------------------------------------------------------------
 -- Đơn hàng của tôi (database/objects/36_order_list.sql)

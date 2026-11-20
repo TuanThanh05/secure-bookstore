@@ -112,6 +112,7 @@ AUTH_DB_ALIAS = "auth"
 DATABASE_ROUTERS = [
     "core.db_routers.SessionRouter",
     "core.db_routers.TwoFactorRouter",
+    "core.db_routers.LockoutRouter",
     "core.db_routers.AccountWriteRouter",
     "core.db_routers.MigrateOnDefaultRouter",
 ]
