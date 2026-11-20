@@ -13,6 +13,17 @@ def stored_key(session_key):
     return hashlib.sha256(session_key.encode("utf-8")).hexdigest()[:STORED_KEY_LENGTH]
 
 
+# AI-TRACE#523 | Claude Opus 5.5 | Xóa mọi phiên còn hạn của một người dùng (đọc từng dòng bằng đúng khóa đã băm), trả số phiên đã xóa | CẤM XÓA CHÚ THÍCH NÀY
+def end_user_sessions(user_id):
+    model = SessionStore.get_model_class()
+    ended = 0
+    for session in model.objects.filter(expire_date__gt=timezone.now()).iterator():
+        if SessionStore.decode_row(session).get("_auth_user_id") == str(user_id):
+            session.delete()
+            ended += 1
+    return ended
+
+
 # AI-TRACE#446 | Claude Opus 5.5 | Bộ lưu phiên: bảng chỉ giữ mã băm của cookie, chữ ký session_data gắn với đúng dòng nên chép sang dòng khác là vô hiệu | CẤM XÓA CHÚ THÍCH NÀY
 class SessionStore(DatabaseSessionStore):
     def _salt_for(self, row_key):

@@ -49,7 +49,7 @@ class MaskingTests(SimpleTestCase):
         self.assertEqual(account().masked_phone, "090****567")
 
 
-# AI-TRACE#314 | Claude Opus 5.5 | Test service tài khoản bằng cursor giả: tham số đúng thứ tự, ngưỡng axes từ settings, giải mã SĐT đúng ngữ cảnh, chặn đầu vào sai, đổi lỗi SIGNAL | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#314 | Claude Opus 5.5 | Test service tài khoản bằng cursor giả: tham số đúng thứ tự, ngưỡng axes từ settings, giải mã SĐT đúng ngữ cảnh, chặn đầu vào sai, đổi lỗi SIGNAL | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi khóa tài khoản đăng xuất mọi phiên
 class AccountServiceTests(SimpleTestCase):
     def setUp(self):
         self.actor = SimpleNamespace(pk=2)
@@ -64,6 +64,9 @@ class AccountServiceTests(SimpleTestCase):
         self.conn = conn
         patcher = mock.patch.object(account_services, "connections", {"staff": conn})
         patcher.start()
+        sessions = mock.patch.object(account_services, "end_user_sessions", return_value=3)
+        self.end_user_sessions = sessions.start()
+        self.addCleanup(sessions.stop)
         self.addCleanup(patcher.stop)
 
     def test_list_passes_filters_and_axes_limits(self):
@@ -91,8 +94,9 @@ class AccountServiceTests(SimpleTestCase):
         self.cursor.callproc.assert_not_called()
 
     def test_lock_and_unlock_call_procedures(self):
-        lock_account(self.actor, "7", "  Spam   đánh giá ")
+        self.assertEqual(lock_account(self.actor, "7", "  Spam   đánh giá "), 3)
         self.cursor.callproc.assert_called_with("sp_staff_account_lock", [2, 7, "Spam đánh giá"])
+        self.end_user_sessions.assert_called_once_with(7)
         unlock_account(self.actor, 7, "Đã xác minh")
         self.cursor.callproc.assert_called_with("sp_staff_account_unlock", [2, 7, "Đã xác minh"])
 
@@ -103,6 +107,7 @@ class AccountServiceTests(SimpleTestCase):
                 with self.assertRaises(AccountError) as ctx:
                     lock_account(self.actor, 7, "Spam đánh giá")
                 self.assertEqual(ctx.exception.code, code)
+        self.end_user_sessions.assert_not_called()
 
     def test_permission_error_not_swallowed(self):
         self.cursor.callproc.side_effect = OperationalError(1370, "execute command denied")
@@ -115,7 +120,7 @@ class AccountServiceTests(SimpleTestCase):
             lock_account(self.actor, 7, "Spam đánh giá")
 
 
-# AI-TRACE#315 | Claude Opus 5.5 | Test trang quản lý tài khoản: chỉ admin, email/SĐT che mặc định, bản đầy đủ cần xác thực lại và ghi log, khóa/mở khóa luôn đòi nhập mật khẩu dù vừa xác thực, CSRF | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#315 | Claude Opus 5.5 | Test trang quản lý tài khoản: chỉ admin, email/SĐT che mặc định, bản đầy đủ cần xác thực lại và ghi log, khóa/mở khóa luôn đòi nhập mật khẩu dù vừa xác thực, CSRF | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi khóa tài khoản đăng xuất mọi phiên
 class AccountViewTests(TestCase):
     def setUp(self):
         cache.clear()
@@ -127,7 +132,7 @@ class AccountViewTests(TestCase):
         self.lock_url = reverse("dashboard:account_lock", args=[7])
         self.unlock_url = reverse("dashboard:account_unlock", args=[7])
         patches = {"list_accounts": [account(), account(8, "binh", "locked", None)], "get_account": account(),
-                   "lock_account": None, "unlock_account": None}
+                   "lock_account": 2, "unlock_account": None}
         for name, value in patches.items():
             patcher = mock.patch(f"{VIEWS}.{name}", return_value=value)
             setattr(self, name, patcher.start())
@@ -180,7 +185,9 @@ class AccountViewTests(TestCase):
     def test_lock_success(self):
         response = self.client.post(self.lock_url, self.action_data(), follow=True)
         self.assertEqual(response.redirect_chain[-1][0], self.list_url)
-        self.assertContains(response, "Đã khóa tài khoản an_nguyen.")
+        self.assertContains(response, "Đã khóa tài khoản an_nguyen và đăng xuất 2 phiên đang mở.")
+        self.assertTrue(SecurityEvent.objects.filter(event_type="logout", detail__reason="account_locked",
+                                                     detail__target_id=7, detail__sessions_ended=2).exists())
         actor, user_id, reason = self.lock_account.call_args.args
         self.assertEqual((actor.pk, user_id, reason), (self.staff.pk, 7, "Spam đánh giá"))
         self.assertNotIn(REAUTH_SESSION_KEY, self.client.session)

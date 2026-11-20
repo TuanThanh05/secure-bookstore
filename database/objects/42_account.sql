@@ -27,8 +27,10 @@
 -- trong cùng giao dịch. Trigger trg_user_guard_update (10_...) cho app_staff đổi
 -- đúng cột is_active của khách, các cột khác vẫn bị chặn; app_staff không có
 -- quyền UPDATE(is_active) trực tiếp nên chỉ hai thủ tục này đổi được.
--- Django tự đăng xuất tài khoản bị khóa ở lần bấm tiếp theo (ModelBackend
--- không trả user có is_active = 0).
+-- Khóa xong, Django xóa mọi phiên của khách đó (dashboard.account_services.lock_account
+-- → core.session_store.end_user_sessions; bảng phiên thuộc app_session nên không xóa ở đây).
+-- Phòng hờ: core.middleware.InactiveAccountSessionMiddleware hủy phiên của tài khoản
+-- is_active = 0 ở request kế tiếp, nên phiên cũ không sống lại khi mở khóa.
 --
 -- Mã lỗi: INVALID_INPUT, NOT_STAFF, ACCOUNT_NOT_FOUND, ALREADY_LOCKED, NOT_LOCKED
 -- Root tạo bằng `python manage.py db_apply`. Chạy lại nhiều lần được.

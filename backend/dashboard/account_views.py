@@ -68,7 +68,7 @@ def _account_or_404(request, user_id):
         raise
 
 
-# AI-TRACE#309 | Claude Opus 5.5 | Khóa/mở khóa tài khoản: mỗi lần đều nhập lý do và mật khẩu admin ngay trong form (xác thực một lần, không dựa vào xác thực trước đó), ghi log bước xác thực | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#309 | Claude Opus 5.5 | Khóa/mở khóa tài khoản: mỗi lần đều nhập lý do và mật khẩu admin ngay trong form (xác thực một lần, không dựa vào xác thực trước đó), ghi log bước xác thực | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi đăng xuất phiên của tài khoản bị khóa
 def _account_action(request, user_id, action):
     account = _account_or_404(request, user_id)
     locking = action == "lock"
@@ -85,12 +85,18 @@ def _account_action(request, user_id, action):
             log_event("login_success", request, user=request.user, username=request.user.get_username(),
                       detail={"step_up": True, "action": f"account_{action}", "target_id": account.id})
             try:
-                (lock_account if locking else unlock_account)(request.user, account.id, form.cleaned_data["reason"])
+                ended = (lock_account if locking else unlock_account)(request.user, account.id,
+                                                                     form.cleaned_data["reason"])
             except AccountError as exc:
                 messages.error(request, exc.message)
             else:
-                verb = "khóa" if locking else "mở khóa"
-                messages.success(request, f"Đã {verb} tài khoản {account.username}.")
+                if locking:
+                    log_event("logout", request, severity="warning", user=request.user,
+                              username=request.user.get_username(),
+                              detail={"reason": "account_locked", "target_id": account.id, "sessions_ended": ended})
+                    messages.success(request, f"Đã khóa tài khoản {account.username} và đăng xuất {ended} phiên đang mở.")
+                else:
+                    messages.success(request, f"Đã mở khóa tài khoản {account.username}.")
             return redirect("dashboard:accounts")
         if form.user_mismatch:
             log_event("access_denied", request, severity="warning", user=request.user,
