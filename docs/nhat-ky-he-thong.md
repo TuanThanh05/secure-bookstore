@@ -29,6 +29,21 @@ Chưa dùng: `otp_failed` (không có 2FA), `payment_*` (nhánh thanh toán).
 
 **Không bao giờ ghi** mật khẩu, token, session ID, nội dung file, SĐT/địa chỉ.
 
+### 2b. Che mã bí mật trong đường dẫn (2026-11-20)
+
+**Lỗi đã sửa (báo cáo rà soát, mục SA-02):** link đặt lại mật khẩu có dạng `/account/dat-lai-mat-khau/<uid>/<token>/`. Khi link **đúng**, Django cất token vào phiên rồi chuyển hướng 302 sang `/set-password/` **trước khi** đặt `validlink = True`. Code cũ thấy `validlink = False` nên ghi `invalid_input` kèm nguyên đường dẫn – tức là **mỗi lần khách bấm link hợp lệ, token còn sống (5 phút) lọt vào `core_securityevent`, `logs/security.log` và trang Nhật ký**. Ai đọc được nhật ký trong 5 phút đó có thể mở link và đặt mật khẩu mới cho khách (phá ranh giới "admin không can thiệp mật khẩu khách"). Đã tái hiện trong sandbox: trình duyệt khác dùng lại token trong log vẫn vào được form.
+
+**Hai lớp sửa:**
+
+1. `CustomerPasswordResetConfirmView.dispatch` chỉ ghi `invalid_input` khi link thật sự sai (không phải bước chuyển hướng của link đúng) và truyền `path=` đã thay token bằng `-` (giữ `set-password` vì đó không phải mã).
+2. `core.security_log.redact_path`: **mọi** đường dẫn trước khi ghi file log và bảng đều đi qua bộ lọc theo `SECURITY_LOG_SECRET_PATHS` trong settings (link đặt lại mật khẩu, link đăng ký); phần mã thay bằng `-`, che trước rồi mới cắt 255 ký tự. View sau này quên truyền `path=` cũng không lộ mã. **Thêm URL mới chứa mã bí mật thì thêm mẫu vào `SECURITY_LOG_SECRET_PATHS`.**
+
+Log cũ đã ghi trước bản sửa vẫn còn token nhưng **đã hết hạn** (5 phút hoặc đã đổi mật khẩu) – giữ nguyên, không sửa nhật ký đã ghi (chốt 2026-11-20); tự xóa sau 1 năm.
+
+Kiểm tra: `accounts/tests/test_password_reset.py::ResetLinkLoggingTests` (3/4 test trượt trên code cũ), `core/tests/test_security_log.py`.
+
+**Chưa xử lý:** access log của Nginx (mặc định bật cho `location /` trong `deploy/nginx/secure-bookstore.conf`) vẫn ghi nguyên URL có token vào file log của Nginx trên máy chủ.
+
 ## 3. Nhật ký thay đổi dữ liệu
 
 | Dữ liệu | Ghi bởi | Nội dung |

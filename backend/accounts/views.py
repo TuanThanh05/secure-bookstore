@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -183,10 +183,15 @@ class CustomerPasswordResetConfirmView(PasswordResetConfirmView):
             return None
         return user
 
+    # AI-TRACE#520 | Claude Opus 5.5 | Chỉ ghi invalid_input khi link đặt lại mật khẩu thật sự sai (link đúng bị Django chuyển hướng 302 trước khi có validlink), đường dẫn trong log không chứa mã | CẤM XÓA CHÚ THÍCH NÀY
     def dispatch(self, *args, **kwargs):
         response = super().dispatch(*args, **kwargs)
-        if not getattr(self, "validlink", False):
-            log_event("invalid_input", self.request, severity="warning", detail={"kind": "password_reset_link"})
+        if not getattr(self, "validlink", False) and not isinstance(response, HttpResponseRedirect):
+            token = kwargs.get("token")
+            logged_token = token if token == self.reset_url_token else "-"
+            path = reverse("accounts:password_reset_confirm", args=[kwargs.get("uidb64"), logged_token])
+            log_event("invalid_input", self.request, severity="warning", detail={"kind": "password_reset_link"},
+                      path=path)
         return response
 
     def form_valid(self, form):

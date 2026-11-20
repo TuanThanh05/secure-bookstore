@@ -1,6 +1,8 @@
 import logging
+import re
 
 from axes.signals import user_locked_out
+from django.conf import settings
 from django.contrib.auth.signals import user_logged_in, user_logged_out, user_login_failed
 from django.db import DatabaseError
 from django.dispatch import receiver
@@ -13,19 +15,35 @@ logger = logging.getLogger("security")
 LEVELS = {"info": logging.INFO, "warning": logging.WARNING, "critical": logging.CRITICAL}
 
 
+PATH_MAX_LENGTH = 255
+
+
+# AI-TRACE#519 | Claude Opus 5.5 | Che mã bí mật trong đường dẫn trước khi ghi log (link đặt lại mật khẩu, link đăng ký): phần mã thay bằng "-" | CẤM XÓA CHÚ THÍCH NÀY
+def redact_path(path):
+    if not path:
+        return path
+    for pattern in settings.SECURITY_LOG_SECRET_PATHS:
+        match = re.match(pattern, path)
+        if match:
+            start, end = match.span("secret")
+            return f"{path[:start]}-{path[end:]}"
+    return path
+
+
 def _client_info(request):
     if request is None:
         return "unknown", None, None, None
     meta = request.META
     user_agent = (meta.get("HTTP_USER_AGENT") or "")[:255] or None
-    return client_ip(request) or "unknown", user_agent, request.method, request.path[:255]
+    return client_ip(request) or "unknown", user_agent, request.method, request.path
 
 
 def log_event(event_type, request=None, *, severity="info", user=None, username=None, ip_address=None, detail=None,
               path=None):
     ip, user_agent, method, request_path = _client_info(request)
     ip = ip_address or ip
-    path = path or request_path
+    path = redact_path(path or request_path)
+    path = path[:PATH_MAX_LENGTH] if path else None
     user_id = user.pk if user is not None and user.is_authenticated else None
     username = (username or "")[:150] or None
 
