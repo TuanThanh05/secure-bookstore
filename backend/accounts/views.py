@@ -1,7 +1,11 @@
+import time
+from urllib.parse import quote, urlencode
+
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import logout, update_session_auth_hash
+from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.http import Http404, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -9,23 +13,27 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csp import csp_override
 from django.views.decorators.http import require_GET, require_http_methods
 from axes.utils import reset as axes_reset
-from django.contrib.auth.views import LogoutView, PasswordResetConfirmView, PasswordResetView
+from django.contrib.auth.views import LoginView, LogoutView, PasswordResetConfirmView, PasswordResetView
 from django.urls import reverse_lazy
 
 from core.captcha import captcha_site_key, verify_captcha
-from core.decorators import mark_recent_auth
+from core.decorators import has_recent_auth, mark_recent_auth
 from core.security_log import log_event
 
 from .decorators import customer_recent_auth_required, customer_required
-from .emails import send_password_changed_email
+from . import two_factor
+from .emails import send_password_changed_email, send_two_factor_email
 from .forms import (
     CustomerPasswordChangeForm,
     CustomerPasswordResetForm,
     CustomerReauthForm,
     CustomerSetPasswordForm,
+    LoginForm,
     ProfileUpdateForm,
     SignupCompleteForm,
     SignupEmailForm,
+    TwoFactorCodeForm,
+    TwoFactorDisableForm,
 )
 from .models import User
 from .profile import build_profile, decrypt_phone
@@ -198,14 +206,19 @@ class SecureLogoutView(LogoutView):
         return response
 
 
-# AI-TRACE#036 | Claude Opus 5.5 | Trang thông tin của khách, nhân viên bị chuyển sang trang quản trị | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#036 | Claude Opus 5.5 | Trang thông tin của khách, nhân viên bị chuyển sang trang quản trị | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thêm xác thực 2 bước
 @login_required
 @never_cache
 @require_GET
 def profile(request):
     if request.user.is_staff:
         return redirect("dashboard:profile")
-    return render(request, "account/profile.html", {"profile": build_profile(request.user, show_contact=True)})
+    enabled = two_factor.has_two_factor(request.user)
+    return render(request, "account/profile.html", {
+        "profile": build_profile(request.user, show_contact=True),
+        "two_factor_enabled": enabled,
+        "recovery_remaining": two_factor.recovery_remaining(request.user) if enabled else None,
+    })
 
 
 # AI-TRACE#060 | Claude Opus 5.5 | Đổi mật khẩu cho khách: giữ phiên hiện tại, đăng xuất thiết bị khác, sai nhiều lần thì đăng xuất | CẤM XÓA CHÚ THÍCH NÀY
@@ -291,3 +304,222 @@ def profile_update(request):
             "phone": decrypt_phone(user) or "",
         })
     return render(request, "account/profile_update.html", {"form": form})
+
+
+TWO_FACTOR_PENDING_KEY = "accounts:2fa-pending"
+TWO_FACTOR_EXPIRED = "Phiên đăng nhập 2 bước đã hết hạn. Vui lòng đăng nhập lại."
+TWO_FACTOR_BLOCKED = "Tài khoản đã nhập sai mã xác thực quá nhiều lần. Vui lòng thử lại sau 1 giờ."
+TWO_FACTOR_WRONG = "Mã xác thực không đúng hoặc đã được dùng."
+STAFF_WITHOUT_TWO_FACTOR = ("Tài khoản quản trị chưa cài xác thực 2 bước nên không đăng nhập được trên web. "
+                            "Cài bằng lệnh trên máy chủ (xem docs/xac-thuc-2-buoc.md).")
+
+
+# AI-TRACE#493 | Claude Opus 5.5 | Đăng nhập bước 1: đúng mật khẩu mà cần 2 bước thì CHƯA đăng nhập, chỉ ghi trạng thái chờ (đổi session ID) rồi chuyển sang bước 2 | CẤM XÓA CHÚ THÍCH NÀY
+class SecureLoginView(LoginView):
+    template_name = "account/login.html"
+    authentication_form = LoginForm
+    redirect_authenticated_user = True
+
+    def form_valid(self, form):
+        user = form.get_user()
+        if not two_factor.requires_two_factor(user):
+            return super().form_valid(form)
+        if (user.is_staff or user.is_superuser) and two_factor.confirmed_device(user) is None:
+            log_event("access_denied", self.request, severity="warning", user=user, username=user.get_username(),
+                      detail={"kind": "staff_without_two_factor"})
+            form.add_error(None, STAFF_WITHOUT_TWO_FACTOR)
+            return self.form_invalid(form)
+        if two_factor.is_blocked(user):
+            log_event("rate_limited", self.request, severity="warning", user=user, username=user.get_username(),
+                      detail={"kind": "two_factor"})
+            form.add_error(None, TWO_FACTOR_BLOCKED)
+            return self.form_invalid(form)
+        self.request.session.cycle_key()
+        self.request.session[TWO_FACTOR_PENDING_KEY] = {
+            "user_id": user.pk,
+            "backend": user.backend,
+            "at": int(time.time()),
+            "tries": 0,
+            "next": self.get_success_url(),
+        }
+        return redirect("accounts:login_two_factor")
+
+
+def _pending_login(request):
+    data = request.session.get(TWO_FACTOR_PENDING_KEY)
+    if not isinstance(data, dict):
+        return None, None
+    age = int(time.time()) - int(data.get("at", 0))
+    if not 0 <= age <= settings.TWO_FACTOR_PENDING_MAX_AGE:
+        request.session.pop(TWO_FACTOR_PENDING_KEY, None)
+        return None, None
+    user = User.objects.filter(pk=data.get("user_id"), is_active=True).first()
+    if user is None:
+        request.session.pop(TWO_FACTOR_PENDING_KEY, None)
+        return None, None
+    return data, user
+
+
+def _cancel_pending(request, message):
+    request.session.pop(TWO_FACTOR_PENDING_KEY, None)
+    messages.error(request, message)
+    return redirect("accounts:login")
+
+
+# AI-TRACE#494 | Claude Opus 5.5 | Đăng nhập bước 2: mã 6 số (hoặc mã dự phòng của khách) đúng mới login(); sai 5 lần hủy lượt, sai nhiều lần/giờ chặn tài khoản | CẤM XÓA CHÚ THÍCH NÀY
+@never_cache
+@require_http_methods(["GET", "POST"])
+def login_two_factor(request):
+    if request.user.is_authenticated:
+        return redirect("catalog:home")
+    pending, user = _pending_login(request)
+    if pending is None:
+        return _cancel_pending(request, TWO_FACTOR_EXPIRED)
+    allow_recovery = not (user.is_staff or user.is_superuser)
+    if request.method == "POST":
+        form = TwoFactorCodeForm(request.POST, allow_recovery=allow_recovery)
+        if two_factor.is_blocked(user):
+            return _cancel_pending(request, TWO_FACTOR_BLOCKED)
+        if form.is_valid():
+            code = form.cleaned_data["code"]
+            method, remaining = None, None
+            if allow_recovery and two_factor.looks_like_recovery_code(code):
+                remaining = two_factor.use_recovery_code(user, code)
+                method = "recovery" if remaining is not None else None
+            else:
+                device = two_factor.confirmed_device(user)
+                method = "totp" if device is not None and two_factor.verify_code(device, code) else None
+            if method:
+                next_url = pending.get("next") or settings.LOGIN_REDIRECT_URL
+                request.session.pop(TWO_FACTOR_PENDING_KEY, None)
+                two_factor.clear_failures(user)
+                login(request, user, backend=pending.get("backend"))
+                if method == "recovery":
+                    log_event("two_factor_recovery_used", request, severity="warning", user=user,
+                              username=user.get_username(), detail={"remaining": remaining})
+                    send_two_factor_email(request, user, "recovery_used", remaining=remaining)
+                    messages.warning(request, f"Bạn vừa dùng một mã dự phòng. Còn lại {remaining} mã.")
+                return redirect(next_url)
+            failures = two_factor.record_failure(user)
+            pending["tries"] = int(pending.get("tries", 0)) + 1
+            request.session[TWO_FACTOR_PENDING_KEY] = pending
+            log_event("otp_failed", request, severity="warning", user=user, username=user.get_username(),
+                      detail={"tries": pending["tries"], "failures_hour": failures})
+            if pending["tries"] >= settings.TWO_FACTOR_MAX_ATTEMPTS or two_factor.is_blocked(user):
+                return _cancel_pending(request, "Bạn đã nhập sai mã quá nhiều lần. Vui lòng đăng nhập lại.")
+            form.add_error("code", TWO_FACTOR_WRONG)
+    else:
+        form = TwoFactorCodeForm(allow_recovery=allow_recovery)
+    return render(request, "account/login_two_factor.html", {
+        "form": form,
+        "allow_recovery": allow_recovery,
+        "minutes": settings.TWO_FACTOR_PENDING_MAX_AGE // 60,
+    })
+
+
+# AI-TRACE#495 | Claude Opus 5.5 | Cài 2 bước cho khách: trang QR cần xác thực lại; mã đúng thì bật, hiện 5 mã dự phòng đúng một lần, gửi thư báo | CẤM XÓA CHÚ THÍCH NÀY
+@customer_required
+@never_cache
+@require_http_methods(["GET", "POST"])
+def two_factor_setup(request):
+    user = request.user
+    if two_factor.has_two_factor(user):
+        messages.info(request, "Xác thực 2 bước đang bật.")
+        return redirect("accounts:profile")
+    if request.method == "GET":
+        if not has_recent_auth(request):
+            query = urlencode({"next": request.get_full_path()})
+            return redirect(f"{reverse('accounts:reauth')}?{query}")
+        device = two_factor.pending_setup(user) or two_factor.start_setup(user)
+        form = TwoFactorCodeForm()
+    else:
+        device = two_factor.pending_setup(user)
+        if device is None:
+            messages.error(request, "Lượt cài đã hết hạn. Hãy bắt đầu lại.")
+            return redirect("accounts:two_factor_setup")
+        form = TwoFactorCodeForm(request.POST)
+        if form.is_valid():
+            codes = two_factor.confirm_setup(user, device, form.cleaned_data["code"])
+            if codes is not None:
+                log_event("two_factor_enabled", request, user=user, username=user.get_username(), detail={"via": "web"})
+                send_two_factor_email(request, user, "enabled")
+                return render(request, "account/two_factor_codes.html", {
+                    "codes": codes,
+                    "download_data": quote(_recovery_file_text(user, codes)),
+                })
+            log_event("otp_failed", request, severity="warning", user=user, username=user.get_username(),
+                      detail={"kind": "setup"})
+            form.add_error("code", TWO_FACTOR_WRONG)
+    secret = two_factor.setup_secret(device)
+    return render(request, "account/two_factor_setup.html", {
+        "form": form,
+        "secret": two_factor.group_secret(secret),
+        "issuer": settings.TWO_FACTOR_ISSUER,
+        "setup_minutes": settings.TWO_FACTOR_SETUP_MAX_AGE // 60,
+    })
+
+
+def _recovery_file_text(user, codes):
+    lines = [
+        f"Ma du phong xac thuc 2 buoc - {settings.TWO_FACTOR_ISSUER}",
+        f"Tai khoan: {user.get_username()}",
+        "Moi ma chi dung duoc mot lan. Cat file nay o noi an toan, khong gui cho ai.",
+        "",
+        *codes,
+        "",
+    ]
+    return "\n".join(lines)
+
+
+# AI-TRACE#496 | Claude Opus 5.5 | Ảnh QR của lượt cài đang dở: chỉ chủ tài khoản, không cache, hết lượt cài thì 404 | CẤM XÓA CHÚ THÍCH NÀY
+@customer_required
+@never_cache
+@require_GET
+def two_factor_qr(request):
+    device = two_factor.pending_setup(request.user)
+    if device is None:
+        raise Http404
+    uri = two_factor.provisioning_uri(request.user, two_factor.setup_secret(device))
+    response = HttpResponse(two_factor.qr_svg(uri), content_type="image/svg+xml")
+    response["Content-Security-Policy"] = "default-src 'none'"
+    return response
+
+
+# AI-TRACE#497 | Claude Opus 5.5 | Tắt 2 bước: cần mật khẩu và mã hiện tại (hoặc mã dự phòng), sai nhiều lần thì đăng xuất, gửi thư báo | CẤM XÓA CHÚ THÍCH NÀY
+@customer_required
+@never_cache
+@require_http_methods(["GET", "POST"])
+def two_factor_disable(request):
+    user = request.user
+    device = two_factor.confirmed_device(user)
+    if device is None:
+        messages.info(request, "Xác thực 2 bước đang tắt.")
+        return redirect("accounts:profile")
+    if request.method == "POST":
+        form = TwoFactorDisableForm(request.POST)
+        if form.is_valid():
+            code = form.cleaned_data["code"]
+            password_ok = user.check_password(form.cleaned_data["password"])
+            if two_factor.looks_like_recovery_code(code):
+                code_ok = password_ok and two_factor.use_recovery_code(user, code) is not None
+            else:
+                code_ok = password_ok and two_factor.verify_code(device, code)
+            if code_ok:
+                two_factor.disable(user)
+                two_factor.clear_failures(user)
+                log_event("two_factor_disabled", request, severity="warning", user=user,
+                          username=user.get_username(), detail={"via": "web"})
+                send_two_factor_email(request, user, "disabled")
+                messages.success(request, "Đã tắt xác thực 2 bước.")
+                return redirect("accounts:profile")
+            failures = two_factor.record_failure(user)
+            log_event("otp_failed", request, severity="warning", user=user, username=user.get_username(),
+                      detail={"kind": "disable", "failures_hour": failures})
+            if two_factor.is_blocked(user):
+                logout(request)
+                messages.error(request, TWO_FACTOR_BLOCKED)
+                return redirect("accounts:login")
+            form.add_error(None, "Mật khẩu hoặc mã xác thực không đúng.")
+    else:
+        form = TwoFactorDisableForm()
+    return render(request, "account/two_factor_disable.html", {"form": form})

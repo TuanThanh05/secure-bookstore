@@ -145,7 +145,7 @@ python manage.py doi_mat_khau_admin <tên đăng nhập> --settings=bookstore.se
   5. **Xóa mọi phiên đang mở của nhân viên đó** ngay lập tức (phiên của người khác giữ nguyên). Kể cả không xóa, Django cũng tự hủy phiên cũ ở request tiếp theo vì mã băm mật khẩu lưu trong phiên không còn khớp.
   6. Ghi log `password_changed` với `ip_address = cli`, `detail = {"via": "cli", "sessions_ended": n}`.
   7. Gửi thư báo tới email gốc, **không kèm link nào** (không có gì để bấm vào trên web).
-- **Email gốc phải là email thật**: kiểm tra email của tài khoản admin sau `createsuperuser`.
+- **Email gốc phải là email thật**: kiểm tra email của tài khoản admin sau `tao_admin` (lệnh tạo admin, xem `docs/xac-thuc-2-buoc.md`).
 - Trang thông tin quản trị ghi "Không thể đổi mật khẩu". Đây chỉ là lớp gây nhiễu, **không tính là biện pháp bảo mật**; biện pháp thật là không có đường đổi trên web.
 - **Kiểm thử:** `accounts/tests/test_admin_password_command.py` (9 test).
 

@@ -20,4 +20,22 @@
     <a class="btn" href="{% url 'accounts:profile_update' %}">Cập nhật thông tin</a>
     <a class="btn btn--secondary" href="{% url 'accounts:password_change' %}">Đổi mật khẩu</a>
   </div>
+
+  {# AI-TRACE#499 | Claude Opus 5.5 | Khối xác thực 2 bước ở trang thông tin: trạng thái, số mã dự phòng còn lại, nút bật/tắt | CẤM XÓA CHÚ THÍCH NÀY #}
+  <section class="area-2fa" aria-labelledby="tieu-de-2fa">
+    <h2 class="area-2fa__title" id="tieu-de-2fa">Xác thực 2 bước</h2>
+    {% if two_factor_enabled %}
+      <p class="area-2fa__status area-2fa__status--on">Đang bật – mỗi lần đăng nhập cần mã 6 số trong ứng dụng Google Authenticator.</p>
+      <p class="area-2fa__desc">Còn {{ recovery_remaining }} mã dự phòng chưa dùng.</p>
+      <div class="area-actions">
+        <a class="btn btn--secondary" href="{% url 'accounts:two_factor_disable' %}">Tắt xác thực 2 bước</a>
+      </div>
+    {% else %}
+      <p class="area-2fa__status">Đang tắt.</p>
+      <p class="area-2fa__desc">Bật để ngay cả khi lộ mật khẩu, người khác cũng không đăng nhập được nếu không có điện thoại của bạn.</p>
+      <div class="area-actions">
+        <a class="btn" href="{% url 'accounts:two_factor_setup' %}">Bật xác thực 2 bước</a>
+      </div>
+    {% endif %}
+  </section>
 {% endblock %}

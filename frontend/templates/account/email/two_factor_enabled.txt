@@ -1,0 +1,12 @@
+{% autoescape off %}Xin chào {{ username }},
+
+Xác thực 2 bước (ứng dụng Google Authenticator) vừa được BẬT cho tài khoản của bạn tại Secure Bookstore lúc {{ at|date:"H:i d/m/Y" }}.
+Từ nay, mỗi lần đăng nhập bạn cần nhập thêm mã 6 số trong ứng dụng.
+
+Nếu đó là bạn, hãy cất 5 mã dự phòng ở nơi an toàn.
+
+Nếu KHÔNG phải bạn, có người đã biết mật khẩu của bạn. Hãy đặt lại mật khẩu ngay:
+{{ reset_link }}
+
+Secure Bookstore
+{% endautoescape %}

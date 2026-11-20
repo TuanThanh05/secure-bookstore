@@ -147,3 +147,16 @@
 .order-list__meta { color: var(--color-muted); font-size: 14px; }
 .order-list__total { color: var(--color-primary); font-size: 16px; }
 .order-list__pager { display: flex; justify-content: center; align-items: center; gap: var(--space-sm); margin-top: var(--space-lg); }
+
+/* Xác thực 2 bước (account/profile.html, two_factor_*.html) */
+.area-2fa { margin-top: var(--space-lg); padding-top: var(--space-lg); border-top: 1px solid var(--color-border); }
+.area-2fa__title { margin: 0 0 var(--space-sm); font-size: 18px; }
+.area-2fa__status { margin: 0 0 var(--space-xs); font-weight: 600; }
+.area-2fa__status--on { color: var(--color-success); }
+.area-2fa__desc { margin: 0 0 var(--space-md); color: var(--color-muted); font-size: 14px; }
+.area-2fa__steps { margin: 0 0 var(--space-md); padding-left: 1.25rem; line-height: 1.6; }
+.area-2fa__qr { margin: 0 0 var(--space-lg); }
+.area-2fa__qr img { display: block; background: #fff; border: 1px solid var(--color-border); }
+.area-2fa__qr figcaption { margin-top: var(--space-sm); font-size: 14px; color: var(--color-muted); }
+.area-2fa__secret { display: inline-block; margin-top: 4px; font-size: 15px; letter-spacing: 1px; overflow-wrap: anywhere; color: var(--color-text); }
+.area-2fa__codes { margin: 0 0 var(--space-md); padding: var(--space-md); max-width: 320px; font-size: 18px; line-height: 1.8; letter-spacing: 1px; background: var(--color-surface-low); border-radius: 8px; }

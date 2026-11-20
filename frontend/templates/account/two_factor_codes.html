@@ -1,0 +1,22 @@
+{% extends "layouts/account.html" %}
+{% load static %}
+{% block title %}Mã dự phòng{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/account-area.css' %}">{% endblock %}
+{% block extra_js %}<script src="{% static 'js/copy-codes.js' %}" defer></script>{% endblock %}
+{% block account_content %}
+  {# AI-TRACE#502 | Claude Opus 5.5 | Trang hiện 5 mã dự phòng đúng một lần, nút sao chép (JS ngoài) và tải file .txt (không cần JS) | CẤM XÓA CHÚ THÍCH NÀY #}
+  <header class="area-header">
+    <h1 class="area-header__title">Đã bật xác thực 2 bước</h1>
+    <p class="area-header__desc"><strong>Mã dự phòng chỉ hiện một lần duy nhất.</strong> Mỗi mã dùng được một lần khi bạn mất điện thoại. Hãy sao chép hoặc tải về và cất ở nơi an toàn.</p>
+  </header>
+
+  <pre class="area-2fa__codes" id="ma-du-phong">{% for code in codes %}{{ code }}
+{% endfor %}</pre>
+
+  <div class="area-actions">
+    <button type="button" class="btn btn--secondary" data-copy-target="ma-du-phong" hidden>Sao chép</button>
+    <a class="btn btn--secondary" href="data:text/plain;charset=utf-8,{{ download_data }}" download="key-secure-bookstore.txt">Tải xuống</a>
+    <a class="btn" href="{% url 'accounts:profile' %}">Tôi đã cất mã, quay lại</a>
+  </div>
+  <p class="area-2fa__desc" data-copy-status role="status"></p>
+{% endblock %}

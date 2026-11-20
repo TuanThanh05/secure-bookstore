@@ -8,6 +8,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from accounts.models import User
+from accounts.tests.two_factor_helpers import enroll, submit_code
 from core.db_routers import SessionRouter
 from core.models import SecurityEvent
 from core.session_store import SessionStore, stored_key
@@ -91,13 +92,14 @@ class SessionRouterTests(TestCase):
         self.assertIsNone(router.db_for_write(User))
 
 
-# AI-TRACE#455 | Claude Opus 5.5 | Test giới hạn 1 giờ cho phiên nhân viên: quá giờ thì đăng xuất kèm log lý do, khách không bị giới hạn | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#455 | Claude Opus 5.5 | Test giới hạn 1 giờ cho phiên nhân viên: quá giờ thì đăng xuất kèm log lý do, khách không bị giới hạn | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thêm xác thực 2 bước
 class StaffSessionLimitTests(TestCase):
     def setUp(self):
         cache.clear()
         self.secret = new_secret("qt")
         self.staff = User.objects.create_user(username="quan_tri", email="admin@example.test",
                                               password=self.secret, is_staff=True)
+        self.totp = enroll(self.staff)
         self.customer = User.objects.create_user(username="an_nguyen", email="an@example.test",
                                                  password=self.secret, email_verified=True)
         self.now = 1_800_000_000
@@ -105,7 +107,10 @@ class StaffSessionLimitTests(TestCase):
     def login_at(self, username, at):
         with mock.patch(TIME, return_value=at):
             response = self.client.post(reverse("accounts:login"), {"username": username, "password": self.secret})
+            if username == self.staff.username:
+                response = submit_code(self.client, self.totp)
         self.assertEqual(response.status_code, 302)
+        self.assertIn("_auth_user_id", self.client.session)
 
     def get_at(self, url, at):
         with mock.patch(TIME, return_value=at):

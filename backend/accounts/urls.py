@@ -1,7 +1,5 @@
-from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from .forms import LoginForm
 from . import views
 
 app_name = "accounts"
@@ -14,14 +12,15 @@ urlpatterns = [
     path("quen-mat-khau/", views.CustomerPasswordResetView.as_view(), name="password_reset"),
     path("quen-mat-khau/da-gui/", views.password_reset_done, name="password_reset_done"),
     path("dat-lai-mat-khau/<uidb64>/<token>/", views.CustomerPasswordResetConfirmView.as_view(), name="password_reset_confirm"),
-    path("login/", auth_views.LoginView.as_view(
-            template_name="account/login.html",
-            authentication_form=LoginForm,
-            redirect_authenticated_user=True,),name="login"),
+    path("login/", views.SecureLoginView.as_view(), name="login"),
+    path("login/xac-thuc-2-buoc/", views.login_two_factor, name="login_two_factor"),
     path("logout/", views.SecureLogoutView.as_view(), name="logout"),
     path("profile/", views.profile, name="profile"),
     path("doi-mat-khau/", views.password_change, name="password_change"),
     path("xac-thuc-lai/", views.reauth, name="reauth"),
     path("cap-nhat/", views.profile_update, name="profile_update"),
+    path("xac-thuc-2-buoc/bat/", views.two_factor_setup, name="two_factor_setup"),
+    path("xac-thuc-2-buoc/ma-qr.svg", views.two_factor_qr, name="two_factor_qr"),
+    path("xac-thuc-2-buoc/tat/", views.two_factor_disable, name="two_factor_disable"),
 ]
 

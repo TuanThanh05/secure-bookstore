@@ -1,0 +1,12 @@
+{% autoescape off %}Xin chào {{ username }},
+
+Xác thực 2 bước vừa bị TẮT cho tài khoản của bạn tại Secure Bookstore lúc {{ at|date:"H:i d/m/Y" }}.
+Các mã dự phòng cũ đã bị hủy.
+
+Nếu đó là bạn, bạn không cần làm gì thêm.
+
+Nếu KHÔNG phải bạn, hãy đặt lại mật khẩu ngay rồi bật lại xác thực 2 bước:
+{{ reset_link }}
+
+Secure Bookstore
+{% endautoescape %}

@@ -1,0 +1,12 @@
+{% autoescape off %}Xin chào {{ username }},
+
+Một mã dự phòng vừa được dùng để đăng nhập vào tài khoản của bạn tại Secure Bookstore lúc {{ at|date:"H:i d/m/Y" }}.
+Còn lại {{ remaining }} mã dự phòng chưa dùng.
+
+Nếu đó là bạn: khi còn ít mã, hãy tắt rồi bật lại xác thực 2 bước để nhận bộ mã mới.
+
+Nếu KHÔNG phải bạn, hãy đặt lại mật khẩu ngay:
+{{ reset_link }}
+
+Secure Bookstore
+{% endautoescape %}

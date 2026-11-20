@@ -76,3 +76,23 @@ def send_staff_password_changed_email(user):
     context = {"username": user.username, "changed_at": timezone.localtime()}
     return _send(None, "staff_password_changed", user, user.email, "Mật khẩu tài khoản quản trị vừa được thay đổi – Secure Bookstore",
                  "account/email/staff_password_changed.txt", context)
+
+
+TWO_FACTOR_EMAILS = {
+    "enabled": ("Xác thực 2 bước vừa được BẬT – Secure Bookstore", "account/email/two_factor_enabled.txt"),
+    "disabled": ("Xác thực 2 bước vừa bị TẮT – Secure Bookstore", "account/email/two_factor_disabled.txt"),
+    "recovery_used": ("Một mã dự phòng vừa được dùng để đăng nhập – Secure Bookstore",
+                      "account/email/two_factor_recovery_used.txt"),
+}
+
+
+# AI-TRACE#498 | Claude Opus 5.5 | Báo cho chủ tài khoản mỗi lần bật/tắt 2 bước hoặc dùng mã dự phòng, kèm link đổi mật khẩu | CẤM XÓA CHÚ THÍCH NÀY
+def send_two_factor_email(request, user, kind, remaining=None):
+    subject, template = TWO_FACTOR_EMAILS[kind]
+    context = {
+        "username": user.username,
+        "remaining": remaining,
+        "at": timezone.localtime(),
+        "reset_link": request.build_absolute_uri(reverse("accounts:password_reset")) if request else None,
+    }
+    return _send(request, f"two_factor_{kind}", user, user.email, subject, template, context)

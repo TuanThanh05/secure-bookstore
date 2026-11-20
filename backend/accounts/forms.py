@@ -181,3 +181,28 @@ class ProfileUpdateForm(forms.Form):
         if value and not PHONE_RE.match(value):
             raise ValidationError("Số điện thoại Việt Nam gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08 hoặc 09.", code="invalid_phone")
         return value
+
+
+# AI-TRACE#491 | Claude Opus 5.5 | Ô nhập mã 6 số (hoặc mã dự phòng) của bước 2 khi đăng nhập và khi cài | CẤM XÓA CHÚ THÍCH NÀY
+class TwoFactorCodeForm(forms.Form):
+    code = forms.CharField(label="Mã xác thực", max_length=20, strip=True)
+
+    def __init__(self, *args, allow_recovery=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        field = self.fields["code"]
+        field.widget.attrs.update({"autocomplete": "one-time-code", "autofocus": True, "maxlength": 20,
+                                   "inputmode": "text" if allow_recovery else "numeric"})
+        if allow_recovery:
+            field.label = "Mã 6 số trong ứng dụng hoặc mã dự phòng"
+
+
+# AI-TRACE#492 | Claude Opus 5.5 | Form tắt 2 bước: mật khẩu hiện tại và mã 6 số (hoặc mã dự phòng) | CẤM XÓA CHÚ THÍCH NÀY
+class TwoFactorDisableForm(forms.Form):
+    password = forms.CharField(label="Mật khẩu hiện tại", strip=False,
+                               widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}))
+    code = forms.CharField(label="Mã 6 số trong ứng dụng hoặc mã dự phòng", max_length=20, strip=True,
+                           widget=forms.TextInput(attrs={"autocomplete": "one-time-code", "maxlength": 20}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        cap_password_fields(self, "password")
