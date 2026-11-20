@@ -21,7 +21,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 033 | Claude Opus 5.5 |  | `backend/core/mail_backends.py` | `ReadableConsoleEmailBackend` | 4 | In thư ra terminal dạng chữ đọc được thay vì base64 khi chạy máy dev | [ ] |
 | 034 | Claude Opus 5.5 |  | `backend/accounts/profile.py` | `ProfileView` | 9 | Dữ liệu trang thông tin tài khoản, email và SĐT có thể bị giấu | [ ] |
 | 035 | Claude Opus 5.5 |  | `backend/accounts/profile.py` | `build_profile` | 43 | Tạo dữ liệu trang thông tin, chỉ đưa email và SĐT khi được phép | [ ] |
-| 036 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `profile` | 209 | Trang thông tin của khách, nhân viên bị chuyển sang trang quản trị (đã viết lại bởi Claude Opus 5.5 khi thêm xác thực 2 bước) | [ ] |
+| 036 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `profile` | 214 | Trang thông tin của khách, nhân viên bị chuyển sang trang quản trị (đã viết lại bởi Claude Opus 5.5 khi thêm xác thực 2 bước) | [ ] |
 | 037 | Claude Opus 5.5 |  | `backend/dashboard/views.py` | `profile` | 31 | Trang thông tin của nhân viên, mặc định không gửi email và SĐT | [ ] |
 | 038 | Claude Opus 5.5 |  | `backend/dashboard/views.py` | `profile_contact` | 39 | Hiện email và SĐT của chính nhân viên sau khi xác thực lại, có ghi log | [ ] |
 | 039 | Claude Opus 5.5 |  | `frontend/templates/account/profile.html` | `<header class="area-header">` | 6 | Bảng thông tin tài khoản của khách, hiện đầy đủ email và SĐT | [ ] |
@@ -45,7 +45,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 057 | Claude Opus 5.5 |  | `backend/accounts/forms.py` | `CustomerPasswordChangeForm` | 103 | Form đổi mật khẩu: mật khẩu hiện tại và hai ô mật khẩu mới (đã viết lại bởi Claude Opus 5.5 khi giới hạn độ dài mật khẩu) | [ ] |
 | 058 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `record_password_change_failure` | 109 | Đếm số lần nhập sai mật khẩu hiện tại khi đổi mật khẩu, trả về tổng số lần | [ ] |
 | 059 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `clear_password_change_failures` | 120 | Xóa bộ đếm nhập sai sau khi đổi mật khẩu thành công | [ ] |
-| 060 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `password_change` | 224 | Đổi mật khẩu cho khách: giữ phiên hiện tại, đăng xuất thiết bị khác, sai nhiều lần thì đăng xuất | [ ] |
+| 060 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `password_change` | 229 | Đổi mật khẩu cho khách: giữ phiên hiện tại, đăng xuất thiết bị khác, sai nhiều lần thì đăng xuất | [ ] |
 | 061 | Claude Opus 5.5 |  | `frontend/templates/account/password_change.html` | `<header class="area-header">` | 7 | Form đổi mật khẩu trong khu vực tài khoản khách, có nút hiện mật khẩu | [ ] |
 | 062 | Claude Opus 5.5 |  | `frontend/static/css/account-area.css` | `.area-actions { display: flex; flex-wrap: wrap; gap: var(--s` | 35 | Kiểu nút thao tác và form đổi mật khẩu trong khu vực tài khoản | [ ] |
 | 063 | Claude Opus 5.5 |  | `backend/accounts/tests/test_password_change.py` | `PasswordChangeTests` | 15 | Test đổi mật khẩu: mật khẩu cũ, đăng xuất thiết bị khác, sai nhiều lần, chặn nhân viên | [ ] |
@@ -61,8 +61,8 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 073 | Claude Opus 5.5 |  | `backend/accounts/forms.py` | `CustomerReauthForm` | 126 | Form xác thực lại của khách, nhận tên đăng nhập hoặc email và mật khẩu (đã viết lại bởi Claude Opus 5.5 khi giới hạn độ dài mật khẩu) | [ ] |
 | 074 | Claude Opus 5.5 |  | `backend/accounts/forms.py` | `ProfileUpdateForm` | 158 | Form cập nhật họ, tên, SĐT của khách; không có ô username hay email | [ ] |
 | 075 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `update_profile` | 125 | Lưu họ, tên, SĐT đã mã hóa; chỉ ghi cột thay đổi và log tên cột, không log giá trị | [ ] |
-| 076 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `reauth` | 265 | Trang xác thực lại riêng cho khách, có link quên mật khẩu, next chỉ trỏ trong site | [ ] |
-| 077 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `profile_update` | 287 | Cập nhật họ, tên, SĐT của khách sau khi xác thực lại | [ ] |
+| 076 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `reauth` | 270 | Trang xác thực lại riêng cho khách, có link quên mật khẩu, next chỉ trỏ trong site | [ ] |
+| 077 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `profile_update` | 292 | Cập nhật họ, tên, SĐT của khách sau khi xác thực lại | [ ] |
 | 078 | Claude Opus 5.5 |  | `database/schema/04_securityevent_profile_updated.sql` | `ALTER TABLE core_securityevent DROP CHECK ck_secevent_type;` | 7 | Thêm loại sự kiện cập nhật hồ sơ vào danh sách cho phép | [ ] |
 | 079 | Claude Opus 5.5 |  | `backend/core/migrations/0005_securityevent_profile_updated.py` | `_statements` | 9 | Đọc file SQL thêm loại sự kiện cập nhật hồ sơ | [ ] |
 | 080 | Claude Opus 5.5 |  | `frontend/templates/account/reauth.html` | `<header class="area-header">` | 7 | Trang xác thực lại của khách: tên đăng nhập, mật khẩu, nút xác thực và link quên mật khẩu | [ ] |
@@ -477,11 +477,11 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 490 | Claude Opus 5.5 |  | `backend/accounts/two_factor.py` | `record_failure` | 175 | Đếm số lần nhập sai bước 2 của mỗi tài khoản trong 1 giờ (chặn dò mã qua nhiều lượt đăng nhập) | [ ] |
 | 491 | Claude Opus 5.5 |  | `backend/accounts/forms.py` | `TwoFactorCodeForm` | 186 | Ô nhập mã 6 số (hoặc mã dự phòng) của bước 2 khi đăng nhập và khi cài | [ ] |
 | 492 | Claude Opus 5.5 |  | `backend/accounts/forms.py` | `TwoFactorDisableForm` | 199 | Form tắt 2 bước: mật khẩu hiện tại và mã 6 số (hoặc mã dự phòng) | [ ] |
-| 493 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `SecureLoginView` | 317 | Đăng nhập bước 1: đúng mật khẩu mà cần 2 bước thì CHƯA đăng nhập, chỉ ghi trạng thái chờ (đổi session ID) rồi chuyển sang bước 2 | [ ] |
-| 494 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `login_two_factor` | 369 | Đăng nhập bước 2: mã 6 số (hoặc mã dự phòng của khách) đúng mới login(); sai 5 lần hủy lượt, sai nhiều lần/giờ chặn tài khoản | [ ] |
-| 495 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `two_factor_setup` | 420 | Cài 2 bước cho khách: trang QR cần xác thực lại; mã đúng thì bật, hiện 5 mã dự phòng đúng một lần, gửi thư báo | [ ] |
-| 496 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `two_factor_qr` | 474 | Ảnh QR của lượt cài đang dở: chỉ chủ tài khoản, không cache, hết lượt cài thì 404 | [ ] |
-| 497 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `two_factor_disable` | 488 | Tắt 2 bước: cần mật khẩu và mã hiện tại (hoặc mã dự phòng), sai nhiều lần thì đăng xuất, gửi thư báo | [ ] |
+| 493 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `SecureLoginView` | 322 | Đăng nhập bước 1: đúng mật khẩu mà cần 2 bước thì CHƯA đăng nhập, chỉ ghi trạng thái chờ (đổi session ID) rồi chuyển sang bước 2 | [ ] |
+| 494 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `login_two_factor` | 374 | Đăng nhập bước 2: mã 6 số (hoặc mã dự phòng của khách) đúng mới login(); sai 5 lần hủy lượt, sai nhiều lần/giờ chặn tài khoản | [ ] |
+| 495 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `two_factor_setup` | 425 | Cài 2 bước cho khách: trang QR cần xác thực lại; mã đúng thì bật, hiện 5 mã dự phòng đúng một lần, gửi thư báo | [ ] |
+| 496 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `two_factor_qr` | 479 | Ảnh QR của lượt cài đang dở: chỉ chủ tài khoản, không cache, hết lượt cài thì 404 | [ ] |
+| 497 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `two_factor_disable` | 493 | Tắt 2 bước: cần mật khẩu và mã hiện tại (hoặc mã dự phòng), sai nhiều lần thì đăng xuất, gửi thư báo | [ ] |
 | 498 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_two_factor_email` | 89 | Báo cho chủ tài khoản mỗi lần bật/tắt 2 bước hoặc dùng mã dự phòng, kèm link đổi mật khẩu | [ ] |
 | 499 | Claude Opus 5.5 |  | `frontend/templates/account/profile.html` | `<section class="area-2fa" aria-labelledby="tieu-de-2fa">` | 24 | Khối xác thực 2 bước ở trang thông tin: trạng thái, số mã dự phòng còn lại, nút bật/tắt | [ ] |
 | 500 | Claude Opus 5.5 |  | `frontend/templates/account/login_two_factor.html` | `<h1 class="auth__title">Xác thực 2 bước</h1>` | 7 | Trang đăng nhập bước 2: nhập mã 6 số (khách được dùng mã dự phòng), có hạn 5 phút | [ ] |
@@ -503,3 +503,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 516 | Claude Opus 5.5 |  | `backend/core/migrations/0012_review_purchased_only.py` | `_statements` | 9 | Đọc file SQL xóa đánh giá của khách chưa nhận sách (không đảo ngược được) | [ ] |
 | 517 | Claude Opus 5.5 |  | `backend/catalog/review_services.py` | `can_write_review` | 150 | Hỏi CSDL khách đã nhận cuốn sách này chưa (sp_review_can_write) để quyết định hiện form đánh giá | [ ] |
 | 518 | Claude Opus 5.5 |  | `backend/catalog/tests/test_book_detail.py` | `ReviewPurchasedOnlyTests` | 115 | Test chỉ khách đã nhận sách mới thấy form và gửi được đánh giá; gửi lén bị chặn ở CSDL thì báo lỗi và ghi log | [ ] |
+| 519 | Claude Opus 5.5 |  | `backend/core/security_log.py` | `redact_path` | 21 | Che mã bí mật trong đường dẫn trước khi ghi log (link đặt lại mật khẩu, link đăng ký): phần mã thay bằng "-" | [ ] |
+| 520 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `CustomerPasswordResetConfirmView.dispatch` | 186 | Chỉ ghi invalid_input khi link đặt lại mật khẩu thật sự sai (link đúng bị Django chuyển hướng 302 trước khi có validlink), đường dẫn trong log không chứa mã | [ ] |
+| 521 | Claude Opus 5.5 |  | `backend/accounts/tests/test_password_reset.py` | `ResetLinkLoggingTests` | 152 | Test tái hiện lỗi lộ mã đặt lại mật khẩu trong nhật ký: link đúng không ghi invalid_input, không đường dẫn log nào chứa mã | [ ] |
+| 522 | Claude Opus 5.5 |  | `backend/core/tests/test_security_log.py` | `RedactPathTests` | 11 | Test che mã bí mật trong đường dẫn của nhật ký (file log và core_securityevent), kể cả khi view quên truyền path | [ ] |

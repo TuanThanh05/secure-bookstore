@@ -147,3 +147,58 @@ class PasswordResetTests(TestCase):
                        args=[urlsafe_base64_encode(force_bytes(staff.pk)), default_token_generator.make_token(staff)])
         response = self.client.get(path, follow=True)
         self.assertFalse(response.context["validlink"])
+
+
+# AI-TRACE#521 | Claude Opus 5.5 | Test tái hiện lỗi lộ mã đặt lại mật khẩu trong nhật ký: link đúng không ghi invalid_input, không đường dẫn log nào chứa mã | CẤM XÓA CHÚ THÍCH NÀY
+@override_settings(**NO_CAPTCHA)
+class ResetLinkLoggingTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.customer = User.objects.create_user(username="an_nguyen", email="an@example.test",
+                                                 password=PASSWORD, email_verified=True)
+        self.client.post(reverse("accounts:password_reset"), {"email": "an@example.test"})
+        self.path = LINK_RE.search(mail.outbox[-1].body).group(1)
+        self.uid, self.token = self.path.strip("/").split("/")[-2:]
+
+    def assert_token_not_logged(self, logs):
+        for event in SecurityEvent.objects.all():
+            self.assertNotIn(self.token, event.path or "")
+        for line in logs.output:
+            self.assertNotIn(self.token, line)
+
+    def test_valid_link_is_not_logged_as_invalid(self):
+        with self.assertNoLogs("security", level="WARNING"):
+            response = self.client.get(self.path)
+            self.assertEqual(response.status_code, 302)
+            form = self.client.get(response["Location"])
+            self.assertTrue(form.context["validlink"])
+        self.assertFalse(SecurityEvent.objects.filter(event_type="invalid_input").exists())
+        for event in SecurityEvent.objects.all():
+            self.assertNotIn(self.token, event.path or "")
+
+    def test_tampered_link_is_logged_without_token(self):
+        tampered = f"{self.token[:-1]}{'a' if self.token[-1] != 'a' else 'b'}"
+        with self.assertLogs("security", level="WARNING") as logs:
+            response = self.client.get(reverse("accounts:password_reset_confirm", args=[self.uid, tampered]))
+        self.assertFalse(response.context["validlink"])
+        event = SecurityEvent.objects.get(event_type="invalid_input", detail__kind="password_reset_link")
+        self.assertEqual(event.path, reverse("accounts:password_reset_confirm", args=[self.uid, "-"]))
+        self.assertNotIn(tampered, event.path)
+        for line in logs.output:
+            self.assertNotIn(tampered, line)
+
+    def test_expired_link_is_logged_without_token(self):
+        later = time.time() + 5 * 60 + 5
+        with self.assertLogs("security", level="WARNING") as logs:
+            with mock.patch("django.contrib.auth.tokens.PasswordResetTokenGenerator._now") as now:
+                from datetime import datetime
+                now.return_value = datetime.fromtimestamp(later)
+                response = self.client.get(self.path)
+        self.assertFalse(response.context["validlink"])
+        self.assertTrue(SecurityEvent.objects.filter(event_type="invalid_input").exists())
+        self.assert_token_not_logged(logs)
+
+    def test_set_password_page_without_session_keeps_step_name(self):
+        self.client.get(reverse("accounts:password_reset_confirm", args=[self.uid, "set-password"]))
+        event = SecurityEvent.objects.get(event_type="invalid_input")
+        self.assertEqual(event.path, reverse("accounts:password_reset_confirm", args=[self.uid, "set-password"]))

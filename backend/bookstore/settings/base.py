@@ -135,6 +135,13 @@ AXES_CLIENT_IP_CALLABLE = "core.client_ip.client_ip"   # axes đếm theo IP th�
 TRUSTED_PROXY_IPS = env.list("TRUSTED_PROXY_IPS", default=[])
 CLIENT_IP_HEADER = "HTTP_X_REAL_IP"        # Nginx: proxy_set_header X-Real-IP $remote_addr;
 
+# Đường dẫn chứa mã bí mật (core/security_log.py): nhóm "secret" được thay bằng "-"
+# trước khi ghi file log và bảng core_securityevent. Thêm URL mới chứa mã thì thêm mẫu vào đây.
+SECURITY_LOG_SECRET_PATHS = [
+    r"^/account/dat-lai-mat-khau/[^/]+/(?!set-password(?:/|$))(?P<secret>[^/]+)",   # link đặt lại mật khẩu
+    r"^/account/dang-ky/xac-nhan/(?P<secret>[^/]+)",                               # link đăng ký
+]
+
 LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "catalog:home"
 LOGOUT_REDIRECT_URL = "catalog:home"
