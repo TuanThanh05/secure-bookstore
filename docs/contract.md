@@ -190,7 +190,7 @@ Bảo mật đã kiểm tra (test `orders/tests/test_cart_page.py`, `db_check_gr
 
 Chốt 2026-11-14, bổ sung 2026-11-16 (nhánh đặt hàng). Đổi chữ ký thủ tục hoặc hàm thì sửa mục này trong cùng PR.
 
-**Luồng:** trang giỏ → nút **Đặt hàng** (`/orders/dat-hang/`) → điền tên người nhận, SĐT, địa chỉ (tên và SĐT điền sẵn từ hồ sơ, vẫn sửa được; địa chỉ nhập mới mỗi lần) → **Xác nhận đặt hàng** → trang đơn `/orders/don/<mã đơn>/` (trạng thái "Chờ thanh toán", hạn thanh toán 15 phút, nút Thanh toán mờ cho tới nhánh thanh toán). Nút **Đặt hàng** ở trang chi tiết sách gửi cùng form thêm vào giỏ (`then=cart`) rồi chuyển sang trang giỏ.
+**Luồng:** trang giỏ → nút **Đặt hàng** (`/orders/dat-hang/`) → điền tên người nhận, SĐT, địa chỉ (tên và SĐT điền sẵn từ hồ sơ, vẫn sửa được; địa chỉ nhập mới mỗi lần) → **Xác nhận đặt hàng** → trang đơn `/orders/don/<mã đơn>/` (trạng thái "Chờ thanh toán", hạn thanh toán `ORDER_HOLD_MINUTES` = 5 phút (từ 2026-11-20, trước là 15), nút Thanh toán mờ cho tới nhánh thanh toán). Nút **Đặt hàng** ở trang chi tiết sách gửi cùng form thêm vào giỏ (`then=cart`) rồi chuyển sang trang giỏ.
 
 **Thủ tục MySQL** (`database/objects/30_sp_place_order.sql`), `r_customer` chỉ có `EXECUTE`:
 
@@ -204,7 +204,7 @@ Chốt 2026-11-14, bổ sung 2026-11-16 (nhánh đặt hàng). Đổi chữ ký 
 | `p_order_code` | OUT CHAR(32) | Mã đơn (`RANDOM_BYTES`), dùng trên URL thay cho id |
 | `p_created` | OUT TINYINT | `1` = đơn mới, `0` = gửi lại cùng mã yêu cầu, trả mã đơn cũ |
 
-Danh sách sách, số lượng, giá đều do thủ tục đọc từ giỏ và `catalog_book`. Phí ship cố định 30.000 đ (`SHIPPING_FEE` ở Django chỉ để hiển thị trước); hạn thanh toán 15 phút. Kho bị trừ ngay khi tạo đơn.
+Danh sách sách, số lượng, giá đều do thủ tục đọc từ giỏ và `catalog_book`. Phí ship cố định 30.000 đ (`SHIPPING_FEE` ở Django chỉ để hiển thị trước); hạn thanh toán do Django truyền vào (`p_hold_minutes` = `ORDER_HOLD_MINUTES` = 5); tổng số cuốn tối đa `p_max_items` = `ORDER_MAX_ITEMS` = 20 (`ORDER_TOO_LARGE`; trang đặt hàng chặn trước, thủ tục chặn lại); tài khoản đang bị khóa tự động vì giữ kho → `ACCOUNT_LOCKED`. Kho bị trừ ngay khi tạo đơn. Chữ ký từ 2026-11-20: `sp_place_order(user_id, key, name, phone_enc, address_enc, hold_minutes, max_items, OUT code, OUT created)` (OUT đọc bằng `@_sp_place_order_7`, `_8`).
 
 **Chống giữ kho (chốt 2026-11-16):** mỗi khách tối đa **1 đơn chờ thanh toán còn hạn** (`PENDING_EXISTS`), kiểm tra khi đang giữ khóa giỏ nên nhiều tab bấm cùng lúc cũng chỉ ra 1 đơn; Django giới hạn thêm 5 lần đặt/10 phút (`ORDER_PLACE_RATE_*`). Hủy đơn quá hạn và trả kho làm ở nhánh thanh toán.
 
@@ -244,77 +244,16 @@ Kho bị trừ ngay khi tạo đơn, nên **hủy đơn = cộng lại đúng s�
 
 | Ai | Cách | Điều kiện |
 | --- | --- | --- |
-| Khách | Nút **Hủy đơn hàng** trên trang đơn → hộp xác nhận (`<details>`, không JS) → **Xác nhận hủy đơn** (POST) → `sp_order_cancel(user_id, code)` | Đơn của chính mình, đang `pending` (kể cả đã quá hạn mà Event chưa kịp hủy) |
+| Khách | Nút **Hủy đơn hàng** trên trang đơn → hộp xác nhận (`<details>`, không JS) → **Xác nhận hủy đơn** (POST) → `sp_order_cancel(user_id, code, OUT account_locked)` | Đơn của chính mình, đang `pending` (kể cả đã quá hạn mà Event chưa kịp hủy) |
 | Hệ thống | MySQL Event `ev_cancel_expired_orders` mỗi phút → `sp_cancel_expired_orders` → `sp_order_expire_one` từng đơn | Đơn `pending` có `expires_at <= UTC_TIMESTAMP()`, tối đa 200 đơn mỗi lần |
 
 **Không hủy được:** đơn đã thanh toán, đang giao, đã giao, đã hủy → `ORDER_NOT_CANCELLABLE` ("Đơn hàng này không còn hủy được..."). Không có hoàn tiền; trigger khóa đơn cũng chỉ cho `pending → cancelled`.
 
-**Chống race condition:** mỗi lần hủy khóa dòng đơn `FOR UPDATE` rồi mới kiểm tra lại trạng thái. Khách bấm hủy đúng lúc Event chạy, hoặc bấm nhiều lần cùng lúc, thì chỉ một bên hủy được, kho cộng đúng một lần. Thứ tự khóa đơn → sách; `sp_place_order` khóa giỏ → sách và không khóa dòng đơn cũ, nên không deadlock. Thủ tục thanh toán sau này cũng khóa dòng đơn và chỉ nhận khi `expires_at` còn hạn, nên không có đơn vừa "đã thanh toán" vừa "đã hủy".
-
-**Một đơn lỗi không chặn các đơn khác:** mỗi đơn quá hạn hủy trong giao dịch riêng (`sp_order_expire_one` có `ROLLBACK; RESIGNAL`), vòng lặp bắt lỗi rồi đi tiếp; đơn lỗi được thử lại ở phút sau.
-
-**Quyền:** `r_customer` chỉ có `EXECUTE sp_order_cancel`. `sp_cancel_expired_orders`, `sp_order_expire_one` không cấp cho tài khoản ứng dụng nào (chỉ Event gọi). Definer cần `UPDATE orders_order` và **quyền `EVENT` trên CSDL**: thiếu quyền này Event không chạy (log MySQL: "user no longer has EVENT privilege"). Lần đầu chạy `db_apply`, Event có thể chạy trúng khoảng giữa lúc tạo Event và lúc cấp quyền rồi báo lỗi một lần trong log MySQL; phút sau chạy bình thường. Cần `event_scheduler = ON` (`database/config/my.cnf` đã bật). Kiểm tra Event: `SELECT EVENT_NAME, STATUS FROM information_schema.EVENTS;` bằng root.
-
-**Django:** `orders.services.cancel_order(request, code)` lấy user từ phiên, mã đơn sai mẫu không xuống CSDL, giới hạn 10 lần/10 phút (`ORDER_CANCEL_RATE_*`). `Order.can_cancel` = đang `pending`. Trang đơn hiện nhãn: Chờ thanh toán, Quá hạn thanh toán (kèm "sẽ được hệ thống tự hủy trong ít phút"), Đã hủy (kèm thời điểm hủy), Đã thanh toán.
-
-**Đã kiểm tra** (test `orders/tests/test_order_cancel.py`, `db_check_grants` tổng 51 + chạy thật trong sandbox): Event hủy đơn quá hạn và trả kho, không đụng đơn còn hạn; Event chạy được dù `bookstore_definer` bị khóa đăng nhập; khách hủy đơn → kho cộng lại; hủy lần 2, hủy đơn đã thanh toán → `ORDER_NOT_CANCELLABLE`; khách A hủy đơn khách B → 404, đơn B không đổi; GET → 405, thiếu CSRF → 403; `app_customer` gọi `sp_cancel_expired_orders`/`sp_order_expire_one` → 1370; gọi `sp_order_cancel` bằng id quản trị → `NOT_CUSTOMER`. Chạy đồng thời 5 vòng khách hủy + Event cùng một đơn → 1 bên hủy, kho đúng; 3 vòng bấm hủy 4 lần cùng lúc → 1 thành công, kho đúng; một đơn bị khóa ở phiên khác → các đơn quá hạn còn lại vẫn được hủy, đơn bị khóa được hủy ở lần sau.
-
-## Đơn đã tạo không sửa được: `32_trg_orders_guard.sql`
-
-Chốt 2026-11-16: thanh toán xong (và cả lúc đang chờ thanh toán) không thể tăng số lượng hay thêm sách khác vào đơn. Hai lớp:
-
-1. **Quyền:** không tài khoản ứng dụng nào có quyền ghi `orders_order`, `orders_orderitem`; không có thủ tục nào sửa đơn.
-2. **Trigger** (chặn cả root, cả khi một thủ tục sau này viết sai), mã lỗi `ORDER_LOCKED`:
-
-| Bảng | Quy tắc |
-| --- | --- |
-| `orders_orderitem` | Chỉ thêm khi đơn `pending`, chưa thanh toán và **tổng các dòng không vượt `subtotal` đã chốt** (lúc tạo đơn các dòng cộng lại vừa bằng `subtotal`, nên sau đó thêm bất kỳ dòng nào cũng bị chặn). Không bao giờ sửa, không bao giờ xóa |
-| `orders_order` | Không đổi mã đơn, người đặt, tiền sách, phí ship, tổng tiền, thông tin giao hàng, mã chống trùng, ngày tạo, hạn thanh toán. Trạng thái chỉ đi `pending → paid/cancelled`, `paid → shipped`, `shipped → delivered`; `paid_at`, `cancelled_at` ghi một lần đúng lúc chuyển trạng thái. Không xóa đơn |
-
-Đã thử bằng root trong sandbox: thêm sách vào đơn đang chờ hay đã thanh toán, tăng số lượng, sửa giá, sửa tổng tiền, sửa người nhận, nhảy `pending → shipped`, quay lại `pending`, hủy đơn đã thanh toán, xóa dòng, xóa đơn → đều `ORDER_LOCKED`; `pending → paid`, `paid → shipped` đi qua.
-
-**Bảo mật đã kiểm tra** (test `orders/tests/test_checkout.py`, `test_place_order.py`, `db_check_grants` tổng 46 + chạy thật): `total`, `user_id`, `idempotency_key` gửi kèm form bị bỏ qua; thiếu CSRF → 403; khách B mở đơn của khách A → 404; mã đơn chứa `' OR 1=1` → 404 không xuống CSDL; `app_customer` đọc/sửa thẳng `orders_order`, thêm thẳng `orders_orderitem` → 1142; gọi thủ tục bằng id quản trị → `NOT_CUSTOMER`; CSDL chỉ lưu bản mã (`v1.`...). Chạy đồng thời: cùng khách bấm 4 lần cùng mã → 1 đơn mới + 3 lần trả lại đơn cũ; cùng khách 3 tab khác mã → 1 đơn + 2 `PENDING_EXISTS`; hai khách tranh cuốn cuối → 1 đơn + 1 `OUT_OF_STOCK`, kho về 0, không âm.
-
-
-## Thanh toán mô phỏng: `sp_payment_simulate`
-
-Chốt 2026-11-16, tạm thời khi chưa có cổng thật. Chi tiết: `docs/thanh-toan-mo-phong.md`.
-
-- Bật bằng `PAYMENT_SIMULATION=True` trong `.env`; tắt thì nút hiện "Chưa cấu hình cổng thanh toán".
-- `POST /payments/mo-phong/<mã đơn>/` (`payments:simulate`) → `payments.services.simulate_payment(request, code)` → `sp_payment_simulate(user_id, code, client_ip, OUT transaction_id)`.
-- Thủ tục khóa dòng đơn của chính khách, chỉ nhận đơn `pending` còn hạn, ghi một dòng `payments_payment` (`provider = 'simulated'`, số tiền lấy từ `total` của đơn) rồi đổi đơn sang `paid` trong cùng giao dịch. Mã lỗi: `ORDER_NOT_FOUND` (→ 404 + `idor_attempt`), `ORDER_ALREADY_PAID`, `ORDER_NOT_PAYABLE`, `ORDER_EXPIRED`, `NOT_CUSTOMER`, `INVALID_INPUT`; service thêm `NOT_CONFIGURED`, `RATE_LIMITED`.
-- Giao dịch đã ghi không sửa/xóa được (trigger `PAYMENT_LOCKED`); một đơn tối đa một giao dịch thành công (UNIQUE `uq_payment_success_order`).
-
-## Luồng trạng thái đơn sau khi thanh toán (chốt 2026-11-16)
-
-```
-pending → paid → confirmed → packed → shipped → delivered
-Chờ thanh toán → Đã thanh toán → Đã tiếp nhận → Đã đóng gói → Đang giao → Đã giao
-pending → cancelled (khách hủy hoặc quá hạn)
-```
-
-- Lược đồ `database/schema/07_order_status_flow.sql` (migration `core/0008_order_status_flow`): thêm `confirmed`, `packed` vào CHECK `ck_order_status`; `ck_order_paid_has_time` bắt buộc `paid_at` với mọi trạng thái từ `paid` trở đi.
-- Trigger `32_trg_orders_guard.sql` chỉ cho đi tới **đúng một bước**, không nhảy cóc, không quay lại (kể cả root sửa tay → `ORDER_LOCKED`). Đơn từ `paid` trở đi không hủy được. `sp_payment_simulate` coi mọi trạng thái từ `paid` trở đi là `ORDER_ALREADY_PAID`.
-- Bốn bước sau `paid` do admin bấm (gói "Quản lý đơn hàng", nhánh sau). Trigger 34 tự ghi nhật ký từng bước.
-
-## Đơn hàng của tôi: `sp_order_list_mine`
-
-Trang `/orders/` (`orders:list`), hai tab:
-
-| Tab | `status=` | Trạng thái |
-| --- | --- | --- |
-| Đang xử lý | `active` (mặc định) | pending, paid, confirmed, packed, shipped |
-| Lịch sử | `history` | delivered, cancelled (trạng thái cuối) |
-
-- **Không dùng view**: mọi khách vào CSDL bằng cùng tài khoản `app_customer`, MySQL không biết ai đang xem, nên view "đơn của khách" sẽ trả đơn của mọi người. Thủ tục `sp_order_list_mine(user_id, group, offset, limit)` nhận `user_id` do Django lấy từ phiên và lọc `WHERE user_id` trong CSDL. Chỉ `r_customer` được gọi; `app_staff` gọi → 1370; id quản trị → `NOT_CUSTOMER`.
-- Trả 2 bộ kết quả: tổng số + một trang (mới nhất trước): mã đơn, trạng thái, tổng tiền, các mốc thời gian, số cuốn, số đầu sách, tên cuốn đầu. **Không trả SĐT/địa chỉ** (xem ở trang chi tiết đơn). Kiểm tra: nhóm chỉ `active`/`history`, `limit` 1–50, `offset` 0–100000 → sai là `INVALID_INPUT`.
-- Django: `orders.services.list_my_orders(request, group, page)` (nhóm sai không xuống CSDL, 10 đơn mỗi trang, `OrderSummary` chỉ đọc), view `order_list` (`login_required`, `never_cache`, `require_safe`, nhân viên → dashboard, tab sai → Đang xử lý, `trang` sai → 1). Mỗi đơn là một thẻ bấm sang `/orders/don/<mã đơn>/`; đơn chờ thanh toán đã quá hạn hiện "Quá hạn thanh toán".
-- Đã kiểm tra trên CSDL thật: tổng số mỗi tab khớp với đếm trực tiếp; khách B không thấy đơn khách A; phân trang đúng; nhóm/limit/offset sai bị từ chối; trigger chặn paid → shipped, packed → delivered (nhảy cóc), confirmed → paid, packed → confirmed, delivered → shipped/cancelled (quay lại) và trạng thái lạ; nhật ký đơn ghi đủ pending, paid, confirmed, packed, shipped, delivered.
-
-## Phân trang tủ sách trang chủ
-
-Chốt 2026-11-16. Trang chủ `/` hiện **12 cuốn mỗi trang** (3 hàng × 4 cột trên màn hình ngang; máy tính bảng 3 cột × 4 hàng; điện thoại 2 cột). Không đổi CSDL: `sp_public_book_list` vẫn trả tối đa 200 cuốn mới nhất, Django chia trang trên danh sách đó (`catalog.views.home`, `BOOKS_PER_PAGE = 12`).
-
-- Tham số `?trang=`: chỉ nhận chữ số (`parse_positive_int`); sai, 0, âm → trang 1; lớn hơn số trang → trang cuối. Link chuyển trang **giữ nguyên** `q` và `category`, kèm `#tu-sach` để trình duyệt cuộn thẳng tới tủ sách.
-- Thanh chuyển trang (`components/pagination.html`, không JS): `‹` `1` `2` `3` `…` `<trang cuối>` `›`; hiện trang đầu, trang cuối, trang hiện tại và hai trang kề, chỗ bỏ qua là `…` (`catalog.views.page_items`). Ô **Đến trang** là form GET (số 1–số trang cuối, giữ `q`, `category`). Chỉ 1 trang thì không hiện thanh.
-- Test: `catalog/tests/test_home.py` lớp `HomePaginationTests`.
+**Chống giữ kho (báo cáo rà soát T3.4, chốt 2026-11-20).** Kho bị trừ lúc đặt nên kẻ xấu có thể đặt → hủy (hoặc để hết hạn) → đặt lại liên tục để sách luôn "hết hàng". Rút thời gian giữ hay giới hạn tần suất không cắt được vòng lặp này, nên:
+- Giữ kho **5 phút** (`ORDER_HOLD_MINUTES`), mỗi đơn tối đa **20 cuốn** (`ORDER_MAX_ITEMS`).
+- Mỗi lần một đơn `pending` bị hủy (khách) hoặc hết hạn (Event), trong cùng giao dịch thủ tục nội bộ `sp_order_hold_check` đếm số đơn bị hủy chưa thanh toán của khách, tính từ mốc muộn hơn giữa 24 giờ trước và lần hết khóa/được mở khóa gần nhất. **Đủ 3 đơn → khóa cả tài khoản 24 giờ** (`accounts_user.auto_locked_until`). Ngưỡng viết trong SQL vì đường hết hạn do Event chạy, không có Django.
+- Khóa bằng cột riêng, **không** dùng `is_active` (khóa của admin, có lý do/nhật ký; trigger 10 cấm `app_customer` đổi `is_active`). Chỉ thủ tục DEFINER ghi cột này (definer có `UPDATE (auto_locked_until)`; `app_customer` không có quyền UPDATE bảng; trigger 10 chặn `app_auth`, `app_staff` không có quyền cột).
+- Khách hủy làm khóa: thủ tục trả `p_account_locked = 1` → Django ghi `order_hold_abuse` (`detail.via = "cancel"`, `locked_until`), xóa mọi phiên (`end_user_sessions`), đăng xuất, về trang đăng nhập kèm câu báo giờ mở khóa. Đơn hết hạn làm khóa: `sp_order_expire_one` tự ghi `order_hold_abuse` (`ip_address = 'system'`, `detail.via = "expired"`); khách bị đăng xuất ở request kế tiếp (`InactiveAccountSessionMiddleware`, log `logout` `account_auto_locked`).
+- Đang khóa: đăng nhập **đúng** mật khẩu mới thấy câu báo khóa (`LoginForm.confirm_login_allowed`), sai mật khẩu vẫn báo sai như thường; `sp_place_order` → `ACCOUNT_LOCKED`.
+- Admin thấy trạng thái **"Khóa tự động (giữ kho)"** (bộ lọc `khoa-tu-dong`) và **mở khóa sớm được** bằng nút Mở khóa như thường (chốt b – khi bắt nhầm khách thật): `sp_staff_account_unlock` đặt `auto_locked_until = lúc đó` (không NULL) để chỉ đếm đơn bỏ sau lần mở khóa, ghi `core_auditlog` kèm lý do.
+- Kiểm tra trên CSDL thật (sandbox): đơn giữ đúng 300 giây; hủy đơn 1, 2 → không khóa, đơn 3 → khóa 24 giờ; đặt đơn khi khóa → `ACCOUNT_LOCKED`; đăng nhập đúng mật khẩu → câu báo khóa; phiên đang mở → bị đăng xuất; admin mở khóa → đăng nhập được, hủy thêm 1 đơn không bị khóa lại; `p_max_items` nhỏ hơn số cuốn → `ORDER_TOO_LARGE`; `app_auth` tự gỡ khóa → 1644; đường hết hạn (Event thật) → khóa + log `order_hold_abuse` ip `system`. Test: `orders/tests/test_hold_abuse.py`.

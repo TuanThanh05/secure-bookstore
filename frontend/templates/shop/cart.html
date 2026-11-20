@@ -51,13 +51,13 @@
       </ul>
       <aside class="cart__summary" aria-label="Tạm tính">
         <p class="cart__row"><span>Tạm tính ({{ cart.item_count }} cuốn)</span><strong>{{ cart.subtotal|vnd }}</strong></p>
-        <p class="cart__note">Giá chốt khi đặt hàng. Mỗi sách tối đa {{ cart_max }} cuốn.{% if cart.has_unavailable %} Sách ngừng bán hoặc hết hàng không được tính.{% endif %}</p>
+        <p class="cart__note">Giá chốt khi đặt hàng. Mỗi sách tối đa {{ cart_max }} cuốn, mỗi đơn tối đa {{ order_max_items }} cuốn.{% if cart.has_unavailable %} Sách ngừng bán hoặc hết hàng không được tính.{% endif %}</p>
         {% if cart.has_unavailable %}
           <button class="btn cart__order" type="button" disabled>Đặt hàng</button>
           <p class="cart__note">Hãy gỡ sách ngừng bán hoặc hết hàng trước khi đặt hàng.</p>
         {% else %}
           <a class="btn cart__order" href="{% url 'orders:checkout' %}">Đặt hàng</a>
-          <p class="cart__note">Phí giao hàng 30.000 ₫, thanh toán trong 15 phút sau khi đặt.</p>
+          <p class="cart__note">Phí giao hàng 30.000 ₫, thanh toán trong {{ order_hold_minutes }} phút sau khi đặt. Hủy hoặc bỏ 3 đơn chưa thanh toán trong 24 giờ, tài khoản sẽ bị tạm khóa 24 giờ.</p>
         {% endif %}
         <a class="btn btn--secondary cart__more" href="{% url 'catalog:home' %}">Xem thêm sách</a>
       </aside>

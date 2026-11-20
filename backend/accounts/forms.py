@@ -15,6 +15,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxLengthValidator
 from django.urls import reverse
 
+from core.middleware import auto_lock_message
+
 from .emails import send_password_reset_email
 
 from .models import User
@@ -80,6 +82,12 @@ class LoginForm(AuthenticationForm):
             if username:
                 return username
         return value
+
+    # AI-TRACE#540 | Claude Opus 5.5 | Đúng mật khẩu nhưng tài khoản đang bị khóa tự động vì giữ kho: không cho đăng nhập, báo giờ mở khóa | CẤM XÓA CHÚ THÍCH NÀY
+    def confirm_login_allowed(self, user):
+        super().confirm_login_allowed(user)
+        if user.is_auto_locked:
+            raise ValidationError(auto_lock_message(user), code="auto_locked")
 
 
 # AI-TRACE#049 | Claude Opus 5.5 | Form quên mật khẩu chỉ gửi cho khách, dùng thư và giới hạn của nhóm | CẤM XÓA CHÚ THÍCH NÀY

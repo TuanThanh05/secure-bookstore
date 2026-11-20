@@ -93,6 +93,14 @@ BEGIN
                 SET MESSAGE_TEXT = 'tai khoan ung dung khong duoc doi trang thai, email, ten dang nhap cua khach';
         END IF;
     END IF;
+    -- AI-TRACE#534 | Claude Opus 5.5 | app_auth không được đổi auto_locked_until (khóa tự động vì giữ kho): chỉ thủ tục DEFINER đặt/gỡ cột này | CẤM XÓA CHÚ THÍCH NÀY
+    -- app_customer không có quyền UPDATE trên bảng này (chỉ SELECT), nên lệnh đổi cột
+    -- này với USER() = app_customer chỉ có thể đến từ thủ tục DEFINER (33_order_cancel.sql).
+    IF SUBSTRING_INDEX(USER(), '@', 1) = 'app_auth'
+       AND NOT (NEW.auto_locked_until <=> OLD.auto_locked_until) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'app_auth khong duoc doi khoa tu dong (auto_locked_until)';
+    END IF;
     -- app_staff: chỉ được sửa dòng của nhân viên (cột nào thì quyền theo cột đã giới hạn).
     -- Riêng dòng của khách: chỉ được đổi đúng cột is_active (khóa/mở khóa). app_staff
     -- không có quyền UPDATE(is_active) trực tiếp, nên thay đổi này chỉ có thể đến từ

@@ -23,16 +23,24 @@
 --                       chuỗi dài quá vẫn vào được thủ tục và nhận INVALID_INPUT)
 --   p_phone_encrypted   SĐT đã mã hóa AES-GCM ở Django
 --   p_address_encrypted địa chỉ đã mã hóa AES-GCM ở Django
+--   p_hold_minutes      số phút giữ kho chờ thanh toán (settings ORDER_HOLD_MINUTES, 1–60)
+--   p_max_items         tổng số cuốn tối đa của một đơn (settings ORDER_MAX_ITEMS, 1–150)
 --   p_order_code (OUT)  mã đơn (32 ký tự hex)
 --   p_created    (OUT)  1 = đơn mới tạo, 0 = bấm lại, trả mã đơn cũ
 --
--- Lỗi (SIGNAL SQLSTATE '45000', MESSAGE_TEXT là đúng 1 trong 6 mã):
+-- Lỗi (SIGNAL SQLSTATE '45000', MESSAGE_TEXT là đúng 1 trong 8 mã):
 --   INVALID_INPUT   tham số sai, hoặc mã yêu cầu đã thuộc người khác
 --   NOT_CUSTOMER    người gọi là nhân viên, bị khóa hoặc chưa xác nhận email
 --   PENDING_EXISTS  khách đang có 1 đơn chờ thanh toán còn hạn
 --   CART_EMPTY      giỏ rỗng hoặc chưa có giỏ
 --   BOOK_INACTIVE   có sách đã ngừng bán
 --   OUT_OF_STOCK    có sách không đủ số lượng
+--   ORDER_TOO_LARGE tổng số cuốn trong giỏ vượt p_max_items
+--   ACCOUNT_LOCKED  tài khoản đang bị khóa tự động vì giữ kho (auto_locked_until)
+--
+-- Bổ sung 2026-11-20 (báo cáo rà soát T3.4 – giữ kho không thanh toán): thời gian
+-- giữ kho rút còn 5 phút và truyền từ Django; mỗi đơn tối đa 20 cuốn; tài khoản bỏ
+-- 3 đơn chưa thanh toán trong 24 giờ bị khóa 24 giờ (33_order_cancel.sql).
 --
 -- Bổ sung 2026-11-16 (nhánh đặt hàng):
 --   - Tự kiểm tra lại người gọi là khách hợp lệ (NOT_CUSTOMER), như các thủ
@@ -51,13 +59,15 @@ DROP PROCEDURE IF EXISTS sp_order_get;
 
 DELIMITER $$
 
--- AI-TRACE#001 | Claude Opus 5.5 | Thủ tục đặt đơn: khóa giỏ và sách, kiểm tra kho, tạo đơn, trừ kho | CẤM XÓA CHÚ THÍCH NÀY
+-- AI-TRACE#001 | Claude Opus 5.5 | Thủ tục đặt đơn: khóa giỏ và sách, kiểm tra kho, tạo đơn, trừ kho | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thêm thời gian giữ kho, giới hạn số cuốn và khóa giữ kho
 CREATE DEFINER = 'bookstore_definer'@'localhost' PROCEDURE sp_place_order(
     IN  p_user_id           BIGINT,
     IN  p_idempotency_key   CHAR(32),
     IN  p_shipping_name     VARCHAR(255),
     IN  p_phone_encrypted   VARCHAR(512),
     IN  p_address_encrypted VARCHAR(1024),
+    IN  p_hold_minutes      INT,
+    IN  p_max_items         INT,
     OUT p_order_code        CHAR(32),
     OUT p_created           TINYINT
 )
@@ -79,6 +89,8 @@ proc: BEGIN
     DECLARE v_code           CHAR(32);
     DECLARE v_customer       INT DEFAULT 0;
     DECLARE v_pending_count  INT DEFAULT 0;
+    DECLARE v_item_total     BIGINT DEFAULT 0;
+    DECLARE v_locked_until   DATETIME(6) DEFAULT NULL;
 
     -- Bước 1: lỗi ở đâu cũng hủy toàn bộ giao dịch rồi báo lỗi ra ngoài
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -101,6 +113,8 @@ proc: BEGIN
        OR CHAR_LENGTH(p_shipping_name) > 100
        OR p_phone_encrypted IS NULL OR CHAR_LENGTH(p_phone_encrypted) = 0
        OR p_address_encrypted IS NULL OR CHAR_LENGTH(p_address_encrypted) = 0
+       OR p_hold_minutes IS NULL OR p_hold_minutes < 1 OR p_hold_minutes > 60
+       OR p_max_items IS NULL OR p_max_items < 1 OR p_max_items > 150
     THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'INVALID_INPUT';
     END IF;
@@ -114,6 +128,12 @@ proc: BEGIN
     END IF;
 
     SET v_now = UTC_TIMESTAMP(6);
+
+    -- AI-TRACE#533 | Claude Opus 5.5 | sp_place_order từ chối tài khoản đang bị khóa tự động vì giữ kho (lớp 2, kể cả khi gọi thẳng thủ tục) | CẤM XÓA CHÚ THÍCH NÀY
+    SELECT auto_locked_until INTO v_locked_until FROM accounts_user WHERE id = p_user_id;
+    IF v_locked_until IS NOT NULL AND v_locked_until > v_now THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ACCOUNT_LOCKED';
+    END IF;
 
     -- Bước 3: mở giao dịch
     START TRANSACTION;
@@ -157,8 +177,9 @@ proc: BEGIN
     SELECT COUNT(*),
            COALESCE(SUM(b.is_active = 0), 0),
            COALESCE(SUM(b.stock < ci.quantity), 0),
-           COALESCE(SUM(b.price * ci.quantity), 0)
-      INTO v_line_count, v_inactive_count, v_short_count, v_subtotal
+           COALESCE(SUM(b.price * ci.quantity), 0),
+           COALESCE(SUM(ci.quantity), 0)
+      INTO v_line_count, v_inactive_count, v_short_count, v_subtotal, v_item_total
       FROM orders_cartitem ci
       STRAIGHT_JOIN catalog_book b ON b.id = ci.book_id
      WHERE ci.cart_id = v_cart_id
@@ -167,6 +188,9 @@ proc: BEGIN
     -- Bước 7: kiểm tra giỏ
     IF v_line_count = 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'CART_EMPTY';
+    END IF;
+    IF v_item_total > p_max_items THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ORDER_TOO_LARGE';
     END IF;
     IF v_inactive_count > 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'BOOK_INACTIVE';
@@ -186,7 +210,7 @@ proc: BEGIN
     ) VALUES (
         v_code, p_user_id, 'pending', v_subtotal, c_shipping_fee, v_subtotal + c_shipping_fee,
         TRIM(p_shipping_name), p_phone_encrypted, p_address_encrypted,
-        p_idempotency_key, v_now, v_now, v_now + INTERVAL 15 MINUTE
+        p_idempotency_key, v_now, v_now, v_now + INTERVAL p_hold_minutes MINUTE
     );
     SET v_order_id = LAST_INSERT_ID();
 

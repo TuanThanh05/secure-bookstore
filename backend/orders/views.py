@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
 from django.core.paginator import Paginator
@@ -11,6 +12,8 @@ from django.http import Http404
 from django.views.decorators.http import require_http_methods, require_POST, require_safe
 
 from accounts.profile import decrypt_phone
+from core.middleware import auto_lock_message
+from core.session_store import end_user_sessions
 from core.security_log import log_event
 
 from .cart_services import (CART_MAX_PER_BOOK, CartError, add_to_cart, get_cart, remove_from_cart,
@@ -20,7 +23,7 @@ from .services import (ORDER_CODE_RE, ORDER_GROUPS, ORDER_LIST_MAX_OFFSET, ORDER
                        OrderError, cancel_order, get_order, list_my_orders, new_idempotency_key, place_order)
 
 
-# AI-TRACE#250 | Claude Opus 5.5 | Trang giỏ hàng của khách: đọc bằng sp_cart_list, không lưu cache; nhân viên không có giỏ | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#250 | Claude Opus 5.5 | Trang giỏ hàng của khách: đọc bằng sp_cart_list, không lưu cache; nhân viên không có giỏ | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi hiện số cuốn tối đa mỗi đơn và thời gian giữ kho
 @login_required
 @never_cache
 @require_safe
@@ -33,6 +36,8 @@ def cart(request):
         "cart_max": CART_MAX_PER_BOOK,
         "cart_update_url": reverse("orders:cart_update"),
         "cart_remove_url": reverse("orders:cart_remove"),
+        "order_max_items": settings.ORDER_MAX_ITEMS,
+        "order_hold_minutes": settings.ORDER_HOLD_MINUTES,
     })
 
 
@@ -179,7 +184,7 @@ def _checkout_initial(user):
             "phone": decrypt_phone(user) or ""}
 
 
-# AI-TRACE#273 | Claude Opus 5.5 | Trang đặt hàng: kiểm tra giỏ (không rỗng, không có sách ngừng bán/hết hàng), form giao hàng điền sẵn từ hồ sơ, gọi sp_place_order, xong chuyển tới trang đơn | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#273 | Claude Opus 5.5 | Trang đặt hàng: kiểm tra giỏ (không rỗng, không có sách ngừng bán/hết hàng), form giao hàng điền sẵn từ hồ sơ, gọi sp_place_order, xong chuyển tới trang đơn | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi giới hạn số cuốn mỗi đơn và đổi thời gian giữ kho
 @login_required
 @never_cache
 @require_http_methods(["GET", "HEAD", "POST"])
@@ -194,6 +199,9 @@ def checkout(request):
     if cart_data.has_unavailable:
         messages.error(request, "Hãy gỡ các sách ngừng bán hoặc hết hàng khỏi giỏ trước khi đặt hàng.")
         return redirect("orders:cart")
+    if sum(line.quantity for line in cart_data.lines) > settings.ORDER_MAX_ITEMS:
+        messages.error(request, OrderError("ORDER_TOO_LARGE").message)
+        return redirect("orders:cart")
     key = _checkout_key(request)
     status = 200
     if request.method == "POST":
@@ -204,7 +212,7 @@ def checkout(request):
                 result = place_order(request, key, data["shipping_name"], data["phone"], data["address"])
             except OrderError as exc:
                 messages.error(request, exc.message)
-                if exc.code in ("CART_EMPTY", "BOOK_INACTIVE", "OUT_OF_STOCK"):
+                if exc.code in ("CART_EMPTY", "BOOK_INACTIVE", "OUT_OF_STOCK", "ORDER_TOO_LARGE"):
                     return redirect("orders:cart")
                 if exc.code == "PENDING_EXISTS" and request.session.get(LAST_ORDER_SESSION):
                     return redirect("orders:order_detail", code=request.session[LAST_ORDER_SESSION])
@@ -212,7 +220,8 @@ def checkout(request):
             else:
                 request.session.pop(CHECKOUT_KEY_SESSION, None)
                 request.session[LAST_ORDER_SESSION] = result.order_code
-                messages.success(request, "Đã tạo đơn hàng. Hãy thanh toán trong 15 phút, quá hạn đơn sẽ bị hủy.")
+                messages.success(request, f"Đã tạo đơn hàng. Hãy thanh toán trong {settings.ORDER_HOLD_MINUTES} phút, "
+                                          "quá hạn đơn sẽ bị hủy.")
                 return redirect("orders:order_detail", code=result.order_code)
         else:
             status = 400
@@ -223,6 +232,7 @@ def checkout(request):
         "cart": cart_data,
         "shipping_fee": SHIPPING_FEE,
         "total": cart_data.subtotal + SHIPPING_FEE,
+        "order_hold_minutes": settings.ORDER_HOLD_MINUTES,
     }, status=status)
 
 
@@ -242,7 +252,7 @@ def order_detail(request, code):
     return render(request, "shop/order_detail.html", {"order": order, "payment_simulation": settings.PAYMENT_SIMULATION})
 
 
-# AI-TRACE#288 | Claude Opus 5.5 | Nhận nút hủy đơn (chỉ POST, CSRF, sau bước xác nhận trên trang đơn): đơn người khác/mã sai trả 404, xong quay về trang đơn | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#288 | Claude Opus 5.5 | Nhận nút hủy đơn (chỉ POST, CSRF, sau bước xác nhận trên trang đơn): đơn người khác/mã sai trả 404, xong quay về trang đơn | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi hủy đơn có thể khóa tài khoản vì giữ kho
 @login_required
 @require_POST
 def order_cancel(request, code):
@@ -250,12 +260,27 @@ def order_cancel(request, code):
         messages.error(request, "Tài khoản quản trị không có đơn hàng.")
         return redirect("dashboard:index")
     try:
-        cancel_order(request, code)
+        account_locked = cancel_order(request, code)
     except OrderError as exc:
         if exc.code == "ORDER_NOT_FOUND":
             _log_order_probe(request, code, exc)
             raise Http404 from None
         messages.error(request, exc.message)
     else:
+        if account_locked:
+            return _logout_auto_locked(request)
         messages.success(request, "Đã hủy đơn hàng. Sách trong đơn đã được trả lại kho.")
     return redirect("orders:order_detail", code=code)
+
+
+# AI-TRACE#541 | Claude Opus 5.5 | Hủy đơn làm tài khoản bị khóa tự động vì giữ kho: ghi log order_hold_abuse, xóa mọi phiên, đăng xuất, báo giờ mở khóa | CẤM XÓA CHÚ THÍCH NÀY
+def _logout_auto_locked(request):
+    user = request.user
+    user.refresh_from_db(fields=["auto_locked_until"])
+    log_event("order_hold_abuse", request, severity="warning", user=user, username=user.get_username(),
+              detail={"via": "cancel", "locked_until": user.auto_locked_until.strftime("%Y-%m-%dT%H:%M:%SZ")})
+    message = auto_lock_message(user)
+    end_user_sessions(user.pk)
+    logout(request)
+    messages.error(request, message)
+    return redirect("accounts:login")

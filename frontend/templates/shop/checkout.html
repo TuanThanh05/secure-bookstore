@@ -37,7 +37,7 @@
       <p class="cart__row checkout__row"><span>Tạm tính</span><span>{{ cart.subtotal|vnd }}</span></p>
       <p class="cart__row checkout__row"><span>Phí giao hàng</span><span>{{ shipping_fee|vnd }}</span></p>
       <p class="cart__row"><span>Tổng cộng</span><strong>{{ total|vnd }}</strong></p>
-      <p class="cart__note">Giá và tổng tiền được tính lại ở máy chủ lúc đặt. Sau khi đặt, bạn có 15 phút để thanh toán.</p>
+      <p class="cart__note">Giá và tổng tiền được tính lại ở máy chủ lúc đặt. Sau khi đặt, bạn có {{ order_hold_minutes }} phút để thanh toán; quá hạn đơn bị hủy và sách trả về kho.</p>
     </aside>
   </div>
 {% endblock %}

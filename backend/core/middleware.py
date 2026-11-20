@@ -3,10 +3,12 @@ import time
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import SESSION_KEY, logout
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth.signals import user_logged_in
 from django.db import DatabaseError
 from django.dispatch import receiver
 from django.shortcuts import redirect
+from django.utils import timezone
 
 from core.security_log import log_event
 
@@ -73,15 +75,30 @@ class StaffSessionLimitMiddleware:
         return not 0 <= age < settings.STAFF_SESSION_MAX_AGE
 
 
-# AI-TRACE#524 | Claude Opus 5.5 | Phiên còn ghi người dùng nhưng tài khoản đã bị khóa (hoặc không còn) thì hủy hẳn phiên, không để phiên được gia hạn rồi sống lại khi mở khóa | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#524 | Claude Opus 5.5 | Phiên còn ghi người dùng nhưng tài khoản đã bị khóa (hoặc không còn) thì hủy hẳn phiên, không để phiên được gia hạn rồi sống lại khi mở khóa | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thêm khóa tự động vì giữ kho
 class InactiveAccountSessionMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
         session = getattr(request, "session", None)
-        if session is not None and SESSION_KEY in session and not request.user.is_authenticated:
-            log_event("logout", request, severity="warning",
-                      detail={"reason": "account_inactive", "user_id": str(session.get(SESSION_KEY))[:20]})
-            session.flush()
+        if session is not None and SESSION_KEY in session:
+            user = request.user
+            if not user.is_authenticated:
+                log_event("logout", request, severity="warning",
+                          detail={"reason": "account_inactive", "user_id": str(session.get(SESSION_KEY))[:20]})
+                session.flush()
+            elif getattr(user, "is_auto_locked", False):
+                log_event("logout", request, severity="warning", user=user, username=user.get_username(),
+                          detail={"reason": "account_auto_locked"})
+                session.flush()
+                request.user = AnonymousUser()
+                messages.error(request, auto_lock_message(user))
         return self.get_response(request)
+
+
+# AI-TRACE#539 | Claude Opus 5.5 | Câu báo tài khoản bị khóa tự động vì giữ kho, kèm giờ mở (giờ Việt Nam) | CẤM XÓA CHÚ THÍCH NÀY
+def auto_lock_message(user):
+    until = timezone.localtime(user.auto_locked_until).strftime("%H:%M ngày %d/%m/%Y")
+    return (f"Tài khoản bị tạm khóa đến {until} vì đã hủy hoặc bỏ 3 đơn chưa thanh toán trong 24 giờ. "
+            "Nếu bị khóa nhầm, hãy liên hệ cửa hàng.")

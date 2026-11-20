@@ -156,6 +156,7 @@ GRANT EVENT ON *                               TO 'bookstore_definer'@'localhost
 GRANT EXECUTE ON PROCEDURE sp_order_cancel          TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_order_expire_one      TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_cancel_expired_orders TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_order_hold_check      TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_order_cancel          TO 'r_customer';
 
 -- ---------------------------------------------------------------------
@@ -270,6 +271,9 @@ GRANT EXECUTE ON PROCEDURE sp_cart_remove            TO 'r_customer';
 -- r_staff: chỉ gọi bốn thủ tục; không có quyền UPDATE(is_active) trực tiếp.
 -- ---------------------------------------------------------------------
 GRANT UPDATE (is_active) ON accounts_user            TO 'bookstore_definer'@'localhost';
+-- Chống giữ kho (33_order_cancel.sql, 42_account.sql): definer đặt/gỡ khóa tự động.
+-- AI-TRACE#535 | Claude Opus 5.5 | Cấp cho definer quyền đổi đúng cột auto_locked_until và ghi log order_hold_abuse khi Event khóa tài khoản | CẤM XÓA CHÚ THÍCH NÀY
+GRANT UPDATE (auto_locked_until) ON accounts_user    TO 'bookstore_definer'@'localhost';
 GRANT SELECT             ON axes_accessattempt       TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_staff_account_list     TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_staff_account_get      TO 'bookstore_definer'@'localhost';
@@ -286,7 +290,7 @@ GRANT EXECUTE ON PROCEDURE sp_staff_account_unlock   TO 'r_staff';
 -- sp_purge_old_logs do Event gọi). Tài khoản ứng dụng vẫn chỉ có INSERT.
 -- r_staff: chỉ gọi 2 thủ tục đọc. sp_purge_old_logs không cấp cho ai (chỉ Event).
 -- ---------------------------------------------------------------------
-GRANT SELECT, DELETE ON core_securityevent           TO 'bookstore_definer'@'localhost';
+GRANT SELECT, INSERT, DELETE ON core_securityevent   TO 'bookstore_definer'@'localhost';
 GRANT SELECT, DELETE ON core_auditlog                TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_staff_security_events  TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_staff_audit_log        TO 'bookstore_definer'@'localhost';

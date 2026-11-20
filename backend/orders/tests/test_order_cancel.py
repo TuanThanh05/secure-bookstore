@@ -25,7 +25,7 @@ def order(status="pending", minutes_left=10):
                  lines=(OrderLine(book_id=7, title="Nhà Giả Kim", unit_price=79000, quantity=2),))
 
 
-# AI-TRACE#291 | Claude Opus 5.5 | Test service hủy đơn bằng cursor giả: mã đơn sai mẫu không xuống CSDL, chặn nhân viên/ẩn danh, giới hạn tần suất, đổi lỗi SIGNAL | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#291 | Claude Opus 5.5 | Test service hủy đơn bằng cursor giả: mã đơn sai mẫu không xuống CSDL, chặn nhân viên/ẩn danh, giới hạn tần suất, đổi lỗi SIGNAL | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thủ tục hủy trả cờ khóa vì giữ kho
 @override_settings(ORDER_CANCEL_RATE_LIMIT=100, ORDER_CANCEL_RATE_WINDOW=600)
 class CancelOrderServiceTests(SimpleTestCase):
     def setUp(self):
@@ -34,6 +34,7 @@ class CancelOrderServiceTests(SimpleTestCase):
         self.request = SimpleNamespace(user=self.user, META={"REMOTE_ADDR": "127.0.0.1"}, method="POST", path="/")
         self.cursor = mock.MagicMock()
         self.cursor.nextset.return_value = None
+        self.cursor.fetchone.return_value = (0,)
         self.conn = mock.MagicMock(in_atomic_block=False)
         self.conn.cursor.return_value.__enter__.return_value = self.cursor
         patcher = mock.patch.object(services, "connection", self.conn)
@@ -44,8 +45,13 @@ class CancelOrderServiceTests(SimpleTestCase):
         self.addCleanup(log_patcher.stop)
 
     def test_calls_procedure_with_session_user(self):
-        cancel_order(self.request, CODE)
-        self.cursor.callproc.assert_called_once_with("sp_order_cancel", [42, CODE])
+        self.assertFalse(cancel_order(self.request, CODE))
+        self.cursor.callproc.assert_called_once_with("sp_order_cancel", [42, CODE, None])
+        self.cursor.execute.assert_called_once_with("SELECT @_sp_order_cancel_2")
+
+    def test_returns_true_when_account_just_locked(self):
+        self.cursor.fetchone.return_value = (1,)
+        self.assertTrue(cancel_order(self.request, CODE))
 
     def test_bad_code_never_reaches_database(self):
         for bad in ("A" * 32, "abc", "a" * 31 + "'", None, 123):
