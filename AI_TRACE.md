@@ -188,7 +188,6 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 201 | Claude Opus 5.5 |  | `backend/catalog/review_services.py` | `MyReview` | 32 | Đánh giá của chính khách cho một sách, dùng để điền sẵn form sửa | [ ] |
 | 202 | Claude Opus 5.5 |  | `backend/catalog/review_services.py` | `clean_content` | 56 | Chuẩn hóa nội dung đánh giá: thống nhất xuống dòng, bỏ ký tự điều khiển và ký tự đảo chiều văn bản, kiểm tra độ dài | [ ] |
 | 203 | Claude Opus 5.5 |  | `backend/catalog/review_services.py` | `_int_in_range` | 66 | Đổi điểm và id sách nhận từ request thành số nguyên trong khoảng cho phép | [ ] |
-| 204 | Claude Opus 5.5 |  | `backend/catalog/review_services.py` | `mask_username` | 79 | Che username khi hiển thị đánh giá: giữ ký tự đầu và cuối, giữa là dấu sao | [ ] |
 | 205 | Claude Opus 5.5 |  | `backend/catalog/review_services.py` | `_allow_review` | 89 | Giới hạn mỗi khách gửi/sửa tối đa REVIEW_RATE_LIMIT đánh giá trong REVIEW_RATE_WINDOW giây | [ ] |
 | 206 | Claude Opus 5.5 |  | `backend/catalog/review_services.py` | `save_review` | 103 | Gửi hoặc sửa đánh giá bằng sp_review_save; user lấy từ phiên đăng nhập, có giới hạn tần suất; trả True nếu là đánh giá mới | [ ] |
 | 207 | Claude Opus 5.5 |  | `backend/catalog/review_services.py` | `get_my_review` | 132 | Lấy đánh giá của chính khách cho một sách bằng sp_review_get_mine, chưa có thì trả None | [ ] |
