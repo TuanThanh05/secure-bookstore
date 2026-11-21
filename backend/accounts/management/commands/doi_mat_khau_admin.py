@@ -2,16 +2,14 @@ import getpass
 import os
 
 from django.contrib.auth.password_validation import validate_password
-from django.contrib.sessions.models import Session
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
 from django.db import DatabaseError, connection
-from django.utils import timezone
 
 from accounts.emails import send_staff_password_changed_email
 from accounts.models import User
 from core.security_log import log_event
-from core.session_store import SessionStore
+from core.session_store import end_user_sessions
 
 MAX_TRIES = 3
 WRONG_SETTINGS = "Lệnh này phải chạy với --settings=bookstore.settings.migrate (tài khoản web không được đổi mật khẩu nhân viên)."
@@ -45,14 +43,6 @@ class Command(BaseCommand):
             return first
         raise CommandError(f"Nhập sai {MAX_TRIES} lần. Mật khẩu chưa được đổi.")
 
-    def _end_sessions(self, user):
-        ended = 0
-        for session in Session.objects.filter(expire_date__gt=timezone.now()).iterator():
-            if SessionStore.decode_row(session).get("_auth_user_id") == str(user.pk):
-                session.delete()
-                ended += 1
-        return ended
-
     def handle(self, *args, **options):
         self._check_connection()
         user = User.objects.filter(username=options["username"], is_staff=True).first()
@@ -66,7 +56,7 @@ class Command(BaseCommand):
         except DatabaseError as exc:
             raise CommandError(WRONG_SETTINGS) from exc
 
-        ended = self._end_sessions(user)
+        ended = end_user_sessions(user.pk)
         log_event("password_changed", user=user, username=user.get_username(), ip_address="cli",
                   detail={"via": "cli", "sessions_ended": ended})
         sent = send_staff_password_changed_email(user)

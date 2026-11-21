@@ -74,7 +74,7 @@ Chốt 2026-11-15. File: `database/objects/21_review.sql`, `catalog/review_servi
   - Trạng thái đơn chỉ đi tới, nên đã nhận sách thì luôn sửa được đánh giá của mình. Không có nhãn "Đã mua hàng", vì mọi đánh giá giờ đều của người đã nhận sách.
 - **Mỗi khách một đánh giá cho mỗi sách.** Gửi lại là **sửa** đánh giá cũ (`INSERT ... ON DUPLICATE KEY UPDATE`): bấm hai lần cùng lúc vẫn chỉ một dòng. Sửa không đổi `is_visible`: đánh giá admin đã ẩn thì vẫn ẩn.
 - **Hiện ngay** sau khi gửi; admin ẩn sau nếu vi phạm.
-- **Tên hiển thị** (dùng khi làm danh sách đánh giá): `mask_username()` giữ ký tự đầu và cuối, giữa là dấu sao, ví dụ `an_nguyen` → `a*******n`.
+- **Tên hiển thị:** `sp_review_list` che tên ngay trong CSDL, giữ ký tự đầu và cuối, giữa là dấu sao, ví dụ `an_nguyen` → `a*******n`. Tên thật không bao giờ ra tới Python.
 
 | Thủ tục | Tham số | Trả về / lỗi |
 | --- | --- | --- |

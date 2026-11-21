@@ -23,7 +23,7 @@ class OverviewError(Exception):
         super().__init__(self.message)
 
 
-# AI-TRACE#574 | Claude Opus 5.5 | Trạng thái sao lưu cho Tổng quan: lần thành công, lần lỗi, lần kiểm tra khôi phục gần nhất; cảnh báo khi lỗi mới hơn thành công, chưa từng sao lưu hoặc bản mới nhất cũ hơn 7 ngày | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#574 | Claude Opus 5.5 | Trạng thái sao lưu cho Tổng quan: lần thành công, lần lỗi, lần kiểm tra khôi phục gần nhất; cảnh báo khi lỗi mới hơn thành công, chưa từng sao lưu hoặc bản mới nhất cũ hơn 7 ngày | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ thuộc tính không dùng
 @dataclass(frozen=True)
 class BackupStatus:
     last_success: datetime.datetime | None
@@ -39,10 +39,6 @@ class BackupStatus:
     @property
     def stale(self):
         return self.last_success is None or self.last_success < datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=7)
-
-    @property
-    def needs_attention(self):
-        return self.failing or self.stale or self.last_verify_ok is False
 
 
 def _backup_status(rows):
