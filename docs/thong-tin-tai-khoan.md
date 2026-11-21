@@ -33,7 +33,7 @@ Rủi ro thực tế là **phiên đăng nhập bị chiếm**: quản trị vi�
    - chưa xác thực lại trong `REAUTH_MAX_AGE` (2 phút) → chuyển tới `dashboard:reauth?next=...`;
    - nhập đúng mật khẩu **của chính mình** (form chỉ có ô mật khẩu, tên tài khoản hiện dạng chữ, xem `docs/dang-nhap.md` mục 6) → quay lại, trang hiện email/SĐT.
 3. **Xác thực lại đi qua `authenticate()`**, nên nhập sai cũng bị axes đếm (khóa sau 5 lần) và ghi `login_failed`. Form không có ô tên đăng nhập nên không thử được mật khẩu của tài khoản khác (bản cũ có ô này và ghi `access_denied` `user_mismatch`; đã bỏ ngày 2026-11-20, T2.2).
-4. **Ghi log mỗi lần xem**: sự kiện `sensitive_data_viewed` với `detail = {"fields": ["email", "phone"], "owner": "self"}`. Loại sự kiện mới được thêm vào CHECK `ck_secevent_type` bằng `database/schema/03_securityevent_sensitive_view.sql` + migration `core/0004`.
+4. **Ghi log mỗi lần xem**: sự kiện `sensitive_data_viewed` với `detail = {"fields": ["email", "phone"], "owner": "self"}`. Loại sự kiện này có trong CHECK `ck_secevent_type` (`database/01_bang.sql`).
 5. **Không lưu cache** (`@never_cache` → `Cache-Control: no-store`) cho cả 2 trang. Nếu không, sau khi rời máy, người khác bấm Back vẫn thấy trang đã hiện email lấy từ bộ nhớ đệm của trình duyệt.
 6. **Trang thường luôn giấu**: kể cả vừa xác thực lại xong, `/dashboard/thong-tin/` vẫn giấu. Chỉ trang `/lien-he/` mới hiện, nên dữ liệu không vô tình xuất hiện ở lần tải trang sau.
 
@@ -64,7 +64,7 @@ Luồng: trang Thông tin tài khoản → nút **Cập nhật thông tin** → 
 - **Kiểm tra đầu vào ở server:** họ/tên tối đa 50 ký tự, chỉ chữ cái (có dấu), khoảng trắng, `-`, `'`; SĐT Việt Nam 10 số bắt đầu 03/05/07/08/09, chấp nhận dấu cách, dấu chấm, `+84` rồi chuẩn hóa về dạng `09xxxxxxxx`.
 - **Cả GET lẫn POST** đều cần xác thực lại còn hạn: để quá 2 phút rồi mới bấm Lưu thì bị chuyển sang trang xác thực lại, dữ liệu không được lưu.
 - **Ghi bằng kết nối `auth` (`app_auth`)**, không phải `app_customer` (chỉ còn đọc). Trigger chỉ cho đổi họ, tên, SĐT, mật khẩu, `last_login` của khách; xem `docs/quyen-ghi-tai-khoan.md`.
-- **Log** `profile_updated` chỉ ghi tên cột thay đổi (`detail.fields`), không ghi giá trị (không lộ SĐT trong log). Không thay đổi gì thì không ghi log. Loại sự kiện mới được thêm vào CHECK bằng `database/schema/04_...` + migration `core/0005`.
+- **Log** `profile_updated` chỉ ghi tên cột thay đổi (`detail.fields`), không ghi giá trị (không lộ SĐT trong log). Không thay đổi gì thì không ghi log. Loại sự kiện này có trong CHECK `ck_secevent_type` (`database/01_bang.sql`).
 - Nhân viên vào 2 trang này bị chuyển sang trang thông tin quản trị (luồng sửa thông tin admin làm riêng).
 
 ## 7. Mã hóa SĐT (`core/crypto.py`) – lỗ hổng CSDL số 10
@@ -79,12 +79,12 @@ Luồng: trang Thông tin tài khoản → nút **Cập nhật thông tin** → 
 ## 8. Lịch sử mật khẩu – không dùng lại 5 mật khẩu gần nhất
 
 - **Quy tắc:** mật khẩu mới không được trùng với 5 mật khẩu gần nhất, **tính cả mật khẩu đang dùng**. Áp dụng cho mọi đường đặt mật khẩu: đổi mật khẩu, quên mật khẩu, lệnh `changepassword` (và lệnh đổi mật khẩu admin sau này). Lúc đăng ký thì chưa có lịch sử nên không kiểm tra.
-- **Bảng** `accounts_passwordhistory` (trong `database/schema/01_tables.sql`): `user_id`, `password_hash`, `created_at`, khóa ngoại tới `accounts_user` với `ON DELETE CASCADE`.
+- **Bảng** `accounts_passwordhistory` (trong `database/01_bang.sql`): `user_id`, `password_hash`, `created_at`, khóa ngoại tới `accounts_user` với `ON DELETE CASCADE`.
 - **Chia việc giữa CSDL và Django:**
 
   | Việc | Ai làm | Vì sao |
   | --- | --- | --- |
-  | Ghi mã băm mới, xóa bớt để còn 5 dòng | Trigger `trg_pwhist_after_insert` / `trg_pwhist_after_update` (`database/objects/11_...`), chạy bằng quyền `bookstore_definer` | Không sót đường nào, kể cả sửa thẳng bằng SQL. `app_customer` không cần quyền ghi bảng lịch sử |
+  | Ghi mã băm mới, xóa bớt để còn 5 dòng | Trigger `trg_pwhist_after_insert` / `trg_pwhist_after_update` (phần 11 của `database/02_trigger_thu_tuc.sql`), chạy bằng quyền `bookstore_definer` | Không sót đường nào, kể cả sửa thẳng bằng SQL. `app_customer` không cần quyền ghi bảng lịch sử |
   | So sánh mật khẩu mới với 5 mã băm | `accounts/validators.PasswordHistoryValidator`, khai báo trong `AUTH_PASSWORD_VALIDATORS` | Mã băm có **muối ngẫu nhiên**: cùng một mật khẩu cho ra chuỗi khác nhau, nên không so chuỗi băm được. Phải gọi `check_password(mật khẩu mới, mã băm cũ)`, mà chỉ Django có mật khẩu gốc |
 
 - **Quyền tối thiểu:** `r_customer` chỉ có `SELECT` trên bảng lịch sử. Mức lộ không tăng vì `r_customer` vốn đã đọc được `accounts_user.password` để kiểm tra đăng nhập. Kẻ tấn công có SQL injection cũng không xóa được lịch sử để quay lại dùng mật khẩu cũ (thử INSERT/UPDATE/DELETE bằng `app_customer` đều bị MySQL từ chối, lỗi 1142).
@@ -158,8 +158,8 @@ python manage.py doi_mat_khau_admin <tên đăng nhập> --settings=bookstore.se
 
   | Lớp | Cách làm | Chặn được |
   | --- | --- | --- |
-  | Quyền theo cột (`grants/01_...`) | `GRANT SELECT (id), UPDATE (first_name, last_name, phone_encrypted) ON accounts_user TO r_staff` | `app_staff` đổi mật khẩu, email, `is_staff`, `is_superuser`, hay đọc email: MySQL từ chối, lỗi 1143 |
-  | Trigger (`objects/10_...`) | `app_staff` sửa dòng có `is_staff = 0` → `SIGNAL` | `app_staff` sửa tên/SĐT của khách: lỗi 1644 |
+  | Quyền theo cột (`database/03_phan_quyen.sql`) | `GRANT SELECT (id), UPDATE (first_name, last_name, phone_encrypted) ON accounts_user TO r_staff` | `app_staff` đổi mật khẩu, email, `is_staff`, `is_superuser`, hay đọc email: MySQL từ chối, lỗi 1143 |
+  | Trigger (phần 10 của `database/02_trigger_thu_tuc.sql`) | `app_staff` sửa dòng có `is_staff = 0` → `SIGNAL` | `app_staff` sửa tên/SĐT của khách: lỗi 1644 |
 
   Django lưu bằng `save(using="staff", update_fields=[...])` nên câu UPDATE chỉ chứa đúng các cột đã đổi.
 - **Đánh đổi đã biết:** ở lớp CSDL, `app_staff` vẫn sửa được tên/SĐT của admin khác (MySQL không biết admin nào đang dùng web). Lớp Django chặn việc này: view chỉ sửa `request.user`, không nhận id từ request.

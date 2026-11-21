@@ -64,8 +64,8 @@ Nếu `main` đã đi trước khi bạn còn đang làm: `git switch main && gi
 | Thấy thay đổi ở | Chạy (trong `backend/`) |
 | --- | --- |
 | `requirements.txt` | `pip install -r ../requirements.txt` |
-| `*/migrations/*.py`, `database/schema/` | `python manage.py migrate --settings=bookstore.settings.migrate` |
-| `database/objects/`, `database/grants/` | `python manage.py db_apply` |
+| `*/migrations/*.py`, `database/01_bang.sql` | `python manage.py migrate --settings=bookstore.settings.migrate` |
+| `database/02_trigger_thu_tuc.sql`, `database/03_phan_quyen.sql` | `python manage.py db_apply` |
 | `.env.example` có biến mới | Thêm biến đó vào `.env` của bạn |
 
 ## Frontend – backend làm song song

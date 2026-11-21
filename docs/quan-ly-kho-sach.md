@@ -4,7 +4,7 @@
 
 ## 1. Thể loại sách
 
-### Đối tượng trong CSDL (`database/objects/40_category.sql`)
+### Đối tượng trong CSDL (phần 40 của `database/02_trigger_thu_tuc.sql`)
 
 | Đối tượng | Việc | Mã lỗi có thể trả |
 | --- | --- | --- |
@@ -70,7 +70,7 @@ Thủ tục `SQL SECURITY DEFINER` không bị lỗi này, nên danh sách chuy�
 
 ## 4. Sách, tồn kho, ẩn/hiện
 
-### Đối tượng trong CSDL (`database/objects/41_book.sql`)
+### Đối tượng trong CSDL (phần 41 của `database/02_trigger_thu_tuc.sql`)
 
 | Đối tượng | Việc | Mã lỗi chính |
 | --- | --- | --- |
@@ -143,7 +143,7 @@ Mọi lỗi nghiệp vụ là `BookError` với `code` và `message` tiếng Vi�
 
 ### Ảnh bìa
 
-Cột `cover_image` đã có sẵn trong `01_tables.sql`, mỗi sách đúng một ảnh. Sách chưa có ảnh: CSDL để **NULL**, `cover_url` trả ảnh mặc định `settings.BOOK_DEFAULT_COVER` (`frontend/static/img/book-cover-default.webp`). Ảnh mặc định không bao giờ bị xóa khi xóa sách hay thay ảnh. Upload ảnh: xem mục 5.
+Cột `cover_image` đã có sẵn trong `database/01_bang.sql`, mỗi sách đúng một ảnh. Sách chưa có ảnh: CSDL để **NULL**, `cover_url` trả ảnh mặc định `settings.BOOK_DEFAULT_COVER` (`frontend/static/img/book-cover-default.webp`). Ảnh mặc định không bao giờ bị xóa khi xóa sách hay thay ảnh. Upload ảnh: xem mục 5.
 
 ## 5. Upload ảnh bìa
 

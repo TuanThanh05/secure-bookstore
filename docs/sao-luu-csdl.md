@@ -41,7 +41,7 @@ Khôi phục **thay toàn bộ nhật ký trong CSDL** bằng bản trong gói: 
    **Phải sinh khóa MỚI**: khóa cũ (ngày 16/11) coi như bỏ vì một bản sao lưu từng lọt lên repo public (#41).
    Bản sao lưu chứa SĐT/địa chỉ đã mã hóa bằng `FIELD_ENCRYPTION_KEY` (`.env`): khôi phục sang máy khác phải mang theo đúng khóa đó, không thì dữ liệu mã hóa không đọc được.
 2. `.env` (máy Arch, MySQL trong Docker): `BACKUP_DUMP_PREFIX=sudo docker compose exec -T db` (lệnh sẽ hỏi mật khẩu sudo). Tùy chọn `BACKUP_OFFSITE_DIR=/đường/dẫn/khác`.
-3. `python manage.py db_setup` (tạo `bookstore_backup`; **bắt buộc chạy lại trước `db_apply`**, vì file quyền cấp cho tài khoản này), `migrate` (thêm 5 loại log, `core/0014`), `db_apply` (cấp quyền chỉ đọc).
+3. `python manage.py db_setup` (tạo `bookstore_backup`; **bắt buộc chạy lại trước `db_apply`**, vì file quyền cấp cho tài khoản này), `migrate`, `db_apply` (cấp quyền chỉ đọc).
 
 ## 3. Các lệnh
 

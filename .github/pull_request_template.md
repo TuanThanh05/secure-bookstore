@@ -29,4 +29,4 @@ Ví dụ: Burp gửi thêm is_staff=1 khi đăng ký → tài khoản vẫn là 
 - [ ] Mọi `<form method="post">` có `{% csrf_token %}`; GET không đổi dữ liệu
 - [ ] View có kiểm tra quyền (`@login_required`, `@permission_required`, lọc theo `request.user`)
 - [ ] `python manage.py check` sạch
-- [ ] Có migration mới / file mới trong `database/objects` hoặc `database/grants`: đã ghi rõ ở trên để mọi người chạy `migrate` / `db_apply`
+- [ ] Có migration mới / sửa file trong `database/`: đã ghi rõ ở trên để mọi người chạy `migrate` / `db_apply`

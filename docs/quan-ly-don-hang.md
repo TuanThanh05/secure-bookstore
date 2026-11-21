@@ -33,7 +33,7 @@ Chờ thanh toán → Đã thanh toán → Đã tiếp nhận → Đã đóng g�
 - **Phải xác thực lại** (`recent_auth_required`, 2 phút) và **mỗi lần xem ghi log** `sensitive_data_viewed` (`fields`: người nhận, SĐT, địa chỉ; `owner`: customer; 8 ký tự đầu mã đơn) – giống xem email/SĐT ở Quản lý tài khoản.
 - SĐT/địa chỉ lưu mã hóa AES-GCM; thủ tục trả bản mã, Django giải mã với ngữ cảnh gắn chủ đơn + mã chống trùng của đơn (`orders.services.shipping_context`). Không giải mã được → "Không đọc được".
 
-## 4. CSDL – `database/objects/44_staff_orders.sql`
+## 4. CSDL – phần 44 của `database/02_trigger_thu_tuc.sql`
 
 - `sp_staff_order_list(actor, status, offset, limit)`: 2 bộ kết quả (tổng + trang), `status` NULL / `todo` / một trong 7 trạng thái, `limit` 1–100, `offset` ≤ 100000.
 - `sp_staff_order_get(actor, code)`: thông tin đơn + `user_id`, `idempotency_key` (để giải mã) + giao dịch thành công (`payments_payment.success_order_id`), rồi danh sách sách.
@@ -64,6 +64,6 @@ Chốt 2026-11-16: báo cáo cơ bản, chỉ con số trọng tâm (bỏ "bán 
 | Bảo mật | Sự kiện nghiêm trọng, cảnh báo trong 24 giờ (thẻ nghiêm trọng tô đỏ khi > 0); đăng nhập sai từ đầu ngày | Nhật ký hệ thống có lọc sẵn (vẫn phải xác thực lại) |
 
 - **Doanh thu** = tổng `total` của đơn từ "Đã thanh toán" trở đi, tính theo `paid_at` (đơn đã thanh toán không hủy được nên không bị trừ lại), gồm cả thanh toán mô phỏng. "Hôm nay", "tháng này" theo giờ Việt Nam: Django tính mốc rồi truyền xuống thủ tục dạng UTC (`dashboard.overview_services.period_starts`).
-- **Thủ tục đọc, không dùng view** (cần `COUNT`/`SUM`/`WHERE`, MySQL từ chối view DEFINER như vậy khi phiên bật role): `database/objects/45_dashboard.sql` – `sp_staff_dashboard_orders(actor, today, week, month)`, `sp_staff_dashboard_stock(actor, low_threshold)` (2 bộ kết quả), `sp_staff_dashboard_security(actor, today)`. Mỗi thủ tục kiểm tra `NOT_STAFF` và mốc thời gian hợp lý (`INVALID_INPUT`). Chỉ `r_staff` được gọi; `db_check_grants` thêm 5 kiểm tra (tổng 85).
+- **Thủ tục đọc, không dùng view** (cần `COUNT`/`SUM`/`WHERE`, MySQL từ chối view DEFINER như vậy khi phiên bật role): phần 45 của `database/02_trigger_thu_tuc.sql` – `sp_staff_dashboard_orders(actor, today, week, month)`, `sp_staff_dashboard_stock(actor, low_threshold)` (2 bộ kết quả), `sp_staff_dashboard_security(actor, today)`. Mỗi thủ tục kiểm tra `NOT_STAFF` và mốc thời gian hợp lý (`INVALID_INPUT`). Chỉ `r_staff` được gọi; `db_check_grants` thêm 5 kiểm tra (tổng 85).
 - Trang chỉ có con số và tên sách, **không có dữ liệu cá nhân** → không bắt xác thực lại, không ghi log mỗi lần xem (chốt). `staff_required` + `never_cache` + `require_GET`.
 - Đã kiểm tra trên CSDL thật: mọi con số khớp với đếm trực tiếp bằng SQL (đơn theo bước, đơn mới/hủy hôm nay, doanh thu, sắp hết/hết hàng, sự kiện bảo mật); id khách làm actor → `NOT_STAFF`; mốc thời gian sai, ngưỡng 0 → `INVALID_INPUT`. Test `dashboard/tests/test_overview.py` (7 test, gồm mốc giờ Việt Nam lúc qua nửa đêm và đầu tháng).

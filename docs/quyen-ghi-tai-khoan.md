@@ -1,6 +1,6 @@
 # Quyền ghi bảng tài khoản: tách `app_auth` + trigger chặn cột
 
-Tài liệu này giải thích lỗ còn hở ở lớp 2 sau gói tách phiên, và cách đóng. Đọc kèm `docs/phien-dang-nhap.md` (cùng kiểu tách tài khoản) và `database/objects/10_trg_accounts_user_guard.sql`.
+Tài liệu này giải thích lỗ còn hở ở lớp 2 sau gói tách phiên, và cách đóng. Đọc kèm `docs/phien-dang-nhap.md` (cùng kiểu tách tài khoản) và phần 10 của `database/02_trigger_thu_tuc.sql`.
 
 ## 1. Lỗ hổng
 
@@ -45,7 +45,7 @@ Trên web, dòng của khách chỉ còn đổi được `password`, `last_login
 - `accounts/services.complete_signup`: `transaction.atomic(using=settings.AUTH_DB_ALIAS)`, để giao dịch nằm trên đúng kết nối ghi.
 - `dashboard/services.py` vẫn ghi bằng `save(using="staff")`. `using` ghi rõ thì router không đổi kết nối.
 - `db_setup`: role `r_auth`, tài khoản `app_auth` (tối đa 30 kết nối).
-- `database/grants/01_role_privileges.sql`, `database/objects/10_trg_accounts_user_guard.sql`.
+- `database/03_phan_quyen.sql`, phần 10 của `database/02_trigger_thu_tuc.sql`.
 
 ## 4. Kiểm tra
 

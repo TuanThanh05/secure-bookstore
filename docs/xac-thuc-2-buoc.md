@@ -73,7 +73,7 @@ Mã 6 số theo chuẩn TOTP (RFC 6238): điện thoại và máy chủ cùng gi
 - **Tải xuống** là link `data:text/plain` với thuộc tính `download`: không cần JS và không cần `blob:`, nên CSP vẫn giữ nguyên.
 - **Sao chép** dùng file `static/js/copy-codes.js` (không JS inline). Clipboard API chỉ chạy trên HTTPS hoặc `localhost`; không chạy được thì nút ẩn đi, người dùng chép tay hoặc tải file.
 
-**Bảo vệ 2 bước của admin ở lớp CSDL** (trigger `database/objects/12_trg_accounts_two_factor.sql`):
+**Bảo vệ 2 bước của admin ở lớp CSDL** (trigger phần 12 của `database/02_trigger_thu_tuc.sql`):
 - `app_auth` không tạo, không xóa, không đổi chuỗi bí mật trong thiết bị của nhân viên; chỉ được **tăng** `last_used_step` lúc admin đăng nhập.
 - `app_auth` không tạo mã dự phòng cho nhân viên.
 - Vì vậy SQL injection ở trang tài khoản cũng không thay được Google Authenticator của admin.
@@ -110,8 +110,8 @@ Container MySQL không ảnh hưởng, vì mã được tính trong Django.
 ## 6. Thành phần trong code
 
 **CSDL:**
-- `database/schema/10_two_factor.sql` + migration `core/0011`: 2 bảng, thêm 3 loại log `two_factor_enabled`, `two_factor_disabled`, `two_factor_recovery_used`. Mã sai dùng loại có sẵn `otp_failed`.
-- `database/objects/12_...` (trigger), quyền trong `database/grants/01_role_privileges.sql`.
+- `database/01_bang.sql` + migration `core/0001`: 2 bảng, thêm 3 loại log `two_factor_enabled`, `two_factor_disabled`, `two_factor_recovery_used`. Mã sai dùng loại có sẵn `otp_failed`.
+- phần 12 của `database/02_trigger_thu_tuc.sql` (trigger), quyền trong `database/03_phan_quyen.sql`.
 
 **Django:**
 - `accounts/models.py` (`TotpDevice`, `RecoveryCode`, `managed = False`, migration `accounts/0003`).

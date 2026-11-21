@@ -96,7 +96,7 @@ def check_version(conn):
 def split_sql(text):
     """Tách file SQL thành từng câu lệnh, hiểu lệnh DELIMITER như client mysql.
 
-    Bỏ qua câu chỉ có chú thích. Dùng cho database/objects/ và database/grants/.
+    Bỏ qua câu chỉ có chú thích. Dùng cho database/02_trigger_thu_tuc.sql và database/03_phan_quyen.sql.
     """
     delimiter = ";"
     statements, buffer = [], []

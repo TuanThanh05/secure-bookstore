@@ -22,10 +22,10 @@
 -- ---------------------------------------------------------------------
 GRANT SELECT, TRIGGER ON accounts_user TO 'bookstore_definer'@'localhost';
 
--- Trigger trg_pwhist_* (objects/11_...): thêm mã băm mới, đọc để tìm dòng
+-- Trigger trg_pwhist_* (phần 11 của 02_trigger_thu_tuc.sql): thêm mã băm mới, đọc để tìm dòng
 -- thứ 5, xóa các dòng cũ hơn. Chỉ definer có INSERT/DELETE trên bảng này.
 GRANT SELECT, INSERT, DELETE ON accounts_passwordhistory TO 'bookstore_definer'@'localhost';
--- Trigger 12 bảo vệ 2 bước của nhân viên (schema/10_two_factor.sql)
+-- Trigger 12 bảo vệ 2 bước của nhân viên (`database/01_bang.sql`)
 GRANT SELECT, TRIGGER ON accounts_totpdevice   TO 'bookstore_definer'@'localhost';
 GRANT SELECT, TRIGGER ON accounts_recoverycode TO 'bookstore_definer'@'localhost';
 
@@ -119,7 +119,7 @@ GRANT INSERT ON core_securityevent             TO 'r_staff';
 GRANT SELECT (id), UPDATE (first_name, last_name, phone_encrypted) ON accounts_user TO 'r_staff';
 
 -- ---------------------------------------------------------------------
--- sp_place_order (database/objects/30_sp_place_order.sql)
+-- sp_place_order (phần 30 của `database/02_trigger_thu_tuc.sql`)
 -- Definer đọc/ghi đúng các bảng thủ tục cần. Từ MySQL 8.0.22, câu khóa dòng
 -- SELECT ... FOR UPDATE cần SELECT cộng thêm UPDATE hoặc DELETE trên bảng đó.
 -- ---------------------------------------------------------------------
@@ -136,7 +136,7 @@ GRANT EXECUTE ON PROCEDURE sp_place_order TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_place_order TO 'r_customer';
 
 -- Đặt hàng (2026-11-16): đọc đơn của chính khách + trigger khóa đơn
--- (database/objects/30_sp_place_order.sql, 32_trg_orders_guard.sql).
+-- (phần 30 của `database/02_trigger_thu_tuc.sql`, 32_trg_orders_guard.sql).
 -- Definer: đọc chi tiết đơn cho sp_order_get; TRIGGER để chạy các trigger
 -- khóa đơn (trigger chạy bằng quyền definer).
 GRANT SELECT          ON orders_orderitem TO 'bookstore_definer'@'localhost';
@@ -145,7 +145,7 @@ GRANT TRIGGER         ON orders_orderitem TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_order_get   TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_order_get   TO 'r_customer';
 
--- Hủy đơn và hủy đơn quá hạn (database/objects/33_order_cancel.sql).
+-- Hủy đơn và hủy đơn quá hạn (phần 33 của `database/02_trigger_thu_tuc.sql`).
 -- Definer: đổi trạng thái đơn (trigger 32 vẫn chỉ cho pending → cancelled),
 -- cộng lại kho (đã có UPDATE catalog_book), gọi thủ tục nội bộ; EVENT để
 -- Event ev_cancel_expired_orders chạy bằng quyền definer.
@@ -160,7 +160,7 @@ GRANT EXECUTE ON PROCEDURE sp_order_hold_check      TO 'bookstore_definer'@'loca
 GRANT EXECUTE ON PROCEDURE sp_order_cancel          TO 'r_customer';
 
 -- ---------------------------------------------------------------------
--- Thể loại sách (database/objects/40_category.sql)
+-- Thể loại sách (phần 40 của `database/02_trigger_thu_tuc.sql`)
 -- Definer: đọc/khóa/ghi catalog_category, đếm sách, ghi nhật ký.
 -- r_staff: chỉ gọi bốn thủ tục; không có quyền nào trên bảng.
 -- r_customer: không có gì ở đây.
@@ -179,7 +179,7 @@ GRANT EXECUTE ON PROCEDURE sp_category_rename  TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_category_delete  TO 'r_staff';
 
 -- ---------------------------------------------------------------------
--- Sách (database/objects/41_book.sql)
+-- Sách (phần 41 của `database/02_trigger_thu_tuc.sql`)
 -- Definer: thêm/sửa/xóa catalog_book, đọc orders_orderitem để biết sách đã bán chưa.
 -- r_staff: chỉ đọc view một bảng v_staff_books và gọi sáu thủ tục.
 -- r_customer: không có gì ở đây (giá nhập, tồn kho chi tiết là của nhân viên).
@@ -203,7 +203,7 @@ GRANT EXECUTE ON PROCEDURE sp_book_reduce_stock TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_book_delete       TO 'r_staff';
 
 -- ---------------------------------------------------------------------
--- Danh mục sách cho khách (database/objects/20_public_catalog.sql)
+-- Danh mục sách cho khách (phần 20 của `database/02_trigger_thu_tuc.sql`)
 -- Definer: đọc thêm catalog_review để tính điểm đánh giá.
 -- r_customer: chỉ gọi hai thủ tục đọc; không có quyền nào trên catalog_*.
 -- ---------------------------------------------------------------------
@@ -216,7 +216,7 @@ GRANT EXECUTE ON PROCEDURE sp_public_category_list   TO 'r_customer';
 GRANT EXECUTE ON PROCEDURE sp_public_book_list       TO 'r_customer';
 
 -- ---------------------------------------------------------------------
--- Đánh giá sách (database/objects/21_review.sql)
+-- Đánh giá sách (phần 21 của `database/02_trigger_thu_tuc.sql`)
 -- Definer: thêm/sửa catalog_review (đã có SELECT ở phần danh mục cho khách),
 -- đọc accounts_user và catalog_book để kiểm tra (đã có).
 -- r_customer: chỉ gọi hai thủ tục; không có quyền ghi nào trên catalog_review.
@@ -232,8 +232,8 @@ GRANT EXECUTE ON PROCEDURE sp_review_get_mine        TO 'r_customer';
 GRANT EXECUTE ON PROCEDURE sp_review_can_write       TO 'r_customer';
 
 -- ---------------------------------------------------------------------
--- Trang chi tiết sách (sp_public_book_get trong objects/20_..., sp_review_list
--- trong objects/21_...). Definer đã có SELECT trên các bảng cần đọc.
+-- Trang chi tiết sách (sp_public_book_get trong phần 20 của 02_trigger_thu_tuc.sql, sp_review_list
+-- trong phần 21 của 02_trigger_thu_tuc.sql). Definer đã có SELECT trên các bảng cần đọc.
 -- ---------------------------------------------------------------------
 GRANT EXECUTE ON PROCEDURE sp_public_book_get        TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_review_list            TO 'bookstore_definer'@'localhost';
@@ -242,7 +242,7 @@ GRANT EXECUTE ON PROCEDURE sp_public_book_get        TO 'r_customer';
 GRANT EXECUTE ON PROCEDURE sp_review_list            TO 'r_customer';
 
 -- ---------------------------------------------------------------------
--- Thêm vào giỏ hàng (database/objects/31_cart.sql)
+-- Thêm vào giỏ hàng (phần 31 của `database/02_trigger_thu_tuc.sql`)
 -- Definer: tạo giỏ, thêm/sửa dòng giỏ (đã có SELECT/UPDATE giỏ, SELECT/DELETE
 -- dòng giỏ cho sp_place_order).
 -- r_customer: chỉ gọi thủ tục; không có quyền nào trên orders_cart*.
@@ -253,7 +253,7 @@ GRANT INSERT, UPDATE ON orders_cartitem              TO 'bookstore_definer'@'loc
 GRANT EXECUTE ON PROCEDURE sp_cart_add               TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_cart_add               TO 'r_customer';
 
--- Trang giỏ hàng: đọc, đổi số lượng, gỡ (database/objects/31_cart.sql)
+-- Trang giỏ hàng: đọc, đổi số lượng, gỡ (phần 31 của `database/02_trigger_thu_tuc.sql`)
 -- bookstore_definer đã có SELECT, UPDATE trên orders_cart và SELECT, INSERT,
 -- UPDATE, DELETE trên orders_cartitem (ở trên), không cần cấp thêm quyền bảng.
 -- r_customer: chỉ gọi thủ tục.
@@ -265,7 +265,7 @@ GRANT EXECUTE ON PROCEDURE sp_cart_set_quantity      TO 'r_customer';
 GRANT EXECUTE ON PROCEDURE sp_cart_remove            TO 'r_customer';
 
 -- ---------------------------------------------------------------------
--- Quản lý tài khoản khách (database/objects/42_account.sql)
+-- Quản lý tài khoản khách (phần 42 của `database/02_trigger_thu_tuc.sql`)
 -- Definer: đổi is_active của khách (trigger chỉ cho đúng cột này), đọc bảng
 -- axes để biết tài khoản "Tạm khóa", ghi core_auditlog (đã có INSERT).
 -- r_staff: chỉ gọi bốn thủ tục; không có quyền UPDATE(is_active) trực tiếp.
@@ -285,7 +285,7 @@ GRANT EXECUTE ON PROCEDURE sp_staff_account_lock     TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_staff_account_unlock   TO 'r_staff';
 
 -- ---------------------------------------------------------------------
--- Nhật ký hệ thống (database/objects/34_trg_orders_audit.sql, 43_logs.sql)
+-- Nhật ký hệ thống (phần 34 của `database/02_trigger_thu_tuc.sql`, 43_logs.sql)
 -- Definer: đọc 2 bảng log cho thủ tục đọc; xóa log cũ hơn 1 năm (chỉ trong
 -- sp_purge_old_logs do Event gọi). Tài khoản ứng dụng vẫn chỉ có INSERT.
 -- r_staff: chỉ gọi 2 thủ tục đọc. sp_purge_old_logs không cấp cho ai (chỉ Event).
@@ -299,7 +299,7 @@ GRANT EXECUTE ON PROCEDURE sp_staff_security_events  TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_staff_audit_log        TO 'r_staff';
 
 -- ---------------------------------------------------------------------
--- Thanh toán mô phỏng (database/objects/35_payment_simulate.sql)
+-- Thanh toán mô phỏng (phần 35 của `database/02_trigger_thu_tuc.sql`)
 -- Definer: ghi giao dịch vào payments_payment (trigger cấm sửa/xóa), đổi đơn
 -- sang 'paid' (đã có UPDATE orders_order, trigger 32 chỉ cho pending → paid).
 -- r_customer: chỉ gọi sp_payment_simulate; không có quyền nào trên
@@ -313,7 +313,7 @@ GRANT TRIGGER        ON payments_payment             TO 'bookstore_definer'@'loc
 GRANT EXECUTE ON PROCEDURE sp_payment_simulate       TO 'bookstore_definer'@'localhost';
 
 -- ---------------------------------------------------------------------
--- Đơn hàng của tôi (database/objects/36_order_list.sql)
+-- Đơn hàng của tôi (phần 36 của `database/02_trigger_thu_tuc.sql`)
 -- Definer: đọc orders_order, orders_orderitem (đã có).
 -- r_customer: chỉ gọi sp_order_list_mine (thủ tục tự lọc theo user_id).
 -- r_staff: không có gì ở đây.
@@ -322,7 +322,7 @@ GRANT EXECUTE ON PROCEDURE sp_order_list_mine        TO 'bookstore_definer'@'loc
 GRANT EXECUTE ON PROCEDURE sp_order_list_mine        TO 'r_customer';
 
 -- ---------------------------------------------------------------------
--- Quản lý đơn hàng của admin (database/objects/44_staff_orders.sql)
+-- Quản lý đơn hàng của admin (phần 44 của `database/02_trigger_thu_tuc.sql`)
 -- Definer: đọc orders_order, orders_orderitem, accounts_user, payments_payment,
 -- đổi trạng thái đơn (đã có cả; trigger 32 chỉ cho đi tới đúng một bước).
 -- r_staff: chỉ gọi 6 thủ tục công khai. sp_staff_order_advance là thủ tục nội
@@ -344,7 +344,7 @@ GRANT EXECUTE ON PROCEDURE sp_staff_order_ship       TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_staff_order_deliver    TO 'r_staff';
 
 -- ---------------------------------------------------------------------
--- Trang Tổng quan (database/objects/45_dashboard.sql)
+-- Trang Tổng quan (phần 45 của `database/02_trigger_thu_tuc.sql`)
 -- Definer: đọc orders_order, catalog_book, accounts_user, core_securityevent
 -- (đã có cả). r_staff: chỉ gọi 3 thủ tục đọc. r_customer: không có gì.
 -- ---------------------------------------------------------------------
@@ -356,7 +356,7 @@ GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_stock     TO 'r_staff';
 GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_security  TO 'r_staff';
 
 -- ---------------------------------------------------------------------
--- Chặn dò mật khẩu rải từ một IP (database/objects/46_login_ip_guard.sql).
+-- Chặn dò mật khẩu rải từ một IP (phần 46 của `database/02_trigger_thu_tuc.sql`).
 -- Definer đã có SELECT core_securityevent. r_customer: chỉ gọi thủ tục đếm
 -- (trang đăng nhập chạy trên kết nối default), không đọc được nhật ký.
 -- ---------------------------------------------------------------------
@@ -373,6 +373,6 @@ GRANT EXECUTE ON PROCEDURE sp_login_ip_failures      TO 'r_customer';
 GRANT SELECT, SHOW VIEW, TRIGGER, EVENT ON *   TO 'bookstore_backup'@'localhost';
 GRANT SHOW_ROUTINE ON *.*                      TO 'bookstore_backup'@'localhost';
 
--- Trạng thái sao lưu trên trang Tổng quan (database/objects/45_dashboard.sql)
+-- Trạng thái sao lưu trên trang Tổng quan (phần 45 của `database/02_trigger_thu_tuc.sql`)
 GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_backup    TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_backup    TO 'r_staff';
