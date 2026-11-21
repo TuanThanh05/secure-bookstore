@@ -1,18 +1,3 @@
-"""python manage.py db_setup – tạo CSDL, role và 4 tài khoản MySQL.
-
-Chạy bằng tài khoản quản trị (root), MỘT LẦN khi dựng máy mới, và chạy lại mỗi
-khi đổi mật khẩu trong .env / database/.env.db (lệnh sẽ đồng bộ mật khẩu).
-Chạy lại nhiều lần không hỏng gì.
-
-Việc nó làm:
-  1. Tạo CSDL (utf8mb4) nếu chưa có.
-  2. Cài component validate_password, đặt chính sách MEDIUM, tối thiểu 12 ký tự.
-  3. Tạo role r_customer, r_staff, r_session, r_auth (quyền cụ thể cấp sau, bằng db_apply).
-  4. Tạo/cập nhật app_customer, app_staff, app_session, app_auth, bookstore_migrate theo ĐỊA CHỈ MÀ
-     MYSQL THẤY MÁY NÀY KẾT NỐI TỪ (Docker: 172.28.0.1, cài thường: 127.0.0.1
-     hoặc localhost), bookstore_definer (khóa đăng nhập) và bookstore_backup
-     (chỉ đọc, chỉ đăng nhập tại chỗ, dùng cho lệnh sao lưu).
-"""
 import secrets
 
 import MySQLdb
@@ -55,8 +40,6 @@ class Command(BaseCommand):
                     "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
                 )
 
-                # 2. bookstore_definer trước: chủ sở hữu trigger/view/thủ tục, khóa đăng nhập.
-                #    Mật khẩu ngẫu nhiên, không lưu ở đâu (không ai cần đăng nhập bằng nó).
                 if not self._user_exists(cur, "bookstore_definer", "localhost"):
                     cur.execute(
                         "CREATE USER 'bookstore_definer'@'localhost' IDENTIFIED BY %s ACCOUNT LOCK",
@@ -99,7 +82,6 @@ class Command(BaseCommand):
                     ("bookstore_migrate", host),
                 )
 
-                # AI-TRACE#567 | Claude Opus 5.5 | Tạo tài khoản sao lưu bookstore_backup chỉ đăng nhập tại chỗ (localhost, socket trong container), tối đa 2 kết nối; quyền chỉ đọc cấp bằng db_apply | CẤM XÓA CHÚ THÍCH NÀY
                 self._upsert_user(cur, BACKUP_USER, "localhost", backup_password, 2, "DB_BACKUP_PASSWORD")
 
                 self._warn_other_hosts(cur, [default["USER"], staff["USER"], session["USER"], auth["USER"], "bookstore_migrate"], host)
@@ -113,7 +95,6 @@ class Command(BaseCommand):
         ))
         self.stdout.write("Tiếp theo: python manage.py migrate --settings=bookstore.settings.migrate")
 
-    # ------------------------------------------------------------------
     def _alias_settings(self, alias):
         from django.conf import settings
 
@@ -131,10 +112,6 @@ class Command(BaseCommand):
         return cur.fetchone()[0] > 0
 
     def _upsert_user(self, cur, user, host, password, max_conn, env_name):
-        """Tạo tài khoản, hoặc đồng bộ lại mật khẩu nếu đã có.
-
-        Tên, host, mật khẩu đi qua tham số của MySQLdb (được escape), không nối chuỗi.
-        """
         verb = "ALTER" if self._user_exists(cur, user, host) else "CREATE"
         try:
             cur.execute(

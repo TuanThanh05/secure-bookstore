@@ -31,7 +31,6 @@ def line(book_id, quantity):
                     quantity=quantity, is_active=True, in_stock=True)
 
 
-# AI-TRACE#542 | Claude Opus 5.5 | Test chống giữ kho: hủy đơn làm khóa tài khoản thì đăng xuất mọi phiên và ghi log, đăng nhập/phiên đang mở bị chặn khi đang khóa, đơn quá 20 cuốn bị chặn, trạng thái admin | CẤM XÓA CHÚ THÍCH NÀY
 class HoldAbuseLockTests(TestCase):
     def setUp(self):
         cache.clear()

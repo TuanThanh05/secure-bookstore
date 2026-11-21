@@ -49,7 +49,6 @@ ORDER_STATUS_LABELS = {
 }
 
 
-# AI-TRACE#002 | Claude Opus 5.5 | Lỗi nghiệp vụ khi đặt đơn, mang mã lỗi và câu tiếng Việt | CẤM XÓA CHÚ THÍCH NÀY
 class OrderError(Exception):
     def __init__(self, code):
         self.code = code
@@ -57,23 +56,19 @@ class OrderError(Exception):
         super().__init__(self.message)
 
 
-# AI-TRACE#003 | Claude Opus 5.5 | Kết quả đặt đơn gồm mã đơn và cờ đơn mới | CẤM XÓA CHÚ THÍCH NÀY
 class PlaceOrderResult(NamedTuple):
     order_code: str
     created: bool
 
 
-# AI-TRACE#004 | Claude Opus 5.5 | Sinh mã yêu cầu chống bấm đặt hàng hai lần | CẤM XÓA CHÚ THÍCH NÀY
 def new_idempotency_key():
     return secrets.token_hex(16)
 
 
-# AI-TRACE#266 | Claude Opus 5.5 | Ngữ cảnh mã hóa SĐT/địa chỉ giao hàng gắn với người đặt và mã chống trùng của đơn, bản mã chép sang đơn khác sẽ không giải mã được | CẤM XÓA CHÚ THÍCH NÀY
 def shipping_context(field, user_pk, idempotency_key):
     return f"orders_order.{field}:{user_pk}:{idempotency_key}"
 
 
-# AI-TRACE#267 | Claude Opus 5.5 | Giới hạn số lần đặt hàng của mỗi khách theo ORDER_PLACE_RATE_* | CẤM XÓA CHÚ THÍCH NÀY
 def _allow_place_order(user):
     key = f"order-place-rate:{user.pk}"
     window = settings.ORDER_PLACE_RATE_WINDOW
@@ -87,7 +82,6 @@ def _allow_place_order(user):
     return count <= settings.ORDER_PLACE_RATE_LIMIT
 
 
-# AI-TRACE#005 | Claude Opus 5.5 | Đặt đơn: user lấy từ phiên, mã hóa SĐT/địa chỉ, giới hạn tần suất rồi gọi sp_place_order và đổi lỗi SIGNAL thành OrderError | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi truyền thời gian giữ kho và số cuốn tối đa
 def place_order(request, idempotency_key, shipping_name, phone, address):
     user = request.user
     if not user.is_authenticated or user.is_staff:
@@ -119,7 +113,6 @@ def place_order(request, idempotency_key, shipping_name, phone, address):
     return PlaceOrderResult(order_code, bool(created))
 
 
-# AI-TRACE#006 | Claude Opus 5.5 | Đọc mã lỗi nghiệp vụ từ lỗi MySQL 1644 do SIGNAL | CẤM XÓA CHÚ THÍCH NÀY
 def _signal_code(exc):
     args = exc.args
     if len(args) >= 2 and args[0] == SIGNAL_ERROR_CODE and args[1] in ORDER_ERROR_MESSAGES:
@@ -127,7 +120,6 @@ def _signal_code(exc):
     return None
 
 
-# AI-TRACE#268 | Claude Opus 5.5 | Một sách trong đơn: tên và giá chụp lúc đặt | CẤM XÓA CHÚ THÍCH NÀY
 @dataclass(frozen=True)
 class OrderLine:
     book_id: int
@@ -140,7 +132,6 @@ class OrderLine:
         return self.unit_price * self.quantity
 
 
-# AI-TRACE#269 | Claude Opus 5.5 | Đơn hàng cho template: trạng thái, tiền, thông tin giao hàng đã giải mã, hạn thanh toán; không chứa mã chống trùng | CẤM XÓA CHÚ THÍCH NÀY
 @dataclass(frozen=True)
 class Order:
     code: str
@@ -187,7 +178,6 @@ def _decrypt_shipping(value, field, user_pk, idempotency_key):
         return None
 
 
-# AI-TRACE#270 | Claude Opus 5.5 | Đọc một đơn của chính khách bằng sp_order_get; mã đơn sai mẫu bị chặn trước khi xuống CSDL, đơn người khác báo không tìm thấy | CẤM XÓA CHÚ THÍCH NÀY
 def get_order(request, code):
     user = request.user
     if not user.is_authenticated or user.is_staff:
@@ -222,7 +212,6 @@ def get_order(request, code):
     )
 
 
-# AI-TRACE#286 | Claude Opus 5.5 | Giới hạn số lần bấm hủy đơn của mỗi khách theo ORDER_CANCEL_RATE_* | CẤM XÓA CHÚ THÍCH NÀY
 def _allow_cancel_order(user):
     key = f"order-cancel-rate:{user.pk}"
     window = settings.ORDER_CANCEL_RATE_WINDOW
@@ -236,7 +225,6 @@ def _allow_cancel_order(user):
     return count <= settings.ORDER_CANCEL_RATE_LIMIT
 
 
-# AI-TRACE#287 | Claude Opus 5.5 | Khách hủy đơn chờ thanh toán của chính mình bằng sp_order_cancel; mã đơn sai mẫu không xuống CSDL, kho được cộng lại trong thủ tục | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi trả về cờ tài khoản vừa bị khóa vì giữ kho
 def cancel_order(request, code):
     user = request.user
     if not user.is_authenticated or user.is_staff:
@@ -264,7 +252,6 @@ def cancel_order(request, code):
     return bool(locked)
 
 
-# AI-TRACE#365 | Claude Opus 5.5 | Một dòng trong danh sách đơn của khách: mã, trạng thái, tổng tiền, thời gian, số cuốn và tên cuốn đầu; không chứa thông tin giao hàng | CẤM XÓA CHÚ THÍCH NÀY
 @dataclass(frozen=True)
 class OrderSummary:
     code: str
@@ -295,7 +282,6 @@ class OrderSummary:
         return max(self.line_count - 1, 0)
 
 
-# AI-TRACE#366 | Claude Opus 5.5 | Đọc một trang đơn của chính khách theo nhóm Đang xử lý/Lịch sử bằng sp_order_list_mine; nhóm sai bị chặn trước khi xuống CSDL, trả tổng số và danh sách | CẤM XÓA CHÚ THÍCH NÀY
 def list_my_orders(request, group, page=1):
     user = request.user
     if not user.is_authenticated or user.is_staff:

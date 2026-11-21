@@ -21,7 +21,6 @@ REVIEW_ERROR_MESSAGES = {
 }
 
 
-# AI-TRACE#200 | Claude Opus 5.5 | Lỗi nghiệp vụ khi gửi đánh giá, mang mã lỗi và câu tiếng Việt | CẤM XÓA CHÚ THÍCH NÀY
 class ReviewError(Exception):
     def __init__(self, code):
         self.code = code
@@ -29,7 +28,6 @@ class ReviewError(Exception):
         super().__init__(self.message)
 
 
-# AI-TRACE#201 | Claude Opus 5.5 | Đánh giá của chính khách cho một sách, dùng để điền sẵn form sửa | CẤM XÓA CHÚ THÍCH NÀY
 @dataclass(frozen=True)
 class MyReview:
     rating: int
@@ -39,7 +37,6 @@ class MyReview:
     updated_at: datetime | None = None
 
 
-# AI-TRACE#215 | Claude Opus 5.5 | Một đánh giá hiển thị công khai: tên đã che, số sao, nội dung, thời gian, cờ đã sửa | CẤM XÓA CHÚ THÍCH NÀY
 @dataclass(frozen=True)
 class PublicReview:
     display_name: str
@@ -53,7 +50,6 @@ class PublicReview:
         return bool(self.created_at and self.updated_at and self.updated_at > self.created_at)
 
 
-# AI-TRACE#202 | Claude Opus 5.5 | Chuẩn hóa nội dung đánh giá: thống nhất xuống dòng, bỏ ký tự điều khiển và ký tự đảo chiều văn bản, kiểm tra độ dài | CẤM XÓA CHÚ THÍCH NÀY
 def clean_content(value):
     text = str(value or "").replace("\r\n", "\n").replace("\r", "\n")
     text = CONTROL_CHARS.sub("", text)
@@ -63,7 +59,6 @@ def clean_content(value):
     return text
 
 
-# AI-TRACE#203 | Claude Opus 5.5 | Đổi điểm và id sách nhận từ request thành số nguyên trong khoảng cho phép | CẤM XÓA CHÚ THÍCH NÀY
 def _int_in_range(value, low, high, code):
     if isinstance(value, bool):
         raise ReviewError(code)
@@ -76,7 +71,6 @@ def _int_in_range(value, low, high, code):
     return number
 
 
-# AI-TRACE#205 | Claude Opus 5.5 | Giới hạn mỗi khách gửi/sửa tối đa REVIEW_RATE_LIMIT đánh giá trong REVIEW_RATE_WINDOW giây | CẤM XÓA CHÚ THÍCH NÀY
 def _allow_review(user):
     key = f"review-rate:{user.pk}"
     window = settings.REVIEW_RATE_WINDOW
@@ -90,7 +84,6 @@ def _allow_review(user):
     return count <= settings.REVIEW_RATE_LIMIT
 
 
-# AI-TRACE#206 | Claude Opus 5.5 | Gửi hoặc sửa đánh giá bằng sp_review_save; user lấy từ phiên đăng nhập, có giới hạn tần suất; trả True nếu là đánh giá mới | CẤM XÓA CHÚ THÍCH NÀY
 def save_review(request, book_id, rating, content):
     user = request.user
     if not user.is_authenticated or user.is_staff:
@@ -119,7 +112,6 @@ def save_review(request, book_id, rating, content):
     return bool(created)
 
 
-# AI-TRACE#207 | Claude Opus 5.5 | Lấy đánh giá của chính khách cho một sách bằng sp_review_get_mine, chưa có thì trả None | CẤM XÓA CHÚ THÍCH NÀY
 def get_my_review(user, book_id):
     if not user.is_authenticated or user.is_staff:
         return None
@@ -137,7 +129,6 @@ def get_my_review(user, book_id):
     return MyReview(rating=int(row[0]), content=row[1], is_visible=bool(row[2]), created_at=row[3], updated_at=row[4])
 
 
-# AI-TRACE#517 | Claude Opus 5.5 | Hỏi CSDL khách đã nhận cuốn sách này chưa (sp_review_can_write) để quyết định hiện form đánh giá | CẤM XÓA CHÚ THÍCH NÀY
 def can_write_review(user, book_id):
     if not user.is_authenticated or user.is_staff:
         return False
@@ -153,7 +144,6 @@ def can_write_review(user, book_id):
     return bool(row and row[0])
 
 
-# AI-TRACE#216 | Claude Opus 5.5 | Danh sách đánh giá đang hiện của một sách bằng sp_review_list, tên đã được che trong CSDL | CẤM XÓA CHÚ THÍCH NÀY
 def list_reviews(book_id):
     try:
         book_pk = _int_in_range(book_id, 1, 2**63 - 1, "BOOK_NOT_FOUND")

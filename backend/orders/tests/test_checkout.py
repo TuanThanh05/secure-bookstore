@@ -32,7 +32,6 @@ def order(status="pending", minutes_left=10):
                  lines=(OrderLine(book_id=7, title="Nhà Giả Kim", unit_price=79000, quantity=2),))
 
 
-# AI-TRACE#278 | Claude Opus 5.5 | Test form giao hàng: chuẩn hóa SĐT, chặn tên có thẻ HTML/ký tự lạ, địa chỉ quá ngắn, bỏ ký tự vô hình | CẤM XÓA CHÚ THÍCH NÀY
 class CheckoutFormTests(SimpleTestCase):
     def form(self, **data):
         payload = {"shipping_name": "Nguyễn  Văn An", "phone": "+84 901 234 567", "address": "12 Nguyễn Huệ,\n Q.1, TP.HCM"}
@@ -58,7 +57,6 @@ class CheckoutFormTests(SimpleTestCase):
         self.assertEqual(form.cleaned_data["address"], "12 Nguyen Huệ, Q.1, TP.HCM")
 
 
-# AI-TRACE#279 | Claude Opus 5.5 | Test get_order bằng cursor giả: mã đơn sai mẫu không xuống CSDL, giải mã đúng ngữ cảnh, đơn người khác báo không tìm thấy, hạn thanh toán | CẤM XÓA CHÚ THÍCH NÀY
 class GetOrderServiceTests(SimpleTestCase):
     def setUp(self):
         self.user = SimpleNamespace(pk=42, is_authenticated=True, is_staff=False)
@@ -111,7 +109,6 @@ class GetOrderServiceTests(SimpleTestCase):
         self.assertFalse(order(status="paid").awaiting_payment)
 
 
-# AI-TRACE#280 | Claude Opus 5.5 | Test view đặt hàng và xem đơn: giỏ phải sạch, mã chống trùng chỉ trong phiên, giá/user_id từ form bị bỏ qua, IDOR trả 404, CSRF, nhân viên bị từ chối | CẤM XÓA CHÚ THÍCH NÀY
 class CheckoutViewTests(TestCase):
     def setUp(self):
         self.customer = User.objects.create_user(username="an_nguyen", email="an@example.test", password=PASSWORD,
@@ -204,7 +201,6 @@ class CheckoutViewTests(TestCase):
         self.place_order.assert_not_called()
 
 
-# AI-TRACE#281 | Claude Opus 5.5 | Test nút Đặt hàng ở trang chi tiết sách: thêm vào giỏ rồi chuyển sang giỏ | CẤM XÓA CHÚ THÍCH NÀY
 class BuyNowButtonTests(TestCase):
     def setUp(self):
         self.customer = User.objects.create_user(username="an_nguyen", email="an@example.test", password=PASSWORD, email_verified=True)

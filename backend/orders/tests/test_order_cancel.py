@@ -25,7 +25,6 @@ def order(status="pending", minutes_left=10):
                  lines=(OrderLine(book_id=7, title="Nhà Giả Kim", unit_price=79000, quantity=2),))
 
 
-# AI-TRACE#291 | Claude Opus 5.5 | Test service hủy đơn bằng cursor giả: mã đơn sai mẫu không xuống CSDL, chặn nhân viên/ẩn danh, giới hạn tần suất, đổi lỗi SIGNAL | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thủ tục hủy trả cờ khóa vì giữ kho
 @override_settings(ORDER_CANCEL_RATE_LIMIT=100, ORDER_CANCEL_RATE_WINDOW=600)
 class CancelOrderServiceTests(SimpleTestCase):
     def setUp(self):
@@ -102,7 +101,6 @@ class CancelOrderServiceTests(SimpleTestCase):
             self.assertFalse(order(status=status).can_cancel)
 
 
-# AI-TRACE#292 | Claude Opus 5.5 | Test view hủy đơn: chỉ POST + CSRF, đơn người khác/mã sai trả 404, nhân viên/ẩn danh bị chặn, nút hủy hai bước chỉ hiện khi còn chờ thanh toán | CẤM XÓA CHÚ THÍCH NÀY
 class OrderCancelViewTests(TestCase):
     def setUp(self):
         self.customer = User.objects.create_user(username="an_nguyen", email="an@example.test", password=PASSWORD, email_verified=True)

@@ -42,7 +42,6 @@ def jpeg():
     return SimpleUploadedFile("bia.jpg", buffer.getvalue(), content_type="image/jpeg")
 
 
-# AI-TRACE#182 | Claude Opus 5.5 | Khung test trang kho sách: tài khoản admin, giả lập service, đánh dấu đã xác thực lại | CẤM XÓA CHÚ THÍCH NÀY
 class CatalogViewTestBase(TestCase):
     def setUp(self):
         cache.clear()
@@ -67,7 +66,6 @@ class CatalogViewTestBase(TestCase):
         return [str(m) for m in response.context["messages"]] if response.context else []
 
 
-# AI-TRACE#183 | Claude Opus 5.5 | Test phân quyền trang kho sách: ẩn danh phải đăng nhập, khách bị 403, POST thiếu CSRF bị chặn, GET không đổi dữ liệu | CẤM XÓA CHÚ THÍCH NÀY
 class CatalogAccessTests(CatalogViewTestBase):
     URLS = [
         ("GET", "dashboard:books", {}), ("GET", "dashboard:book_create", {}), ("GET", "dashboard:book_edit", {"book_id": 9}),
@@ -117,7 +115,6 @@ class CatalogAccessTests(CatalogViewTestBase):
         self.assertIn("no-store", response["Cache-Control"])
 
 
-# AI-TRACE#184 | Claude Opus 5.5 | Test trang danh sách sách: truyền bộ lọc, bỏ qua giá trị lạ, nhãn tồn kho, escape dữ liệu | CẤM XÓA CHÚ THÍCH NÀY
 class BookListViewTests(CatalogViewTestBase):
     def test_filters_are_passed_to_service(self):
         self.client.get(reverse("dashboard:books"), {"ten": " giả kim ", "tac_gia": "coelho", "the_loai": "4", "trang_thai": "an"})
@@ -149,7 +146,6 @@ class BookListViewTests(CatalogViewTestBase):
         self.assertIn("?tac_gia=coelho&trang=2", html)
 
 
-# AI-TRACE#185 | Claude Opus 5.5 | Test thêm và sửa sách: gửi dữ liệu sạch, ảnh, gắn lỗi service vào đúng ô, 404 khi không có sách | CẤM XÓA CHÚ THÍCH NÀY
 class BookFormViewTests(CatalogViewTestBase):
     def test_create_calls_service_and_redirects_to_edit(self):
         response = self.client.post(reverse("dashboard:book_create"), {**book_post(stock="8"), "cover": jpeg()})
@@ -204,7 +200,6 @@ class BookFormViewTests(CatalogViewTestBase):
         self.assertEqual(self.client.get(reverse("dashboard:book_edit", kwargs={"book_id": 404})).status_code, 404)
 
 
-# AI-TRACE#186 | Claude Opus 5.5 | Test nhập kho, giảm kho, ẩn hiện: chỉ POST, kiểm tra số lượng, trạng thái rõ ràng, báo lỗi service | CẤM XÓA CHÚ THÍCH NÀY
 class BookStockAndStatusTests(CatalogViewTestBase):
     def edit_url(self):
         return reverse("dashboard:book_edit", kwargs={"book_id": 9})
@@ -236,7 +231,6 @@ class BookStockAndStatusTests(CatalogViewTestBase):
         self.services["set_book_active"].assert_not_called()
 
 
-# AI-TRACE#187 | Claude Opus 5.5 | Test xóa sách và xóa thể loại: bắt buộc xác thực lại, có trang xác nhận, chặn khi sách đang hiện hoặc thể loại còn sách | CẤM XÓA CHÚ THÍCH NÀY
 class DeleteFlowTests(CatalogViewTestBase):
     def test_book_delete_requires_reauth(self):
         self.services["get_book"].return_value = make_book(is_active=False)
@@ -284,7 +278,6 @@ class DeleteFlowTests(CatalogViewTestBase):
         self.assertEqual(self.client.get(reverse("dashboard:category_delete", kwargs={"category_id": 99})).status_code, 404)
 
 
-# AI-TRACE#188 | Claude Opus 5.5 | Test trang thể loại: thêm, báo trùng tên đúng ô, đổi tên | CẤM XÓA CHÚ THÍCH NÀY
 class CategoryViewTests(CatalogViewTestBase):
     def test_create_category(self):
         response = self.client.post(reverse("dashboard:categories"), {"name": "  Kinh   tế "})

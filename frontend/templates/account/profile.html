@@ -3,7 +3,6 @@
 {% block title %}Thông tin tài khoản{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/account-area.css' %}">{% endblock %}
 {% block account_content %}
-  {# AI-TRACE#039 | Claude Opus 5.5 | Bảng thông tin tài khoản của khách, hiện đầy đủ email và SĐT | CẤM XÓA CHÚ THÍCH NÀY #}
   <header class="area-header">
     <h1 class="area-header__title">Thông tin tài khoản</h1>
     <p class="area-header__desc">Thông tin cá nhân của bạn.</p>
@@ -21,7 +20,6 @@
     <a class="btn btn--secondary" href="{% url 'accounts:password_change' %}">Đổi mật khẩu</a>
   </div>
 
-  {# AI-TRACE#499 | Claude Opus 5.5 | Khối xác thực 2 bước ở trang thông tin: trạng thái, số mã dự phòng còn lại, nút bật/tắt | CẤM XÓA CHÚ THÍCH NÀY #}
   <section class="area-2fa" aria-labelledby="tieu-de-2fa">
     <h2 class="area-2fa__title" id="tieu-de-2fa">Xác thực 2 bước</h2>
     {% if two_factor_enabled %}

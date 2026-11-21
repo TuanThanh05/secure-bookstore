@@ -19,7 +19,6 @@ from .review_services import ReviewError, can_write_review, get_my_review, list_
 BOOKS_PER_PAGE = 12
 
 
-# AI-TRACE#404 | Claude Opus 5.5 | Danh sách số trang để hiện: trang đầu, trang cuối, trang hiện tại và hai trang kề, chỗ bị bỏ qua thay bằng dấu ba chấm (None) | CẤM XÓA CHÚ THÍCH NÀY
 def page_items(current, last):
     wanted = {1, last, current - 1, current, current + 1}
     if current <= 2:
@@ -37,7 +36,6 @@ def page_items(current, last):
     return items
 
 
-# AI-TRACE#405 | Claude Opus 5.5 | Trang chủ: tủ sách 12 cuốn mỗi trang (3 hàng x 4 cột trên màn hình ngang), giữ từ khóa và thể loại khi chuyển trang, trang sai về trang gần nhất hợp lệ | CẤM XÓA CHÚ THÍCH NÀY
 @require_safe
 def home(request):
     q = clean_search_query(request.GET.get("q", ""))
@@ -72,7 +70,6 @@ def about(request):
     return render(request, "shop/about.html")
 
 
-# AI-TRACE#217 | Claude Opus 5.5 | Dựng trang chi tiết sách: thông tin sách, danh sách đánh giá, form đánh giá theo từng loại người xem | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi chỉ cho khách đã nhận sách đánh giá
 def _render_detail(request, book, form=None, open_form=False, status=200):
     user = request.user
     is_customer = user.is_authenticated and not user.is_staff
@@ -95,7 +92,6 @@ def _render_detail(request, book, form=None, open_form=False, status=200):
     }, status=status)
 
 
-# AI-TRACE#218 | Claude Opus 5.5 | Trang chi tiết sách cho mọi người xem; sách ẩn hoặc không tồn tại trả 404 | CẤM XÓA CHÚ THÍCH NÀY
 @require_safe
 def book_detail(request, book_id):
     book = services.get_public_book(book_id)
@@ -104,7 +100,6 @@ def book_detail(request, book_id):
     return _render_detail(request, book)
 
 
-# AI-TRACE#219 | Claude Opus 5.5 | Nhận form gửi/sửa đánh giá (chỉ POST, CSRF, khách đã đăng nhập); lỗi thì hiện lại form, thành công thì quay về trang sách | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi chỉ cho khách đã nhận sách đánh giá
 @require_POST
 def review_submit(request, book_id):
     detail_url = reverse("catalog:book_detail", args=[book_id])

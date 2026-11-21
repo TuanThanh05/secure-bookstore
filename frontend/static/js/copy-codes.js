@@ -1,9 +1,3 @@
-/* =====================================================================
-   copy-codes.js – nút "Sao chép" ở trang mã dự phòng (account/two_factor_codes.html).
-   Quy tắc CSP: không JS inline, không innerHTML; chỉ đọc textContent và ghi
-   textContent. Clipboard API chỉ chạy trên HTTPS hoặc localhost; trình duyệt
-   không hỗ trợ (hoặc tắt JS) thì nút vẫn ẩn, người dùng chép tay hay tải file.
-   ===================================================================== */
 "use strict";
 
 document.querySelectorAll("[data-copy-target]").forEach(function (button) {

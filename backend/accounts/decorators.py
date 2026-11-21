@@ -8,7 +8,6 @@ from django.urls import reverse
 from core.decorators import has_recent_auth
 
 
-# AI-TRACE#071 | Claude Opus 5.5 | Chỉ cho khách đã đăng nhập, nhân viên bị chuyển sang trang quản trị | CẤM XÓA CHÚ THÍCH NÀY
 def customer_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
@@ -21,7 +20,6 @@ def customer_required(view_func):
     return wrapper
 
 
-# AI-TRACE#072 | Claude Opus 5.5 | Bắt khách xác thực lại trong vài phút gần đây, chuyển tới trang xác thực riêng của khách | CẤM XÓA CHÚ THÍCH NÀY
 def customer_recent_auth_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):

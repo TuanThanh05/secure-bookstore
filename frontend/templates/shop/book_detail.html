@@ -4,7 +4,6 @@
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/shop.css' %}">{% endblock %}
 
 {% block content %}
-  {# AI-TRACE#220 | Claude Opus 5.5 | Trang chi tiết sách: ảnh bìa lớn bên trái, thông tin theo hàng bên phải, nút đặt hàng mờ, danh sách và form đánh giá | CẤM XÓA CHÚ THÍCH NÀY #}
   <a class="detail-back" href="{% url 'catalog:home' %}">{% include "components/icon.html" with name="chevron-left" %}<span>Tủ sách</span></a>
 
   <article class="book-detail">
@@ -45,7 +44,6 @@
       {% endif %}
 
       <div class="book-detail__actions">
-        {# AI-TRACE#234 | Claude Opus 5.5 | Form thêm vào giỏ cạnh nút đặt hàng: ô số lượng 1–5, khóa khi hết hàng; nút Đặt hàng gửi cùng form rồi chuyển sang giỏ | CẤM XÓA CHÚ THÍCH NÀY #}
         {% if book.in_stock and not user.is_staff %}
           <form class="cart-add" id="cart-add-form" method="post" action="{{ cart_add_url }}">
             {% csrf_token %}

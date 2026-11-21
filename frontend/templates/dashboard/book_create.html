@@ -3,7 +3,6 @@
 {% block title %}Thêm sách{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
 {% block content %}
-  {# AI-TRACE#176 | Claude Opus 5.5 | Trang thêm sách: form multipart gồm thông tin, tồn kho ban đầu và ảnh bìa | CẤM XÓA CHÚ THÍCH NÀY #}
   <a class="dash-back" href="{% url 'dashboard:books' %}">{% include "components/icon.html" with name="chevron-left" %}<span>Danh sách sách</span></a>
   <header class="dash-header">
     <h1 class="dash-header__title">Thêm sách</h1>

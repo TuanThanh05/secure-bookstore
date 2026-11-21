@@ -41,7 +41,6 @@ class Base(TestCase):
         return SecurityEvent.objects.filter(event_type=event_type)
 
 
-# AI-TRACE#509 | Claude Opus 5.5 | Test service TOTP: mã đúng/sai, lệch giờ, không dùng lại mã, chuỗi bí mật mã hóa gắn user, mã dự phòng một lần | CẤM XÓA CHÚ THÍCH NÀY
 class TwoFactorServiceTests(Base):
     def setUp(self):
         super().setUp()
@@ -90,7 +89,6 @@ class TwoFactorServiceTests(Base):
         self.assertFalse(two_factor.requires_two_factor(self.customer))
 
 
-# AI-TRACE#510 | Claude Opus 5.5 | Test đăng nhập 2 bước: đúng mật khẩu chưa đăng nhập, mã đúng mới vào, sai 5 lần hủy lượt, hết hạn, mã dự phòng, admin bắt buộc | CẤM XÓA CHÚ THÍCH NÀY
 class TwoFactorLoginTests(Base):
     def test_customer_without_two_factor_logs_in_directly(self):
         response = self.post_password("an_nguyen")
@@ -181,7 +179,6 @@ class TwoFactorLoginTests(Base):
         self.assertIn("staff_login_at", self.client.session)
 
 
-# AI-TRACE#511 | Claude Opus 5.5 | Test bật/tắt 2 bước của khách: cần xác thực lại, QR không cache, mã sai không bật, mã dự phòng hiện một lần, thư báo | CẤM XÓA CHÚ THÍCH NÀY
 class TwoFactorSetupTests(Base):
     def login_customer(self):
         self.client.force_login(self.customer)
@@ -258,7 +255,6 @@ class TwoFactorSetupTests(Base):
         self.assertContains(self.client.get(reverse("accounts:profile")), "Còn 5 mã dự phòng")
 
 
-# AI-TRACE#512 | Claude Opus 5.5 | Test lệnh tao_admin/dat_lai_2fa_admin: bắt cài 2 bước ngay, chỉ một admin, sai mã thì không tạo gì | CẤM XÓA CHÚ THÍCH NÀY
 @override_settings(AUTH_DB_ALIAS="default")
 class AdminCommandTests(TestCase):
     def setUp(self):

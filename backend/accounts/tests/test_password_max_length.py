@@ -28,7 +28,6 @@ def secret_of(length):
     return (base * 3)[:length]
 
 
-# AI-TRACE#467 | Claude Opus 5.5 | Test giới hạn 64 ký tự: validator, mọi form có ô mật khẩu, quá dài thì không gọi authenticate hay validator (không băm) | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ ô tên đăng nhập ở xác thực lại (T2.2)
 class MaximumLengthValidatorTests(SimpleTestCase):
     def test_limit_is_64(self):
         self.assertEqual(LIMIT, 64)

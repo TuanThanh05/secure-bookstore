@@ -5,7 +5,6 @@
 {% block extra_js %}<script src="{% static 'js/account.js' %}" defer></script>{% endblock %}
 
 {% block content %}
-  {# AI-TRACE#426 | Claude Opus 5.5 | Trang đăng ký bước 2: email chỉ hiển thị, đặt tên đăng nhập và mật khẩu; báo lỗi khi link hoặc phiên hỏng | CẤM XÓA CHÚ THÍCH NÀY #}
   <h1 class="auth__title">Hoàn tất đăng ký</h1>
   {% if error %}
     <div class="auth-form__alert" role="alert"><p>{{ error }}</p></div>

@@ -14,7 +14,6 @@ PASSWORD = secrets.token_urlsafe(12) + "-Aa9"
 TEST_KEY = base64.b64encode(secrets.token_bytes(32)).decode()
 
 
-# AI-TRACE#083 | Claude Opus 5.5 | Test xác thực lại của khách và cập nhật họ, tên, SĐT mã hóa | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ đăng nhập bằng email (T3.2)
 @override_settings(FIELD_ENCRYPTION_KEY=TEST_KEY)
 class ProfileUpdateTests(TestCase):
     def setUp(self):

@@ -1,16 +1,3 @@
-"""python manage.py db_apply – tạo trigger/view/thủ tục rồi cấp quyền.
-
-Chạy bằng tài khoản quản trị (root), SAU khi `migrate` đã tạo bảng
-(MySQL không cho cấp quyền hay tạo trigger trên bảng chưa có).
-Chạy lại mỗi khi sửa database/02_trigger_thu_tuc.sql hoặc database/03_phan_quyen.sql.
-
-Thứ tự: 02_trigger_thu_tuc.sql rồi 03_phan_quyen.sql. File được dùng DELIMITER.
-Mỗi đối tượng tự DROP ... IF EXISTS trước khi tạo, nên chạy lại không lỗi.
-
-Vì sao root làm việc này mà không phải migrate: khi MySQL bật binlog, tạo
-trigger/thủ tục cần quyền SUPER (hoặc nới lỏng log_bin_trust_function_creators).
-Nhóm không cấp quyền đó cho tài khoản migrate.
-"""
 from pathlib import Path
 
 import MySQLdb
@@ -24,7 +11,6 @@ PAYMENT_GRANT = "GRANT EXECUTE ON PROCEDURE sp_payment_simulate TO 'r_customer'"
 PAYMENT_REVOKE = "REVOKE IF EXISTS EXECUTE ON PROCEDURE sp_payment_simulate FROM 'r_customer'"
 
 
-# AI-TRACE#529 | Claude Opus 5.5 | Quyền gọi sp_payment_simulate của r_customer đi theo cờ PAYMENT_SIMULATION: bật thì cấp, tắt thì thu hồi, để MySQL cũng chặn khi Django tắt | CẤM XÓA CHÚ THÍCH NÀY
 def apply_payment_simulation(cursor, enabled):
     cursor.execute(PAYMENT_GRANT if enabled else PAYMENT_REVOKE)
     return "cấp" if enabled else "thu hồi"

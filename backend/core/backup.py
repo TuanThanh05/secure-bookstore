@@ -46,7 +46,6 @@ SESSION_DUMP_OPTIONS = (
 )
 
 
-# AI-TRACE#557 | Claude Opus 5.5 | Lỗi khi sao lưu/khôi phục: sai khóa, file hỏng hoặc bị sửa, mysqldump lỗi, cấu hình thiếu | CẤM XÓA CHÚ THÍCH NÀY
 class BackupError(Exception):
     pass
 
@@ -63,7 +62,6 @@ class BackupConfig:
     key: bytes
 
 
-# AI-TRACE#558 | Claude Opus 5.5 | Đọc cấu hình sao lưu: khóa và mật khẩu tài khoản sao lưu chỉ lấy từ database/.env.db (web không đọc file này), thư mục và tiền tố lệnh từ settings | CẤM XÓA CHÚ THÍCH NÀY
 def load_config(require_password=True):
     load_admin_env()
     key = decode_key(os.environ.get("BACKUP_ENCRYPTION_KEY", ""))
@@ -93,7 +91,6 @@ def decode_key(value):
     return raw
 
 
-# AI-TRACE#559 | Claude Opus 5.5 | Ghi luồng đã mã hóa AES-256-GCM: tiêu đề (mã nhận dạng, phiên bản, nonce ngẫu nhiên) làm dữ liệu xác thực kèm, thẻ xác thực 16 byte ở cuối file | CẤM XÓA CHÚ THÍCH NÀY
 class EncryptingWriter(io.RawIOBase):
     def __init__(self, key, raw):
         nonce = os.urandom(NONCE_SIZE)
@@ -115,7 +112,6 @@ class EncryptingWriter(io.RawIOBase):
         self._raw.write(self._enc.tag)
 
 
-# AI-TRACE#560 | Claude Opus 5.5 | Giải mã file sao lưu ra file tạm; chỉ coi là hợp lệ khi thẻ GCM khớp (sai khóa, bị sửa, bị cắt đều bị từ chối), dữ liệu giải mã dở không bao giờ được dùng | CẤM XÓA CHÚ THÍCH NÀY
 def decrypt_file(key, src, dst):
     size = src.stat().st_size
     if size < HEADER_SIZE + TAG_SIZE:
@@ -165,7 +161,6 @@ def parse_backup_time(name):
         return None
 
 
-# AI-TRACE#561 | Claude Opus 5.5 | Chọn bản sao lưu cũ hơn số ngày giữ lại theo thời điểm ghi trong tên file (không theo mtime dễ bị đổi); file lạ trong thư mục không bao giờ bị đụng tới | CẤM XÓA CHÚ THÍCH NÀY
 def expired_backups(folder, now, days):
     if not folder.is_dir():
         return []
@@ -191,7 +186,6 @@ def secure_dir(path):
     return path
 
 
-# AI-TRACE#562 | Claude Opus 5.5 | Dựng lệnh chạy công cụ MySQL (mysqldump/mysql) qua tiền tố cấu hình (ví dụ docker compose exec): mật khẩu đi qua stdin, không bao giờ nằm trong tham số dòng lệnh | CẤM XÓA CHÚ THÍCH NÀY
 def client_command(config, tool, args):
     return [*config.dump_prefix, "sh", "-c", DUMP_SCRIPT, "sh", tool, f"--user={BACKUP_USER}", *args]
 
@@ -212,7 +206,6 @@ def run_client(config, tool, args, stdout, stdin_extra=b""):
     return err
 
 
-# AI-TRACE#563 | Claude Opus 5.5 | Đếm số dòng từng bảng và số thủ tục/trigger/Event ngay trước khi sao lưu bằng tài khoản sao lưu, ghi vào manifest để kiểm tra khôi phục so sánh | CẤM XÓA CHÚ THÍCH NÀY
 def snapshot_counts(config):
     tables_sql = ("SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() "
                   "AND table_type = 'BASE TABLE' ORDER BY table_name")
@@ -255,7 +248,6 @@ class BackupResult:
     deleted: tuple
 
 
-# AI-TRACE#564 | Claude Opus 5.5 | Tạo một bản sao lưu: mysqldump (giao dịch nhất quán, có thủ tục/trigger/Event; bảng phiên chỉ lấy cấu trúc, không lấy dữ liệu) ra file tạm trong thư mục 0700, đóng gói cùng ảnh bìa, file logs/security.log và manifest, nén rồi mã hóa, ghi SHA-256, chép off-site, xóa bản quá hạn | CẤM XÓA CHÚ THÍCH NÀY
 def create_backup(config, now=None):
     now = now or datetime.datetime.now(datetime.UTC)
     old_umask = os.umask(0o077)
@@ -352,7 +344,6 @@ def _prune(config, now):
     return removed
 
 
-# AI-TRACE#565 | Claude Opus 5.5 | Mở một bản sao lưu: kiểm tra SHA-256 nếu có, giải mã, đọc manifest, kiểm tra SQL khớp mã băm; chỉ nhận đúng tên thành viên đã biết (SQL, manifest, ảnh bìa, logs/security.log*), thành viên lạ (đường dẫn tuyệt đối, ../, link) bị từ chối | CẤM XÓA CHÚ THÍCH NÀY
 @dataclass(frozen=True)
 class OpenedBackup:
     manifest: dict
@@ -417,7 +408,6 @@ def restore_covers(covers):
     return len(covers)
 
 
-# AI-TRACE#581 | Claude Opus 5.5 | Khi khôi phục, chép file log bảo mật trong bản sao lưu ra thư mục riêng restored-logs/<tên bản> (0700) để đối chiếu, không bao giờ ghi đè logs/security.log đang chạy | CẤM XÓA CHÚ THÍCH NÀY
 def restore_logs(config, logs, source_name):
     if not logs:
         return None
@@ -432,7 +422,6 @@ def restore_logs(config, logs, source_name):
     return folder
 
 
-# AI-TRACE#566 | Claude Opus 5.5 | Chạy file SQL của mysqldump trên một kết nối quản trị: tách câu theo DELIMITER như client mysql, mỗi câu chạy nguyên văn (không tham số), báo đúng câu lỗi | CẤM XÓA CHÚ THÍCH NÀY
 def execute_sql_file(conn, sql_path):
     from core.dbadmin import split_sql
 
@@ -471,7 +460,6 @@ def compare_counts(expected, actual):
     return [(k, expected.get(k), actual.get(k)) for k in keys if expected.get(k) != actual.get(k)]
 
 
-# AI-TRACE#568 | Claude Opus 5.5 | Ghi nhật ký bảo mật cho lệnh sao lưu/khôi phục chạy trên máy chủ (ip_address = cli), detail chỉ chứa tên file, dung lượng, kết quả – không chứa khóa hay mật khẩu | CẤM XÓA CHÚ THÍCH NÀY
 def log_backup_event(event_type, severity="info", **detail):
     from core.security_log import log_event
 

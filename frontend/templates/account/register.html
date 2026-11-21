@@ -5,7 +5,6 @@
 {% block extra_js %}{% if turnstile_site_key %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{% endif %}{% endblock %}
 
 {% block content %}
-  {# AI-TRACE#425 | Claude Opus 5.5 | Trang đăng ký bước 1 chỉ có ô email, tên đăng nhập và mật khẩu đặt sau khi mở link trong thư | CẤM XÓA CHÚ THÍCH NÀY #}
   <h1 class="auth__title">Tạo tài khoản</h1>
   <p class="auth__lead">Nhập email của bạn. Chúng tôi sẽ gửi một link để bạn đặt tên đăng nhập và mật khẩu.</p>
 
@@ -31,7 +30,6 @@
     {% endfor %}
 
     {% if turnstile_site_key %}
-      {# AI-TRACE#438 | Claude Opus 5.5 | Ô xác minh Cloudflare Turnstile tự hiện trong form, báo cần JavaScript khi bị tắt | CẤM XÓA CHÚ THÍCH NÀY #}
       <div class="auth-form__captcha">
         <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-action="{{ turnstile_action }}" data-size="flexible"></div>
         <noscript><p class="auth-form__help">Cần bật JavaScript để xác minh bạn không phải robot trước khi đăng ký.</p></noscript>

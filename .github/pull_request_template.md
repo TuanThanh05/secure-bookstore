@@ -6,7 +6,7 @@ Closes #<!-- số issue -->
 
 ## Yêu cầu bảo mật đã làm
 
-<!-- Liệt kê các mục checklist trong PROJECT_CONTEXT.md mà PR này hoàn thành, ví dụ:
+<!-- Liệt kê các mục checklist trong docs/SECURITY_CHECKLIST.md mà PR này hoàn thành, ví dụ:
 - [x] (1) Chống mass assignment: form chỉ có trường cho phép
 - [x] (2) Thông báo lỗi đăng nhập chung cho mọi trường hợp -->
 
@@ -17,9 +17,9 @@ Ví dụ: Burp gửi thêm is_staff=1 khi đăng ký → tài khoản vẫn là 
 
 ## Đánh dấu AI
 
-<!-- Các ID AI-TRACE mới trong PR này, ví dụ: 012, 013. Không dùng AI thì ghi "Không dùng AI". -->
+<!-- Các hàm do AI viết trong PR này. Không dùng AI thì ghi "Không dùng AI". -->
 
-- [ ] Đã chạy `python scripts/ai_trace.py --check`, không báo lỗi
+- [ ] Đã ghi mục cho mỗi hàm do AI viết vào `docs/AI_TRACE.md` (theo `docs/ai-trace.md`)
 
 ## Tự kiểm tra trước khi mở PR
 

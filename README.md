@@ -5,8 +5,7 @@
 Đồ án môn **An toàn ứng dụng Web và Cơ sở dữ liệu** (PTIT TP.HCM): xây dựng trang web bán sách **đảm bảo an toàn bảo mật**.
 Trọng tâm là bảo mật; bán sách chỉ là bối cảnh.
 
-> Trạng thái: **bộ khung đã xong**, bắt đầu làm chức năng. Quy trình làm việc: [`CONTRIBUTING.md`](CONTRIBUTING.md).
-> Đọc [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md) trước khi làm bất cứ việc gì: quyết định đã chốt, checklist bảo mật, phân công.
+> Đọc [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md) trước: quyết định đã chốt, các biện pháp bảo mật, cấu trúc repo. Checklist bảo mật: [`docs/SECURITY_CHECKLIST.md`](docs/SECURITY_CHECKLIST.md). Code do AI viết và giải thích từng hàm: [`docs/AI_TRACE.md`](docs/AI_TRACE.md).
 
 ## Công nghệ
 
@@ -25,7 +24,7 @@ frontend/        templates/ và static/ (xem frontend/README.md)
 database/        lược đồ, tài khoản, trigger/view/thủ tục, cấu hình MySQL
 deploy/          Nginx, Gunicorn
 security-tests/  script kiểm thử bảo mật và bằng chứng
-docs/            báo cáo, slide, hợp đồng FE–BE
+docs/            tài liệu từng chức năng, PROJECT_CONTEXT, SECURITY_CHECKLIST, AI_TRACE, hợp đồng FE–BE
 ```
 
 ## Chạy thử (máy cá nhân)
@@ -43,4 +42,6 @@ Sau đó dựng MySQL 8.4 (Docker hoặc cài thường) và chạy 4 lệnh the
 
 - Không commit `.env`, mật khẩu, khóa bí mật.
 - Không `raw()`/`cursor.execute` nối chuỗi; không `|safe`/`mark_safe` với dữ liệu người dùng; không `@csrf_exempt`; không đổi dữ liệu bằng GET.
-- Làm trên nhánh tính năng, mở Pull Request vào `main`; không push thẳng lên `main` (chi tiết: [`CONTRIBUTING.md`](CONTRIBUTING.md)).
+- Làm trên nhánh tính năng, mở Pull Request vào `main`; không push thẳng lên `main`; chờ CI xanh rồi Squash and merge.
+- Sau `git pull`: có migration mới thì `migrate --settings=bookstore.settings.migrate`; `database/02_trigger_thu_tuc.sql` hoặc `03_phan_quyen.sql` đổi thì `db_apply`; `requirements.txt` đổi thì `pip install -r requirements.txt`.
+- Trong code chỉ dùng chú thích một dòng; giải thích dài và đánh dấu code do AI viết ghi vào [`docs/AI_TRACE.md`](docs/AI_TRACE.md) (cách ghi: [`docs/ai-trace.md`](docs/ai-trace.md)).

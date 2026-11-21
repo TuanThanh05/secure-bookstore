@@ -19,7 +19,6 @@ REVIEWS = [PublicReview("a*******n", 4, "Hay <script>alert(1)</script>", datetim
            PublicReview("k******e", 5, "Tuyệt", datetime(2026, 11, 14), datetime(2026, 11, 14))]
 
 
-# AI-TRACE#223 | Claude Opus 5.5 | Test trang chi tiết sách và gửi đánh giá: 404 sách ẩn, form theo loại người xem, CSRF, chỉ POST, escape nội dung | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi chỉ cho khách đã nhận sách đánh giá
 class BookDetailViewTests(TestCase):
     def setUp(self):
         cache.clear()
@@ -112,7 +111,6 @@ class BookDetailViewTests(TestCase):
         self.assertNotIn(" onclick=", html)
 
 
-# AI-TRACE#518 | Claude Opus 5.5 | Test chỉ khách đã nhận sách mới thấy form và gửi được đánh giá; gửi lén bị chặn ở CSDL thì báo lỗi và ghi log | CẤM XÓA CHÚ THÍCH NÀY
 class ReviewPurchasedOnlyTests(TestCase):
     def setUp(self):
         cache.clear()

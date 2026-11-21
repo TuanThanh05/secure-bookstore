@@ -23,7 +23,6 @@ COVER_ERROR_MESSAGES = {
 }
 
 
-# AI-TRACE#146 | Claude Opus 5.5 | Lỗi khi xử lý ảnh bìa upload, mang mã lỗi và câu tiếng Việt | CẤM XÓA CHÚ THÍCH NÀY
 class CoverError(Exception):
     def __init__(self, code):
         self.code = code
@@ -31,7 +30,6 @@ class CoverError(Exception):
         super().__init__(self.message)
 
 
-# AI-TRACE#147 | Claude Opus 5.5 | Đọc file upload có giới hạn dung lượng, không tin kích thước client gửi | CẤM XÓA CHÚ THÍCH NÀY
 def _read_limited(uploaded):
     if getattr(uploaded, "size", 0) and uploaded.size > MAX_UPLOAD_BYTES:
         raise CoverError("COVER_TOO_LARGE")
@@ -44,7 +42,6 @@ def _read_limited(uploaded):
     return data
 
 
-# AI-TRACE#148 | Claude Opus 5.5 | Xác nhận đúng là ảnh JPEG/PNG/WebP thật, chặn ảnh bom giải nén, rồi lưu lại thành WebP sạch metadata | CẤM XÓA CHÚ THÍCH NÀY
 def sanitize_cover(uploaded):
     data = _read_limited(uploaded)
     with warnings.catch_warnings():
@@ -78,7 +75,6 @@ def sanitize_cover(uploaded):
     return output.getvalue()
 
 
-# AI-TRACE#149 | Claude Opus 5.5 | Đường dẫn tuyệt đối của ảnh bìa, chỉ nhận đúng mẫu covers/<uuid>.<đuôi> và phải nằm trong MEDIA_ROOT/covers | CẤM XÓA CHÚ THÍCH NÀY
 def _cover_file(relative_path):
     if not relative_path or not COVER_PATH_RE.fullmatch(relative_path):
         return None
@@ -89,7 +85,6 @@ def _cover_file(relative_path):
     return target
 
 
-# AI-TRACE#150 | Claude Opus 5.5 | Kiểm tra và lưu ảnh bìa mới vào MEDIA_ROOT/covers với tên UUID, trả đường dẫn để ghi vào CSDL | CẤM XÓA CHÚ THÍCH NÀY
 def save_cover(uploaded):
     content = sanitize_cover(uploaded)
     relative_path = f"{COVER_DIR}/{uuid.uuid4().hex}.webp"
@@ -101,7 +96,6 @@ def save_cover(uploaded):
     return relative_path
 
 
-# AI-TRACE#151 | Claude Opus 5.5 | Xóa file ảnh bìa đã upload; bỏ qua mọi đường dẫn không đúng mẫu nên không xóa được file khác | CẤM XÓA CHÚ THÍCH NÀY
 def delete_cover(relative_path):
     target = _cover_file(relative_path)
     if target is None:

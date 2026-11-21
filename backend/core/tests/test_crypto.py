@@ -10,7 +10,6 @@ TEST_KEY = base64.b64encode(secrets.token_bytes(32)).decode()
 OTHER_KEY = base64.b64encode(secrets.token_bytes(32)).decode()
 
 
-# AI-TRACE#082 | Claude Opus 5.5 | Test mã hóa AES-GCM: giải mã đúng, nonce ngẫu nhiên, chặn sửa dữ liệu, sai khóa, sai ngữ cảnh | CẤM XÓA CHÚ THÍCH NÀY
 @override_settings(FIELD_ENCRYPTION_KEY=TEST_KEY)
 class FieldCryptoTests(SimpleTestCase):
     def test_round_trip(self):

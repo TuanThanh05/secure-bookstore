@@ -35,7 +35,6 @@ def jpeg_with_gps():
     return image_bytes("JPEG", exif=exif.tobytes())
 
 
-# AI-TRACE#152 | Claude Opus 5.5 | Test kiểm tra ảnh bìa: nhận ảnh thật, chặn file giả, ảnh bom, file quá lớn, xóa metadata và nội dung cài kèm | CẤM XÓA CHÚ THÍCH NÀY
 class SanitizeCoverTests(SimpleTestCase):
     def open_result(self, data):
         return Image.open(BytesIO(sanitize_cover(upload(data))))
@@ -104,7 +103,6 @@ class SanitizeCoverTests(SimpleTestCase):
         self.assertEqual(ctx.exception.code, "COVER_DIMENSIONS")
 
 
-# AI-TRACE#153 | Claude Opus 5.5 | Test lưu và xóa file ảnh bìa: tên UUID trong media/covers, không xóa được file ngoài thư mục | CẤM XÓA CHÚ THÍCH NÀY
 class CoverStorageTests(SimpleTestCase):
     def setUp(self):
         self.media = Path(tempfile.mkdtemp())
@@ -138,7 +136,6 @@ class CoverStorageTests(SimpleTestCase):
         self.assertFalse(delete_cover(path))
 
 
-# AI-TRACE#154 | Claude Opus 5.5 | Test ảnh bìa trong luồng thêm/sửa/xóa sách: dọn file khi CSDL báo lỗi, xóa ảnh cũ khi thay hoặc bỏ | CẤM XÓA CHÚ THÍCH NÀY
 class BookCoverFlowTests(SimpleTestCase):
     def setUp(self):
         self.media = Path(tempfile.mkdtemp())

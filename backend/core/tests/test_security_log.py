@@ -8,7 +8,6 @@ from core.security_log import PATH_MAX_LENGTH, log_event, redact_path
 TOKEN = secrets.token_urlsafe(24)
 
 
-# AI-TRACE#522 | Claude Opus 5.5 | Test che mã bí mật trong đường dẫn của nhật ký (file log và core_securityevent), kể cả khi view quên truyền path | CẤM XÓA CHÚ THÍCH NÀY
 class RedactPathTests(TestCase):
     def test_reset_link_token_is_replaced(self):
         self.assertEqual(redact_path(f"/account/dat-lai-mat-khau/MQ/{TOKEN}/"), "/account/dat-lai-mat-khau/MQ/-/")

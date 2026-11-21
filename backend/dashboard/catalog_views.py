@@ -33,7 +33,6 @@ from .catalog_forms import BookCreateForm, BookEditForm, CategoryForm, StockForm
 BOOKS_PER_PAGE = 20
 
 
-# AI-TRACE#327 | Claude Opus 5.5 | Ghi sự kiện upload_rejected khi ảnh bìa bị từ chối (chỉ mã lỗi, không ghi tên hay nội dung file) | CẤM XÓA CHÚ THÍCH NÀY
 def _log_upload_rejected(request, exc):
     if isinstance(exc, CoverError):
         log_event("upload_rejected", request, severity="warning", user=request.user,
@@ -41,7 +40,6 @@ def _log_upload_rejected(request, exc):
 STATUS_FILTERS = {"hien": True, "an": False}
 
 
-# AI-TRACE#161 | Claude Opus 5.5 | Lấy sách theo id trong URL, không có thì trả 404 | CẤM XÓA CHÚ THÍCH NÀY
 def _book_or_404(book_id):
     try:
         return get_book(book_id)
@@ -49,7 +47,6 @@ def _book_or_404(book_id):
         raise Http404("Không tìm thấy sách") from None
 
 
-# AI-TRACE#162 | Claude Opus 5.5 | Trang danh sách sách: lọc theo tên, tác giả, thể loại, trạng thái, phân trang, cảnh báo tồn kho thấp | CẤM XÓA CHÚ THÍCH NÀY
 @staff_required
 @never_cache
 @require_http_methods(["GET"])
@@ -80,7 +77,6 @@ def books(request):
     })
 
 
-# AI-TRACE#163 | Claude Opus 5.5 | Trang thêm sách: form thông tin, tồn kho ban đầu, ảnh bìa; lỗi service gắn vào đúng ô | CẤM XÓA CHÚ THÍCH NÀY
 @staff_required
 @never_cache
 @require_http_methods(["GET", "POST"])
@@ -103,7 +99,6 @@ def book_create(request):
     return render(request, "dashboard/book_create.html", {"form": form, "has_categories": bool(categories)})
 
 
-# AI-TRACE#164 | Claude Opus 5.5 | Trang sửa sách: form thông tin và ảnh, kèm khung tồn kho, trạng thái và nút xóa | CẤM XÓA CHÚ THÍCH NÀY
 @staff_required
 @never_cache
 @require_http_methods(["GET", "POST"])
@@ -137,7 +132,6 @@ def book_edit(request, book_id):
     })
 
 
-# AI-TRACE#165 | Claude Opus 5.5 | Xử lý chung form nhập kho/giảm kho: kiểm tra số lượng, gọi service, báo kết quả rồi quay lại trang sửa | CẤM XÓA CHÚ THÍCH NÀY
 def _change_stock(request, book_id, prefix, action, verb):
     book = _book_or_404(book_id)
     form = StockForm(request.POST, prefix=prefix)
@@ -154,7 +148,6 @@ def _change_stock(request, book_id, prefix, action, verb):
     return redirect("dashboard:book_edit", book_id=book.id)
 
 
-# AI-TRACE#166 | Claude Opus 5.5 | Nhập thêm hàng cho một sách (POST) | CẤM XÓA CHÚ THÍCH NÀY
 @staff_required
 @never_cache
 @require_POST
@@ -162,7 +155,6 @@ def book_restock(request, book_id):
     return _change_stock(request, book_id, "nhap", restock_book, "nhập thêm")
 
 
-# AI-TRACE#167 | Claude Opus 5.5 | Giảm kho ngoại lệ cho một sách (POST) | CẤM XÓA CHÚ THÍCH NÀY
 @staff_required
 @never_cache
 @require_POST
@@ -170,7 +162,6 @@ def book_reduce(request, book_id):
     return _change_stock(request, book_id, "giam", reduce_book_stock, "giảm")
 
 
-# AI-TRACE#168 | Claude Opus 5.5 | Ẩn hoặc hiện sách theo trạng thái gửi lên rõ ràng, không đảo trạng thái mù | CẤM XÓA CHÚ THÍCH NÀY
 @staff_required
 @never_cache
 @require_POST
@@ -189,7 +180,6 @@ def book_toggle(request, book_id):
     return redirect("dashboard:book_edit", book_id=book.id)
 
 
-# AI-TRACE#169 | Claude Opus 5.5 | Xóa hẳn sách: cần xác thực lại, có trang xác nhận, chỉ xóa sách đang ẩn | CẤM XÓA CHÚ THÍCH NÀY
 @staff_required
 @recent_auth_required
 @never_cache
@@ -210,7 +200,6 @@ def book_delete(request, book_id):
     return render(request, "dashboard/book_delete.html", {"book": book})
 
 
-# AI-TRACE#170 | Claude Opus 5.5 | Trang thể loại: danh sách kèm số sách, form thêm, form sửa tên từng dòng | CẤM XÓA CHÚ THÍCH NÀY
 @staff_required
 @never_cache
 @require_http_methods(["GET", "POST"])
@@ -229,7 +218,6 @@ def categories(request):
     return render(request, "dashboard/categories.html", {"form": form, "categories": list_categories()})
 
 
-# AI-TRACE#171 | Claude Opus 5.5 | Sửa tên thể loại (POST), báo lỗi trùng tên hoặc không tồn tại | CẤM XÓA CHÚ THÍCH NÀY
 @staff_required
 @never_cache
 @require_POST
@@ -247,7 +235,6 @@ def category_rename(request, category_id):
     return redirect("dashboard:categories")
 
 
-# AI-TRACE#172 | Claude Opus 5.5 | Xóa thể loại: cần xác thực lại, có trang xác nhận, chỉ xóa thể loại không còn sách | CẤM XÓA CHÚ THÍCH NÀY
 @staff_required
 @recent_auth_required
 @never_cache

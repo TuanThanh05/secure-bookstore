@@ -11,7 +11,6 @@ from core.backup import BackupError, ask_confirmation, load_config, log_backup_e
 CONFIRM_WORD = "XUAT-SQL"
 
 
-# AI-TRACE#570 | Claude Opus 5.5 | Lệnh demo giải mã bản sao lưu ra file .sql chạy được (như seed_data.sql): cảnh báo, bắt gõ xác nhận, file quyền 600 trong thư mục riêng 0700, ghi log mức cảnh báo | CẤM XÓA CHÚ THÍCH NÀY
 class Command(BaseCommand):
     help = "Giải mã một bản sao lưu ra file .sql TRẦN để demo (file trần chứa toàn bộ dữ liệu, xóa ngay sau khi dùng)."
     requires_system_checks = []

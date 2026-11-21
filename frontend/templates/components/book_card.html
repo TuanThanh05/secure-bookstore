@@ -1,6 +1,5 @@
 {% load bookstore %}
 <article class="book-card">
-  {# AI-TRACE#221 | Claude Opus 5.5 | Ảnh bìa và tên sách trong thẻ sách dẫn tới trang chi tiết | CẤM XÓA CHÚ THÍCH NÀY #}
   <a class="book-card__cover" href="{% url 'catalog:book_detail' book_id=book.id %}" tabindex="-1" aria-hidden="true">
     {% if book.cover_url %}
       <img src="{{ book.cover_url }}" alt="Bìa sách {{ book.title }}" width="240" height="360" loading="lazy">

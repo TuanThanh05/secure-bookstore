@@ -33,7 +33,6 @@ class User(AbstractUser):
     email_verified = models.BooleanField("đã xác minh email", default=False)
     auto_locked_until = models.DateTimeField("khóa tự động đến", null=True, blank=True)
 
-    # AI-TRACE#538 | Claude Opus 5.5 | Tài khoản đang bị khóa tự động vì giữ kho (auto_locked_until còn hạn) | CẤM XÓA CHÚ THÍCH NÀY
     @property
     def is_auto_locked(self):
         return self.auto_locked_until is not None and self.auto_locked_until > timezone.now()
@@ -62,7 +61,6 @@ class User(AbstractUser):
         return self.username
 
 
-# AI-TRACE#088 | Claude Opus 5.5 | Model chỉ đọc cho bảng lịch sử mã băm mật khẩu do trigger ghi | CẤM XÓA CHÚ THÍCH NÀY
 class PasswordHistory(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name="+", db_constraint=False)
     password_hash = models.CharField(max_length=128)
@@ -73,7 +71,6 @@ class PasswordHistory(models.Model):
         db_table = "accounts_passwordhistory"
 
 
-# AI-TRACE#477 | Claude Opus 5.5 | Model thiết bị TOTP (bảng do schema/10 tạo): chuỗi bí mật mã hóa, lúc xác nhận, bước đã dùng | CẤM XÓA CHÚ THÍCH NÀY
 class TotpDevice(models.Model):
     user = models.OneToOneField(User, on_delete=models.DO_NOTHING, related_name="+", db_constraint=False)
     secret_encrypted = models.CharField(max_length=255)
@@ -86,7 +83,6 @@ class TotpDevice(models.Model):
         db_table = "accounts_totpdevice"
 
 
-# AI-TRACE#478 | Claude Opus 5.5 | Model mã dự phòng (bảng do schema/10 tạo): chỉ mã băm, lúc đã dùng | CẤM XÓA CHÚ THÍCH NÀY
 class RecoveryCode(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name="+", db_constraint=False)
     code_hash = models.CharField(max_length=128)

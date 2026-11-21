@@ -22,7 +22,6 @@ def new_secret(tag):
     return f"{secrets.token_urlsafe(12)}-{tag}-Aa9"
 
 
-# AI-TRACE#093 | Claude Opus 5.5 | Test lệnh đổi mật khẩu admin: chỉ nhân viên, quy tắc mật khẩu, đăng xuất phiên, log, thư báo, chặn kết nối web | CẤM XÓA CHÚ THÍCH NÀY
 class AdminPasswordCommandTests(TestCase):
     def setUp(self):
         cache.clear()

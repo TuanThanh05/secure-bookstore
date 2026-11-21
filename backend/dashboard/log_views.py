@@ -11,7 +11,6 @@ from .forms import AuditLogFilterForm, SecurityLogFilterForm
 from .log_services import PAGE_SIZE, LogError, list_audit_log, list_security_events
 
 
-# AI-TRACE#339 | Claude Opus 5.5 | Dữ liệu phân trang cho trang nhật ký: dùng Paginator trên tổng số dòng thủ tục trả về, giữ bộ lọc trong link trang | CẤM XÓA CHÚ THÍCH NÀY
 def _pager(request, total, page):
     paginator = Paginator(range(total), PAGE_SIZE)
     query = request.GET.copy()
@@ -31,7 +30,6 @@ def _log_view(request, tab, filters):
               detail={"fields": [tab], "owner": "system", "filters": filters})
 
 
-# AI-TRACE#340 | Claude Opus 5.5 | Tab nhật ký bảo mật: cần xác thực lại, lọc loại/mức độ/ngày/username-IP, mỗi lần xem ghi log | CẤM XÓA CHÚ THÍCH NÀY
 @staff_required
 @recent_auth_required
 @never_cache
@@ -62,7 +60,6 @@ def logs(request):
     })
 
 
-# AI-TRACE#341 | Claude Opus 5.5 | Tab nhật ký thay đổi dữ liệu: cần xác thực lại, lọc bảng/hành động/ngày/id bản ghi, mỗi lần xem ghi log | CẤM XÓA CHÚ THÍCH NÀY
 @staff_required
 @recent_auth_required
 @never_cache

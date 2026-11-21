@@ -1,12 +1,3 @@
-"""Hàm dùng chung cho 2 lệnh quản trị CSDL: db_setup và db_apply.
-
-Hai lệnh này đăng nhập MySQL bằng root (hoặc tài khoản quản trị khác) để tạo
-tài khoản, trigger, cấp quyền. Chúng chạy giống nhau trên Docker (Arch) lẫn
-MySQL cài thường (Windows), vì chỉ cần kết nối TCP tới DB_HOST:DB_PORT.
-
-Mật khẩu quản trị lấy theo thứ tự: biến môi trường → database/.env.db → hỏi
-trực tiếp (không hiện ký tự). Không bao giờ in mật khẩu ra màn hình.
-"""
 import getpass
 import os
 import re
@@ -94,10 +85,6 @@ def check_version(conn):
 
 
 def split_sql(text):
-    """Tách file SQL thành từng câu lệnh, hiểu lệnh DELIMITER như client mysql.
-
-    Bỏ qua câu chỉ có chú thích. Dùng cho database/02_trigger_thu_tuc.sql và database/03_phan_quyen.sql.
-    """
     delimiter = ";"
     statements, buffer = [], []
     for line in text.splitlines():

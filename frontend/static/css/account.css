@@ -1,25 +1,8 @@
-/* =====================================================================
-   account.css – khu vực tài khoản: đăng ký, đăng nhập, quên mật khẩu.
-   Nạp trong template bằng {% block extra_css %}. Chỉ dùng biến của base.css.
-
-   Khớp với HTML hiện có của account/register.html (vòng lặp {% for field in form %}),
-   không cần sửa template:
-     .auth-form            form, dạng lưới tự chia 1 hoặc 2 cột theo bề rộng thẻ
-     .auth-form__field     một ô: label + input + lỗi + gợi ý
-     .auth-form__errors    lỗi của ô        .auth-form__help   gợi ý của ô
-     .auth-form__alert     lỗi chung        .auth-form__submit nút gửi
-   ===================================================================== */
-
-/* --- Thẻ đăng ký rộng hơn để chia 2 cột ---
-   Nhận biết trang đăng ký bằng ô "nhập lại mật khẩu" (id_password2 do Django tạo).
-   Trang đăng nhập không có ô này nên giữ bề rộng 440px của base.css. */
 .auth__card:has(#id_password2) { max-width: 680px; }
 
 /* --- Viền thẻ cùng màu đỏ đô với nút "Đăng ký" --- */
 .auth__card { border: 2px solid var(--color-primary); }
 
-/* --- Tên thương hiệu căn giữa ---
-   fit-content để vùng bấm chỉ bằng chữ, không kéo dài hết chiều ngang thẻ. */
 .auth__brand {
   display: flex;
   justify-content: center;
@@ -45,9 +28,6 @@
 .auth__switch a { font-weight: 600; text-decoration: none; }
 .auth__switch a:hover { text-decoration: underline; }
 
-/* --- Lưới form ---
-   Mỗi cột tối thiểu 240px: thẻ rộng thì 2 cột (email | mật khẩu...), thẻ hẹp
-   (đăng nhập, điện thoại) thì tự về 1 cột. */
 .auth-form {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -105,10 +85,6 @@
   box-shadow: 0 0 0 4px var(--color-primary-ring);
 }
 
-/* --- Biểu tượng trong ô nhập ---
-   Ảnh SVG nhúng dạng data URI (CSP cho phép img-src data:). Ảnh nền không đọc
-   được biến CSS, nên màu ghi thẳng: %238a7171 chính là --color-subtle (#8a7171).
-   Biểu tượng: Material Icons, Apache License 2.0 (giống icons.svg). */
 .auth-form__field input[name="username"],
 .auth-form__field input[name$="name"] {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238a7171'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E");
@@ -160,8 +136,6 @@
 .auth-form__help ul { margin: 0; padding-left: 1rem; }
 .auth-form__help li + li { margin-top: 2px; }
 
-/* Khối yêu cầu mật khẩu: một khối liền dưới cả hai ô, kéo sát lên hàng ô nhập,
-   căn giữa theo chiều ngang của thẻ (khối chỉ rộng bằng nội dung) */
 .auth-form__help--wide {
   justify-self: center;
   width: fit-content;
@@ -201,7 +175,6 @@
 .auth-form__alert p { margin: 0; }
 .auth-form__alert p + p { margin-top: var(--space-xs); }
 
-/* AI-TRACE#030 | Claude Opus 5.5 | Khung thông báo trên các trang xác nhận email | CẤM XÓA CHÚ THÍCH NÀY */
 .auth__notice {
   margin-bottom: var(--space-md);
   padding: var(--space-sm) var(--space-md);
@@ -215,7 +188,6 @@
 .auth__notice p { margin: 0; }
 .auth__notice p + p { margin-top: var(--space-xs); }
 
-/* AI-TRACE#427 | Claude Opus 5.5 | Dòng giới thiệu trang đăng ký và ô email chỉ hiển thị ở bước hoàn tất | CẤM XÓA CHÚ THÍCH NÀY */
 .auth__lead {
   margin: 0 0 var(--space-md);
   color: var(--color-muted);
@@ -236,7 +208,6 @@
   overflow-wrap: anywhere;
 }
 
-/* AI-TRACE#439 | Claude Opus 5.5 | Chỗ cho ô Cloudflare Turnstile trải hết bề ngang form, giữ chỗ để form không nhảy khi ô hiện ra | CẤM XÓA CHÚ THÍCH NÀY */
 .auth-form__captcha {
   grid-column: 1 / -1;
   min-height: 65px;

@@ -32,7 +32,6 @@
   .area-info__row { grid-template-columns: 1fr; gap: var(--space-xs); }
 }
 
-/* AI-TRACE#062 | Claude Opus 5.5 | Kiểu nút thao tác và form đổi mật khẩu trong khu vực tài khoản | CẤM XÓA CHÚ THÍCH NÀY */
 .area-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
 .area-form { max-width: 480px; }
 .area-form .auth-form { grid-template-columns: 1fr; }
@@ -41,11 +40,9 @@
 .area-info--compact { margin-bottom: var(--space-lg); }
 .area-info--compact .area-info__row { padding: var(--space-sm) 0; }
 
-/* AI-TRACE#084 | Claude Opus 5.5 | Căn giữa form xác thực lại và đổi mật khẩu theo chiều ngang vùng nội dung tài khoản | CẤM XÓA CHÚ THÍCH NÀY */
 .area-form--center { margin-left: auto; margin-right: auto; }
 .area-form--center .area-form__links { text-align: center; }
 
-/* AI-TRACE#255 | Claude Opus 5.5 | Kiểu trang giỏ hàng: danh sách sách bên trái, ô tạm tính bên phải, sách không bán được hiện mờ, xếp dọc trên màn hình hẹp | CẤM XÓA CHÚ THÍCH NÀY */
 .cart { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: var(--space-lg); align-items: start; }
 .cart__list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--color-border); }
 .cart-line {
@@ -88,7 +85,6 @@
   .cart-line__remove { grid-column: 3; grid-row: 2; justify-self: end; }
 }
 
-/* AI-TRACE#277 | Claude Opus 5.5 | Kiểu trang đặt hàng (form + tóm tắt) và trang chi tiết đơn (bảng sách, nhãn trạng thái) | CẤM XÓA CHÚ THÍCH NÀY */
 .checkout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: var(--space-lg); align-items: start; }
 .checkout__form { max-width: none; }
 .checkout__form textarea {
@@ -121,7 +117,6 @@
   .checkout { grid-template-columns: 1fr; }
 }
 
-/* AI-TRACE#290 | Claude Opus 5.5 | Kiểu khối hủy đơn hai bước và nhãn trạng thái đã hủy/quá hạn | CẤM XÓA CHÚ THÍCH NÀY */
 .order__status--cancelled, .order__status--expired { color: var(--color-error); background: rgba(160, 30, 40, 0.1); }
 .order__cancel { margin-top: var(--space-lg); padding-top: var(--space-md); border-top: 1px solid var(--color-border); }
 .order__cancel summary { display: inline-flex; cursor: pointer; list-style: none; color: var(--color-error); padding-left: 0; }
@@ -130,14 +125,12 @@
 .order__cancel-box p { margin: 0 0 var(--space-sm); }
 .order__cancel-confirm { background: var(--color-error); border-color: var(--color-error); }
 
-/* AI-TRACE#359 | Claude Opus 5.5 | Kiểu khối thanh toán mô phỏng hai bước trên trang đơn | CẤM XÓA CHÚ THÍCH NÀY */
 .order__pay summary { display: inline-flex; cursor: pointer; list-style: none; }
 .order__pay summary::-webkit-details-marker { display: none; }
 .order__pay[open] summary { opacity: 0.7; }
 .order__pay-box { margin-top: var(--space-sm); padding: var(--space-md); border: 1px solid var(--color-border); border-radius: var(--radius-md); max-width: 520px; }
 .order__pay-box p { margin: 0 0 var(--space-sm); }
 
-/* AI-TRACE#369 | Claude Opus 5.5 | Kiểu danh sách Đơn hàng của tôi (thẻ đơn bấm được, phân trang) và nhãn trạng thái Đã tiếp nhận/Đã đóng gói | CẤM XÓA CHÚ THÍCH NÀY */
 .order__status--confirmed, .order__status--packed { color: var(--color-success); background: rgba(46, 107, 58, 0.12); }
 .order-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-sm); }
 .order-list__link { display: grid; gap: var(--space-xs); padding: var(--space-md); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); color: inherit; text-decoration: none; }

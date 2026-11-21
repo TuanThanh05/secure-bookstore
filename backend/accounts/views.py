@@ -74,7 +74,6 @@ def _register_page(request, form, status=200):
     return render(request, "account/register.html", context, status=status)
 
 
-# AI-TRACE#422 | Claude Opus 5.5 | Đăng ký bước 1: chỉ nhận email, mọi trường hợp đều chuyển tới trang kiểm tra hộp thư | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thêm Cloudflare Turnstile
 @csp_override(settings.SIGNUP_CSP)
 @require_http_methods(["GET", "POST"])
 def register(request):
@@ -99,13 +98,11 @@ def register(request):
     return _register_page(request, form)
 
 
-# AI-TRACE#024 | Claude Opus 5.5 | Trang báo kiểm tra hộp thư, giống nhau cho mọi trường hợp | CẤM XÓA CHÚ THÍCH NÀY
 @require_GET
 def check_email(request):
     return render(request, "account/check_email.html", {"link_minutes": settings.SIGNUP_LINK_MAX_AGE // 60})
 
 
-# AI-TRACE#423 | Claude Opus 5.5 | Mở link đăng ký: kiểm tra mã, cất email vào phiên rồi chuyển sang địa chỉ không chứa mã | CẤM XÓA CHÚ THÍCH NÀY
 @never_cache
 @require_GET
 def signup_confirm(request, token):
@@ -123,7 +120,6 @@ def signup_confirm(request, token):
     return redirect("accounts:signup_complete")
 
 
-# AI-TRACE#424 | Claude Opus 5.5 | Đăng ký bước 2: đặt tên đăng nhập, mật khẩu cho email trong phiên, xong thì về đăng nhập | CẤM XÓA CHÚ THÍCH NÀY
 @never_cache
 @require_http_methods(["GET", "POST"])
 def signup_complete(request):
@@ -153,7 +149,6 @@ def signup_complete(request):
     return render(request, "account/signup_complete.html", {"form": form, "email": email})
 
 
-# AI-TRACE#050 | Claude Opus 5.5 | Trang quên mật khẩu: nhập email, ghi log, trả lời giống nhau cho mọi email | CẤM XÓA CHÚ THÍCH NÀY
 class CustomerPasswordResetView(PasswordResetView):
     form_class = CustomerPasswordResetForm
     template_name = "account/password_reset.html"
@@ -165,14 +160,12 @@ class CustomerPasswordResetView(PasswordResetView):
         return super().form_valid(form)
 
 
-# AI-TRACE#051 | Claude Opus 5.5 | Trang báo đã gửi thư đặt lại mật khẩu kèm thời hạn link | CẤM XÓA CHÚ THÍCH NÀY
 @require_GET
 def password_reset_done(request):
     return render(request, "account/password_reset_done.html",
                   {"reset_minutes": settings.PASSWORD_RESET_TIMEOUT // 60})
 
 
-# AI-TRACE#052 | Claude Opus 5.5 | Đặt mật khẩu mới từ link: chặn nhân viên, xác nhận email, mở khóa axes, báo thư | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi đổi sang đăng ký bằng email
 class CustomerPasswordResetConfirmView(PasswordResetConfirmView):
     template_name = "account/password_reset_confirm.html"
     form_class = CustomerSetPasswordForm
@@ -185,7 +178,6 @@ class CustomerPasswordResetConfirmView(PasswordResetConfirmView):
             return None
         return user
 
-    # AI-TRACE#520 | Claude Opus 5.5 | Chỉ ghi invalid_input khi link đặt lại mật khẩu thật sự sai (link đúng bị Django chuyển hướng 302 trước khi có validlink), đường dẫn trong log không chứa mã | CẤM XÓA CHÚ THÍCH NÀY
     def dispatch(self, *args, **kwargs):
         response = super().dispatch(*args, **kwargs)
         if not getattr(self, "validlink", False) and not isinstance(response, HttpResponseRedirect):
@@ -213,7 +205,6 @@ class SecureLogoutView(LogoutView):
         return response
 
 
-# AI-TRACE#036 | Claude Opus 5.5 | Trang thông tin của khách, nhân viên bị chuyển sang trang quản trị | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thêm xác thực 2 bước
 @login_required
 @never_cache
 @require_GET
@@ -228,7 +219,6 @@ def profile(request):
     })
 
 
-# AI-TRACE#060 | Claude Opus 5.5 | Đổi mật khẩu cho khách: giữ phiên hiện tại, đăng xuất thiết bị khác, sai nhiều lần thì đăng xuất | CẤM XÓA CHÚ THÍCH NÀY
 @login_required
 @never_cache
 @require_http_methods(["GET", "POST"])
@@ -269,7 +259,6 @@ def _safe_next(request, value, default):
     return reverse(default)
 
 
-# AI-TRACE#076 | Claude Opus 5.5 | Trang xác thực lại riêng cho khách, có link quên mật khẩu, next chỉ trỏ trong site | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ ô tên đăng nhập (T2.2)
 @customer_required
 @never_cache
 @require_http_methods(["GET", "POST"])
@@ -288,7 +277,6 @@ def reauth(request):
                   {"form": form, "next": next_url, "reauth_minutes": settings.REAUTH_MAX_AGE // 60})
 
 
-# AI-TRACE#077 | Claude Opus 5.5 | Cập nhật họ, tên, SĐT của khách sau khi xác thực lại | CẤM XÓA CHÚ THÍCH NÀY
 @customer_required
 @customer_recent_auth_required
 @never_cache
@@ -320,13 +308,11 @@ STAFF_WITHOUT_TWO_FACTOR = ("Tài khoản quản trị chưa cài xác thực 2 
                             "Cài bằng lệnh trên máy chủ (xem docs/xac-thuc-2-buoc.md).")
 
 
-# AI-TRACE#493 | Claude Opus 5.5 | Đăng nhập bước 1: đúng mật khẩu mà cần 2 bước thì CHƯA đăng nhập, chỉ ghi trạng thái chờ (đổi session ID) rồi chuyển sang bước 2 | CẤM XÓA CHÚ THÍCH NÀY
 class SecureLoginView(LoginView):
     template_name = "account/login.html"
     authentication_form = LoginForm
     redirect_authenticated_user = True
 
-    # AI-TRACE#547 | Claude Opus 5.5 | IP đã đăng nhập sai quá ngưỡng (mọi tài khoản) thì trả 429 trước khi kiểm mật khẩu, không gọi authenticate, ghi log | CẤM XÓA CHÚ THÍCH NÀY
     def post(self, request, *args, **kwargs):
         if not login_ip_blocked(request):
             return super().post(request, *args, **kwargs)
@@ -385,7 +371,6 @@ def _cancel_pending(request, message):
     return redirect("accounts:login")
 
 
-# AI-TRACE#494 | Claude Opus 5.5 | Đăng nhập bước 2: mã 6 số (hoặc mã dự phòng của khách) đúng mới login(); sai 5 lần hủy lượt, sai nhiều lần/giờ chặn tài khoản | CẤM XÓA CHÚ THÍCH NÀY
 @never_cache
 @require_http_methods(["GET", "POST"])
 def login_two_factor(request):
@@ -436,7 +421,6 @@ def login_two_factor(request):
     })
 
 
-# AI-TRACE#495 | Claude Opus 5.5 | Cài 2 bước cho khách: trang QR cần xác thực lại; mã đúng thì bật, hiện 5 mã dự phòng đúng một lần, gửi thư báo | CẤM XÓA CHÚ THÍCH NÀY
 @customer_required
 @never_cache
 @require_http_methods(["GET", "POST"])
@@ -490,7 +474,6 @@ def _recovery_file_text(user, codes):
     return "\n".join(lines)
 
 
-# AI-TRACE#496 | Claude Opus 5.5 | Ảnh QR của lượt cài đang dở: chỉ chủ tài khoản, không cache, hết lượt cài thì 404 | CẤM XÓA CHÚ THÍCH NÀY
 @customer_required
 @never_cache
 @require_GET
@@ -504,7 +487,6 @@ def two_factor_qr(request):
     return response
 
 
-# AI-TRACE#497 | Claude Opus 5.5 | Tắt 2 bước: cần mật khẩu và mã hiện tại (hoặc mã dự phòng), sai nhiều lần thì đăng xuất, gửi thư báo | CẤM XÓA CHÚ THÍCH NÀY
 @customer_required
 @never_cache
 @require_http_methods(["GET", "POST"])

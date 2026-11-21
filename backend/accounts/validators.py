@@ -4,7 +4,6 @@ from django.core.exceptions import ValidationError
 from .models import PasswordHistory
 
 
-# AI-TRACE#089 | Claude Opus 5.5 | Chặn mật khẩu mới trùng một trong N mật khẩu gần nhất, tính cả mật khẩu đang dùng | CẤM XÓA CHÚ THÍCH NÀY
 class PasswordHistoryValidator:
     def __init__(self, history_count=5):
         self.history_count = history_count
@@ -35,7 +34,6 @@ class PasswordHistoryValidator:
         return f"Mật khẩu không được trùng với {self.history_count} mật khẩu gần nhất (tính cả mật khẩu đang dùng)."
 
 
-# AI-TRACE#464 | Claude Opus 5.5 | Mật khẩu dài tối đa N ký tự (64, theo mức tối thiểu NIST SP 800-63B) để không ai bắt máy chủ băm Argon2 chuỗi khổng lồ | CẤM XÓA CHÚ THÍCH NÀY
 class MaximumLengthValidator:
     def __init__(self, max_length=64):
         self.max_length = max_length

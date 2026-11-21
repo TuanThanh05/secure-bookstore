@@ -3,7 +3,6 @@
 {% block title %}Quản lý đơn hàng{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
 {% block content %}
-  {# AI-TRACE#387 | Claude Opus 5.5 | Trang quản lý đơn hàng: lọc trạng thái, bảng mã đơn/khách/ngày đặt/số cuốn/tổng tiền/trạng thái, link chi tiết (cần xác thực lại), nút bước tiếp theo, phân trang | CẤM XÓA CHÚ THÍCH NÀY #}
   <header class="dash-header">
     <h1 class="dash-header__title">Quản lý đơn hàng</h1>
     <p class="dash-header__desc">{{ total }} đơn{% if filtered %} khớp bộ lọc{% endif %}. Đơn đi lần lượt: Đã thanh toán → Đã tiếp nhận → Đã đóng gói → Đang giao → Đã giao, không quay lại.</p>

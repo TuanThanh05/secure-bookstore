@@ -14,7 +14,6 @@ from .forms import AccountActionForm, AccountFilterForm
 ACCOUNTS_PER_PAGE = 20
 
 
-# AI-TRACE#306 | Claude Opus 5.5 | Dữ liệu chung cho trang danh sách tài khoản: lọc từ GET, gọi thủ tục, phân trang | CẤM XÓA CHÚ THÍCH NÀY
 def _account_page(request, show_full):
     form = AccountFilterForm(request.GET or None)
     keyword = form.cleaned_data.get("ten") if form.is_valid() else ""
@@ -37,7 +36,6 @@ def _account_page(request, show_full):
     }, len(accounts), status, keyword
 
 
-# AI-TRACE#307 | Claude Opus 5.5 | Trang quản lý tài khoản: danh sách khách, email và SĐT đã che, lọc theo trạng thái và username | CẤM XÓA CHÚ THÍCH NÀY
 @staff_required
 @never_cache
 @require_GET
@@ -46,7 +44,6 @@ def accounts(request):
     return render(request, "dashboard/accounts.html", context)
 
 
-# AI-TRACE#308 | Claude Opus 5.5 | Xem email và SĐT đầy đủ của khách: cần xác thực lại, ghi log sensitive_data_viewed kèm bộ lọc và số dòng | CẤM XÓA CHÚ THÍCH NÀY
 @staff_required
 @recent_auth_required
 @never_cache
@@ -68,7 +65,6 @@ def _account_or_404(request, user_id):
         raise
 
 
-# AI-TRACE#309 | Claude Opus 5.5 | Khóa/mở khóa tài khoản: mỗi lần đều nhập lý do và mật khẩu admin ngay trong form (xác thực một lần, không dựa vào xác thực trước đó), ghi log bước xác thực | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi đăng xuất phiên của tài khoản bị khóa
 def _account_action(request, user_id, action):
     account = _account_or_404(request, user_id)
     locking = action == "lock"

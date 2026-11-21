@@ -49,7 +49,6 @@ def manifest_for(sql):
     return json.dumps({"format": 1, "sql_sha256": hashlib.sha256(sql).hexdigest(), "counts": {"t": 1}}).encode()
 
 
-# AI-TRACE#577 | Claude Opus 5.5 | Test mã hóa bản sao lưu: giải mã đúng khi đúng khóa; sai khóa, sửa 1 byte, cắt cụt, sai mã nhận dạng đều bị từ chối và không để lại dữ liệu dùng được | CẤM XÓA CHÚ THÍCH NÀY
 class BackupCryptoTests(SimpleTestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
@@ -86,7 +85,6 @@ class BackupCryptoTests(SimpleTestCase):
                 backup.decode_key(bad)
 
 
-# AI-TRACE#578 | Claude Opus 5.5 | Test mở gói sao lưu: SHA-256 đi kèm phải khớp, SQL phải khớp manifest, thành phần lạ (../, đường dẫn tuyệt đối, tên ảnh không phải UUID) bị từ chối | CẤM XÓA CHÚ THÍCH NÀY
 class OpenBackupTests(SimpleTestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
@@ -126,7 +124,6 @@ class OpenBackupTests(SimpleTestCase):
             run()
 
 
-# AI-TRACE#579 | Claude Opus 5.5 | Test giữ lại 1 năm theo tên file, so số dòng, và lệnh gọi mysqldump: mật khẩu chỉ đi qua stdin, không nằm trong tham số, tiền tố docker được giữ nguyên | CẤM XÓA CHÚ THÍCH NÀY
 class BackupHelpersTests(SimpleTestCase):
     def test_retention_uses_name_and_ignores_unknown_files(self):
         tmp = Path(tempfile.mkdtemp())
@@ -167,7 +164,6 @@ class BackupHelpersTests(SimpleTestCase):
             backup.run_client(cfg, "mysqldump", [], stdout=None)
 
 
-# AI-TRACE#580 | Claude Opus 5.5 | Test lệnh quản trị: xuất .sql và khôi phục đều hủy khi gõ xác nhận sai (không giải mã, không đụng CSDL); sao lưu lỗi ghi backup_failed mức nghiêm trọng | CẤM XÓA CHÚ THÍCH NÀY
 class BackupCommandTests(SimpleTestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
@@ -197,7 +193,6 @@ class BackupCommandTests(SimpleTestCase):
         self.assertEqual(log.call_args.kwargs["severity"], "critical")
 
 
-# AI-TRACE#582 | Claude Opus 5.5 | Test bản sao lưu bỏ dữ liệu bảng phiên (chỉ lấy cấu trúc, manifest ghi 0 dòng) và kèm logs/security.log*; khôi phục chép log ra thư mục riêng, không ghi đè log đang chạy | CẤM XÓA CHÚ THÍCH NÀY
 class SessionAndLogTests(SimpleTestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())

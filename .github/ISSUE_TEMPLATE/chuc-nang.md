@@ -9,7 +9,7 @@ labels: feature
 
 <!-- Người dùng nào, làm được gì. Ví dụ: Khách hàng đăng ký tài khoản bằng username, email, mật khẩu. -->
 
-## Yêu cầu bảo mật (chép từ PROJECT_CONTEXT.md, mục 4/5)
+## Yêu cầu bảo mật (chép từ docs/SECURITY_CHECKLIST.md)
 
 - [ ] <!-- [BB] ... -->
 - [ ] <!-- [BB] ... -->

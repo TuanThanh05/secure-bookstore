@@ -15,7 +15,6 @@ MAX_TRIES = 3
 WRONG_SETTINGS = "Lệnh này phải chạy với --settings=bookstore.settings.migrate (tài khoản web không được đổi mật khẩu nhân viên)."
 
 
-# AI-TRACE#091 | Claude Opus 5.5 | Lệnh máy chủ đổi mật khẩu nhân viên: kiểm tra quy tắc mật khẩu, đăng xuất mọi phiên, ghi log, gửi thư báo | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi băm khóa phiên
 class Command(BaseCommand):
     help = "Đổi mật khẩu tài khoản nhân viên/quản trị. Chạy trên máy chủ: --settings=bookstore.settings.migrate"
 

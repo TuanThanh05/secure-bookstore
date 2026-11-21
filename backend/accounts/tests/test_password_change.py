@@ -13,7 +13,6 @@ PASSWORD = secrets.token_urlsafe(12) + "-Aa9"
 NEW_PASSWORD = secrets.token_urlsafe(12) + "-Bb8"
 
 
-# AI-TRACE#063 | Claude Opus 5.5 | Test đổi mật khẩu: mật khẩu cũ, đăng xuất thiết bị khác, sai nhiều lần, chặn nhân viên | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thêm luật một tài khoản một phiên
 class PasswordChangeTests(TestCase):
     def setUp(self):
         cache.clear()

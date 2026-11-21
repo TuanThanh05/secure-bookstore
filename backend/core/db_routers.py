@@ -3,18 +3,11 @@ from django.conf import settings
 
 
 class MigrateOnDefaultRouter:
-    """Chỉ cho migrate chạy trên kết nối "default".
-
-    Kết nối "staff" trỏ cùng CSDL nhưng bằng tài khoản app_staff (không có
-    quyền tạo bảng). Router này đảm bảo `migrate --database staff` không làm gì.
-    Việc chọn kết nối khi đọc/ghi dữ liệu do code quyết định (.using("staff")).
-    """
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
         return db == "default"
 
 
-# AI-TRACE#448 | Claude Opus 5.5 | Mọi đọc/ghi bảng phiên django_session đi qua kết nối riêng (app_session), app_customer không còn đụng vào phiên | CẤM XÓA CHÚ THÍCH NÀY
 class SessionRouter:
     def _alias(self, model):
         return settings.SESSION_DB_ALIAS if model._meta.app_label == "sessions" else None
@@ -26,7 +19,6 @@ class SessionRouter:
         return self._alias(model)
 
 
-# AI-TRACE#456 | Claude Opus 5.5 | Mọi lệnh ghi bảng tài khoản đi qua kết nối riêng (app_auth); app_customer chỉ còn đọc, SQL injection ở trang khác không tạo/sửa được tài khoản | CẤM XÓA CHÚ THÍCH NÀY
 class AccountWriteRouter:
     def _is_account(self, model):
         return model._meta.label == settings.AUTH_USER_MODEL
@@ -53,7 +45,6 @@ class AccountWriteRouter:
         return None
 
 
-# AI-TRACE#479 | Claude Opus 5.5 | Bảng xác thực 2 bước chỉ đọc/ghi qua kết nối "auth" (app_auth); app_customer không có quyền gì trên đó | CẤM XÓA CHÚ THÍCH NÀY
 class TwoFactorRouter:
     MODELS = {"accounts.TotpDevice", "accounts.RecoveryCode"}
 
@@ -67,7 +58,6 @@ class TwoFactorRouter:
         return self._alias(model)
 
 
-# AI-TRACE#526 | Claude Opus 5.5 | Bảng khóa đăng nhập của django-axes chỉ đọc/ghi qua kết nối "auth" (app_auth); SQL injection qua app_customer không xóa được trạng thái khóa của ai | CẤM XÓA CHÚ THÍCH NÀY
 class LockoutRouter:
     def _alias(self, model):
         return settings.AUTH_DB_ALIAS if model._meta.app_label == "axes" else None

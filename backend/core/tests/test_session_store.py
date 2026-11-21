@@ -20,7 +20,6 @@ def new_secret(tag):
     return f"{secrets.token_urlsafe(12)}-{tag}-Aa9"
 
 
-# AI-TRACE#453 | Claude Opus 5.5 | Test bộ lưu phiên: bảng chỉ có mã băm cookie, chép session_data sang dòng khác bị từ chối, xóa/kiểm tra tồn tại theo mã băm | CẤM XÓA CHÚ THÍCH NÀY
 class HashedSessionStoreTests(TestCase):
     def setUp(self):
         cache.clear()
@@ -78,7 +77,6 @@ class HashedSessionStoreTests(TestCase):
         self.assertFalse(Session.objects.exists())
 
 
-# AI-TRACE#454 | Claude Opus 5.5 | Test router: bảng phiên đi theo SESSION_DB_ALIAS, bảng khác không bị đổi kết nối | CẤM XÓA CHÚ THÍCH NÀY
 class SessionRouterTests(TestCase):
     def test_sessions_use_session_alias(self):
         router = SessionRouter()
@@ -92,7 +90,6 @@ class SessionRouterTests(TestCase):
         self.assertIsNone(router.db_for_write(User))
 
 
-# AI-TRACE#455 | Claude Opus 5.5 | Test giới hạn 1 giờ cho phiên nhân viên: quá giờ thì đăng xuất kèm log lý do, khách không bị giới hạn | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thêm xác thực 2 bước
 class StaffSessionLimitTests(TestCase):
     def setUp(self):
         cache.clear()

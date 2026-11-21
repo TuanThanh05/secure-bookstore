@@ -1,15 +1,3 @@
-"""Cấu hình CHỈ dùng cho lệnh cần quyền tạo/sửa bảng.
-
-Đổi tài khoản của cả 2 kết nối sang bookstore_migrate. Mật khẩu lấy từ biến
-môi trường DB_MIGRATE_PASSWORD hoặc file database/.env.db (không nằm trong .env,
-nên web lúc chạy không biết mật khẩu này).
-
-    python manage.py migrate         --settings=bookstore.settings.migrate
-    python manage.py createsuperuser --settings=bookstore.settings.migrate
-    python manage.py test            --settings=bookstore.settings.migrate
-
-Không bao giờ chạy runserver/gunicorn bằng file này.
-"""
 import os
 
 import environ
@@ -33,14 +21,8 @@ _migrate_account = {
     "CONN_MAX_AGE": 0,
 }
 DATABASES["default"] = {**DATABASES["default"], **_migrate_account}
-# "staff" cũng dùng tài khoản migrate: khi chạy test, "staff" trỏ vào CSDL tạm
-# test_bookstore (TEST MIRROR) mà app_staff không có quyền vào.
 DATABASES["staff"] = {**DATABASES["staff"], **_migrate_account}
 DATABASES["session"] = {**DATABASES["session"], **_migrate_account}
-# Lệnh quản trị và test đọc/ghi bảng phiên bằng kết nối "default" (tài khoản migrate);
-# chỉ web lúc chạy mới dùng kết nối "session" (app_session).
 SESSION_DB_ALIAS = "default"
 DATABASES["auth"] = {**DATABASES["auth"], **_migrate_account}
-# Tương tự: lệnh quản trị (createsuperuser, doi_mat_khau_admin) và test ghi bảng tài khoản
-# bằng "default"; chỉ web lúc chạy mới dùng kết nối "auth" (app_auth).
 AUTH_DB_ALIAS = "default"

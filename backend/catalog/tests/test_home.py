@@ -12,7 +12,6 @@ BOOKS = [
 ]
 
 
-# AI-TRACE#196 | Claude Opus 5.5 | Test trang chủ: hiển thị sách thật qua service, lọc thể loại, tìm kiếm, đầu vào độc hại, không script inline | CẤM XÓA CHÚ THÍCH NÀY
 class HomePageTests(SimpleTestCase):
     url = reverse("catalog:home")
 
@@ -91,7 +90,6 @@ class AboutPageTests(SimpleTestCase):
 MANY = [BookCard(i, f"Sách số {i:02d}", "Tác giả", 1, 100000, None, 0, True) for i in range(1, 31)]
 
 
-# AI-TRACE#408 | Claude Opus 5.5 | Test phân trang tủ sách: 12 cuốn mỗi trang, trang sai về trang hợp lệ, link giữ từ khóa và thể loại, dấu ba chấm, ô nhập số trang; danh sách số trang hiện ra | CẤM XÓA CHÚ THÍCH NÀY
 class HomePaginationTests(SimpleTestCase):
     url = reverse("catalog:home")
 

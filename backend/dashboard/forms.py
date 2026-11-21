@@ -10,12 +10,10 @@ from .log_services import ACTION_LABELS, EVENT_LABELS, SEVERITY_LABELS, TABLE_LA
 from .order_services import ORDER_FILTERS
 
 
-# AI-TRACE#551 | Claude Opus 5.5 | Form xác thực lại của admin: chỉ ô mật khẩu, kiểm với chính admin đang đăng nhập (T2.2) | CẤM XÓA CHÚ THÍCH NÀY
 class ReauthForm(CurrentUserPasswordForm):
     pass
 
 
-# AI-TRACE#094 | Claude Opus 5.5 | Form sửa họ, tên, SĐT của nhân viên; ô SĐT luôn trống, để trống là giữ số cũ | CẤM XÓA CHÚ THÍCH NÀY
 class StaffProfileUpdateForm(ProfileUpdateForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -34,7 +32,6 @@ ACCOUNT_STATUS_FILTERS = {
 }
 
 
-# AI-TRACE#304 | Claude Opus 5.5 | Bộ lọc danh sách tài khoản khách: trạng thái (giá trị cố định) và username (bỏ ký tự điều khiển, tối đa 150 ký tự) | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thêm trạng thái khóa tự động vì giữ kho
 class AccountFilterForm(forms.Form):
     trang_thai = forms.ChoiceField(label="Trạng thái", required=False, choices=[
         ("", "Tất cả"), ("hoat-dong", "Hoạt động"), ("da-khoa", "Đã khóa"),
@@ -49,7 +46,6 @@ class AccountFilterForm(forms.Form):
         return ACCOUNT_STATUS_FILTERS.get(self.cleaned_data.get("trang_thai", "")) if self.is_valid() else None
 
 
-# AI-TRACE#305 | Claude Opus 5.5 | Form khóa/mở khóa: lý do 5–255 ký tự và nhập lại tài khoản + mật khẩu admin, kiểm tra riêng cho đúng lần gửi này (không dùng lại xác thực cũ) | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ ô tên đăng nhập (T2.2)
 class AccountActionForm(ReauthForm):
     reason = forms.CharField(label="Lý do", min_length=5, max_length=255,
                              widget=forms.Textarea(attrs={"rows": 3}),
@@ -66,7 +62,6 @@ class AccountActionForm(ReauthForm):
 LOG_MAX_DAYS = 400
 
 
-# AI-TRACE#336 | Claude Opus 5.5 | Phần lọc ngày dùng chung cho hai tab nhật ký: từ ngày/đến ngày theo giờ Việt Nam, đổi thành khoảng [bắt đầu, kết thúc) có múi giờ, tối đa 400 ngày | CẤM XÓA CHÚ THÍCH NÀY
 class _LogDateRangeForm(forms.Form):
     tu = forms.DateField(label="Từ ngày", required=False, widget=forms.DateInput(attrs={"type": "date"}))
     den = forms.DateField(label="Đến ngày", required=False, widget=forms.DateInput(attrs={"type": "date"}))
@@ -89,7 +84,6 @@ class _LogDateRangeForm(forms.Form):
         return begin, finish
 
 
-# AI-TRACE#337 | Claude Opus 5.5 | Bộ lọc tab nhật ký bảo mật: loại sự kiện, mức độ (danh sách cố định), khoảng ngày, username/IP | CẤM XÓA CHÚ THÍCH NÀY
 class SecurityLogFilterForm(_LogDateRangeForm):
     loai = forms.ChoiceField(label="Loại sự kiện", required=False)
     muc_do = forms.ChoiceField(label="Mức độ", required=False)
@@ -105,7 +99,6 @@ class SecurityLogFilterForm(_LogDateRangeForm):
         return " ".join(CONTROL_CHARS.sub("", self.cleaned_data["tim"]).split())
 
 
-# AI-TRACE#338 | Claude Opus 5.5 | Bộ lọc tab nhật ký thay đổi dữ liệu: bảng, hành động (danh sách cố định), khoảng ngày, id bản ghi | CẤM XÓA CHÚ THÍCH NÀY
 class AuditLogFilterForm(_LogDateRangeForm):
     bang = forms.ChoiceField(label="Dữ liệu", required=False)
     hanh_dong = forms.ChoiceField(label="Hành động", required=False)
@@ -118,7 +111,6 @@ class AuditLogFilterForm(_LogDateRangeForm):
         self.fields["hanh_dong"].choices = [("", "Tất cả"), *ACTION_LABELS.items()]
 
 
-# AI-TRACE#382 | Claude Opus 5.5 | Bộ lọc trang quản lý đơn: chỉ chọn trong danh sách trạng thái cố định (hoặc Cần xử lý) | CẤM XÓA CHÚ THÍCH NÀY
 class OrderFilterForm(forms.Form):
     trang_thai = forms.ChoiceField(label="Trạng thái", required=False,
                                    choices=[("", "Tất cả"), *ORDER_FILTERS.items()])

@@ -25,7 +25,6 @@ DB_PERMISSION_ERRORS = {
 }
 
 
-# AI-TRACE#329 | Claude Opus 5.5 | Middleware ghi db_permission_denied (mức critical) khi MySQL từ chối câu lệnh vì thiếu quyền – dấu hiệu tấn công hoặc lỗi phân quyền; lỗi vẫn đi tiếp thành trang 500 | CẤM XÓA CHÚ THÍCH NÀY
 class DbPermissionDeniedMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -47,14 +46,12 @@ class DbPermissionDeniedMiddleware:
         return None
 
 
-# AI-TRACE#449 | Claude Opus 5.5 | Ghi giờ đăng nhập của nhân viên vào phiên (phần đã ký, không sửa được từ bảng) để giới hạn thời gian tuyệt đối | CẤM XÓA CHÚ THÍCH NÀY
 @receiver(user_logged_in, dispatch_uid="staff_session_login_at")
 def remember_staff_login(sender, request, user, **kwargs):
     if user.is_staff and request is not None and hasattr(request, "session"):
         request.session[STAFF_LOGIN_AT_KEY] = int(time.time())
 
 
-# AI-TRACE#450 | Claude Opus 5.5 | Phiên nhân viên quá 1 giờ kể từ lúc đăng nhập thì đăng xuất dù vẫn thao tác; thiếu giờ đăng nhập cũng coi là hết hạn | CẤM XÓA CHÚ THÍCH NÀY
 class StaffSessionLimitMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -76,7 +73,6 @@ class StaffSessionLimitMiddleware:
         return not 0 <= age < settings.STAFF_SESSION_MAX_AGE
 
 
-# AI-TRACE#524 | Claude Opus 5.5 | Phiên còn ghi người dùng nhưng tài khoản đã bị khóa (hoặc không còn) thì hủy hẳn phiên, không để phiên được gia hạn rồi sống lại khi mở khóa | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thêm khóa tự động vì giữ kho
 class InactiveAccountSessionMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -98,14 +94,12 @@ class InactiveAccountSessionMiddleware:
         return self.get_response(request)
 
 
-# AI-TRACE#539 | Claude Opus 5.5 | Câu báo tài khoản bị khóa tự động vì giữ kho, kèm giờ mở (giờ Việt Nam) | CẤM XÓA CHÚ THÍCH NÀY
 def auto_lock_message(user):
     until = timezone.localtime(user.auto_locked_until).strftime("%H:%M ngày %d/%m/%Y")
     return (f"Tài khoản bị tạm khóa đến {until} vì đã hủy hoặc bỏ 3 đơn chưa thanh toán trong 24 giờ. "
             "Nếu bị khóa nhầm, hãy liên hệ cửa hàng.")
 
 
-# AI-TRACE#585 | Claude Opus 5.5 | Đăng nhập xong (sau bước 2 nếu có) thì đẩy mọi phiên khác của tài khoản ra: ghi log đăng xuất lý do new_login_elsewhere và gửi thư báo chủ tài khoản | CẤM XÓA CHÚ THÍCH NÀY
 @receiver(user_logged_in, dispatch_uid="single_session_per_user")
 def end_other_sessions(sender, request, user, **kwargs):
     if request is None or not hasattr(request, "session"):
@@ -121,7 +115,6 @@ def end_other_sessions(sender, request, user, **kwargs):
     send_new_login_email(request, user, now)
 
 
-# AI-TRACE#586 | Claude Opus 5.5 | Phiên bị đẩy ra vì tài khoản đăng nhập ở nơi khác: hủy hẳn phiên và báo cho người đang dùng (chỉ giờ đăng nhập mới, không lộ IP) | CẤM XÓA CHÚ THÍCH NÀY
 class ReplacedSessionMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response

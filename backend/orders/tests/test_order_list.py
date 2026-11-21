@@ -30,7 +30,6 @@ def summary(**kwargs):
                         first_title=aware[9])
 
 
-# AI-TRACE#370 | Claude Opus 5.5 | Test service danh sách đơn của khách bằng cursor giả: nhóm sai không xuống CSDL, chặn nhân viên/ẩn danh, tính offset theo trang, đọc 2 bộ kết quả, đổi lỗi SIGNAL, nhãn quá hạn | CẤM XÓA CHÚ THÍCH NÀY
 class ListMyOrdersServiceTests(SimpleTestCase):
     def setUp(self):
         self.request = SimpleNamespace(user=SimpleNamespace(pk=42, is_authenticated=True, is_staff=False))
@@ -91,7 +90,6 @@ class ListMyOrdersServiceTests(SimpleTestCase):
             self.assertEqual(summary(status=status).status_label, label)
 
 
-# AI-TRACE#371 | Claude Opus 5.5 | Test trang Đơn hàng của tôi: hai tab, tab sai về Đang xử lý, trang sai về 1, link sang chi tiết, trạng thái rỗng, nhân viên/ẩn danh bị chặn, không lưu cache | CẤM XÓA CHÚ THÍCH NÀY
 class OrderListViewTests(TestCase):
     def setUp(self):
         self.customer = User.objects.create_user(username="an_nguyen", email="an@example.test", password=PASSWORD,

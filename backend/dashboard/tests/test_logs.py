@@ -36,7 +36,6 @@ def audit(**overrides):
     return AuditRow(**values)
 
 
-# AI-TRACE#344 | Claude Opus 5.5 | Test dữ liệu nhật ký: nhãn tiếng Việt, danh sách thay đổi cũ → mới, nguồn, đọc JSON lỗi không làm hỏng trang | CẤM XÓA CHÚ THÍCH NÀY
 class LogRowTests(SimpleTestCase):
     def test_security_row(self):
         row = event()
@@ -63,7 +62,6 @@ class LogRowTests(SimpleTestCase):
         self.assertEqual(log_services._json("[1, 2]"), {"value": [1, 2]})
 
 
-# AI-TRACE#345 | Claude Opus 5.5 | Test service đọc nhật ký bằng cursor giả: tham số đúng thứ tự, thời gian đổi về UTC, phân trang có trần, đổi lỗi SIGNAL, lỗi quyền để nguyên | CẤM XÓA CHÚ THÍCH NÀY
 class LogServiceTests(SimpleTestCase):
     def setUp(self):
         self.actor = SimpleNamespace(pk=2)
@@ -107,7 +105,6 @@ class LogServiceTests(SimpleTestCase):
             list_audit_log(self.actor)
 
 
-# AI-TRACE#346 | Claude Opus 5.5 | Test bộ lọc nhật ký: loại/mức độ chỉ nhận giá trị cố định, ngày theo giờ Việt Nam đổi thành khoảng có múi giờ, chặn khoảng ngược và quá 400 ngày | CẤM XÓA CHÚ THÍCH NÀY
 @override_settings(TIME_ZONE="Asia/Ho_Chi_Minh")
 class LogFilterFormTests(SimpleTestCase):
     def test_choices_are_fixed(self):
@@ -131,7 +128,6 @@ class LogFilterFormTests(SimpleTestCase):
         self.assertEqual(form.cleaned_data["tim"], "10.0.0.1")
 
 
-# AI-TRACE#347 | Claude Opus 5.5 | Test trang nhật ký: chỉ admin, bắt buộc xác thực lại, mỗi lần xem ghi log, lọc chuyển đúng xuống service, bộ lọc sai không gọi CSDL | CẤM XÓA CHÚ THÍCH NÀY
 class LogViewTests(TestCase):
     def setUp(self):
         self.staff = User.objects.create_user(username="quan_tri", email="qt@example.test", password=PASSWORD, is_staff=True)
@@ -182,7 +178,6 @@ class LogViewTests(TestCase):
         self.assertTrue(Client().get(reverse("dashboard:logs"))["Location"].startswith(reverse("accounts:login")))
 
 
-# AI-TRACE#348 | Claude Opus 5.5 | Test 4 log bổ sung: CSRF, MySQL từ chối quyền (middleware), nghi IDOR khi mở đơn người khác, mã đơn rác không ghi | CẤM XÓA CHÚ THÍCH NÀY
 class NewSecurityEventTests(TestCase):
     def setUp(self):
         self.customer = User.objects.create_user(username="khach", email="k@example.test", password=PASSWORD, email_verified=True)

@@ -2,11 +2,6 @@
 
 
 def parse_positive_int(value, max_digits=9):
-    """Chuỗi chỉ gồm chữ số (tối đa max_digits ký tự) → số nguyên dương; còn lại → None.
-
-    Dùng cho tham số trên URL như ?category=, ?page=. Không dùng int() trần vì
-    int(" 12 "), int("+12"), int("١٢") (chữ số Ả Rập) đều "thành công".
-    """
     if not isinstance(value, str) or not value or len(value) > max_digits:
         return None
     if not (value.isascii() and value.isdigit()):

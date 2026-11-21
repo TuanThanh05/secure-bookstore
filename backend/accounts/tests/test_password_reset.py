@@ -19,7 +19,6 @@ WEAK = "1234" * 2
 LINK_RE = re.compile(r"https?://[^\s]+(/account/dat-lai-mat-khau/[^/\s]+/[^/\s]+/)")
 
 
-# AI-TRACE#056 | Claude Opus 5.5 | Test luồng quên mật khẩu: gửi link, đặt lại, link hết hạn, chặn nhân viên | CẤM XÓA CHÚ THÍCH NÀY
 @override_settings(**NO_CAPTCHA)
 class PasswordResetTests(TestCase):
     def setUp(self):
@@ -149,7 +148,6 @@ class PasswordResetTests(TestCase):
         self.assertFalse(response.context["validlink"])
 
 
-# AI-TRACE#521 | Claude Opus 5.5 | Test tái hiện lỗi lộ mã đặt lại mật khẩu trong nhật ký: link đúng không ghi invalid_input, không đường dẫn log nào chứa mã | CẤM XÓA CHÚ THÍCH NÀY
 @override_settings(**NO_CAPTCHA)
 class ResetLinkLoggingTests(TestCase):
     def setUp(self):

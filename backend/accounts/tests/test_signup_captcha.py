@@ -27,7 +27,6 @@ def cloudflare(payload):
 PASS = {"success": True, "hostname": "testserver", "action": "signup", "error-codes": []}
 
 
-# AI-TRACE#444 | Claude Opus 5.5 | Test trang đăng ký có Turnstile: CSP riêng trang, thiếu token, Cloudflare lỗi, vẫn giữ giới hạn tần suất | CẤM XÓA CHÚ THÍCH NÀY
 @override_settings(TURNSTILE_SITE_KEY=SITE_KEY, TURNSTILE_SECRET_KEY=SECRET)
 class SignupCaptchaTests(TestCase):
     def setUp(self):

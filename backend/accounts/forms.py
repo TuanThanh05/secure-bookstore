@@ -26,7 +26,6 @@ WRONG_CURRENT_CREDENTIAL = "Mật khẩu hiện tại không đúng."
 TOO_LONG_MESSAGE = "Mật khẩu dài tối đa %(limit_value)d ký tự."
 
 
-# AI-TRACE#465 | Claude Opus 5.5 | Chặn độ dài ô mật khẩu ngay ở form: quá dài thì form báo lỗi, không gọi authenticate hay validator (không băm Argon2) | CẤM XÓA CHÚ THÍCH NÀY
 def cap_password_fields(form, *names):
     limit = settings.PASSWORD_MAX_LENGTH
     for name in names:
@@ -35,7 +34,6 @@ def cap_password_fields(form, *names):
         field.validators.append(MaxLengthValidator(limit, message=TOO_LONG_MESSAGE))
         field.widget.attrs["maxlength"] = limit
 
-# AI-TRACE#412 | Claude Opus 5.5 | Bước 1 đăng ký: chỉ một ô email, chuẩn hóa về chữ thường | CẤM XÓA CHÚ THÍCH NÀY
 class SignupEmailForm(forms.Form):
     email = forms.EmailField(label="Email", max_length=254,
                              widget=forms.EmailInput(attrs={"autocomplete": "email"}))
@@ -44,7 +42,6 @@ class SignupEmailForm(forms.Form):
         return BaseUserManager.normalize_email(self.cleaned_data["email"].strip()).lower()
 
 
-# AI-TRACE#413 | Claude Opus 5.5 | Bước 2 đăng ký: tên đăng nhập và mật khẩu, email lấy từ phiên chứ không từ form | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi giới hạn độ dài mật khẩu
 class SignupCompleteForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = User
@@ -57,7 +54,6 @@ class SignupCompleteForm(UserCreationForm):
         cap_password_fields(self, "password1", "password2")
 
 
-# AI-TRACE#543 | Claude Opus 5.5 | Form đăng nhập chỉ nhận tên đăng nhập (không nhận email): chặn dò email ↔ tên đăng nhập qua trạng thái khóa | CẤM XÓA CHÚ THÍCH NÀY
 class LoginForm(AuthenticationForm):
 
     error_messages = {
@@ -73,14 +69,12 @@ class LoginForm(AuthenticationForm):
         username.label = "Tên đăng nhập"
         cap_password_fields(self, "password")
 
-    # AI-TRACE#540 | Claude Opus 5.5 | Đúng mật khẩu nhưng tài khoản đang bị khóa tự động vì giữ kho: không cho đăng nhập, báo giờ mở khóa | CẤM XÓA CHÚ THÍCH NÀY
     def confirm_login_allowed(self, user):
         super().confirm_login_allowed(user)
         if user.is_auto_locked:
             raise ValidationError(auto_lock_message(user), code="auto_locked")
 
 
-# AI-TRACE#049 | Claude Opus 5.5 | Form quên mật khẩu chỉ gửi cho khách, dùng thư và giới hạn của nhóm | CẤM XÓA CHÚ THÍCH NÀY
 class CustomerPasswordResetForm(PasswordResetForm):
     email = forms.EmailField(label="Email đã đăng ký", max_length=254)
 
@@ -98,7 +92,6 @@ class CustomerPasswordResetForm(PasswordResetForm):
         send_password_reset_email(self._request, context["user"], link)
 
 
-# AI-TRACE#057 | Claude Opus 5.5 | Form đổi mật khẩu: mật khẩu hiện tại và hai ô mật khẩu mới | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi giới hạn độ dài mật khẩu
 class CustomerPasswordChangeForm(PasswordChangeForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -109,7 +102,6 @@ class CustomerPasswordChangeForm(PasswordChangeForm):
         cap_password_fields(self, "old_password", "new_password1", "new_password2")
 
 
-# AI-TRACE#466 | Claude Opus 5.5 | Form đặt mật khẩu mới từ link quên mật khẩu, có chặn độ dài ô mật khẩu | CẤM XÓA CHÚ THÍCH NÀY
 class CustomerSetPasswordForm(SetPasswordForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -121,7 +113,6 @@ PHONE_SEPARATORS_RE = re.compile(r"[\s.\-()]")
 PHONE_RE = re.compile(r"^0[35789][0-9]{8}$")
 
 
-# AI-TRACE#550 | Claude Opus 5.5 | Form xác nhận bằng mật khẩu của chính người đang đăng nhập (T2.2): không có ô tên đăng nhập, tên lấy từ request.user nên không thử được mật khẩu tài khoản khác | CẤM XÓA CHÚ THÍCH NÀY
 class CurrentUserPasswordForm(forms.Form):
     error_messages = {"invalid": "Mật khẩu không đúng."}
 
@@ -147,12 +138,10 @@ class CurrentUserPasswordForm(forms.Form):
         return cleaned
 
 
-# AI-TRACE#073 | Claude Opus 5.5 | Form xác thực lại của khách, nhận tên đăng nhập hoặc email và mật khẩu | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi giới hạn độ dài mật khẩu
 class CustomerReauthForm(CurrentUserPasswordForm):
     pass
 
 
-# AI-TRACE#074 | Claude Opus 5.5 | Form cập nhật họ, tên, SĐT của khách; không có ô username hay email | CẤM XÓA CHÚ THÍCH NÀY
 class ProfileUpdateForm(forms.Form):
     last_name = forms.CharField(label="Họ", max_length=50, required=False)
     first_name = forms.CharField(label="Tên", max_length=50, required=False)
@@ -180,7 +169,6 @@ class ProfileUpdateForm(forms.Form):
         return value
 
 
-# AI-TRACE#491 | Claude Opus 5.5 | Ô nhập mã 6 số (hoặc mã dự phòng) của bước 2 khi đăng nhập và khi cài | CẤM XÓA CHÚ THÍCH NÀY
 class TwoFactorCodeForm(forms.Form):
     code = forms.CharField(label="Mã xác thực", max_length=20, strip=True)
 
@@ -193,7 +181,6 @@ class TwoFactorCodeForm(forms.Form):
             field.label = "Mã 6 số trong ứng dụng hoặc mã dự phòng"
 
 
-# AI-TRACE#492 | Claude Opus 5.5 | Form tắt 2 bước: mật khẩu hiện tại và mã 6 số (hoặc mã dự phòng) | CẤM XÓA CHÚ THÍCH NÀY
 class TwoFactorDisableForm(forms.Form):
     password = forms.CharField(label="Mật khẩu hiện tại", strip=False,
                                widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}))

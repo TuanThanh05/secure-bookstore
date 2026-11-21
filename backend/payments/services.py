@@ -20,7 +20,6 @@ PAYMENT_ERROR_MESSAGES = {
 }
 
 
-# AI-TRACE#353 | Claude Opus 5.5 | Lỗi nghiệp vụ khi thanh toán, mang mã lỗi và câu tiếng Việt | CẤM XÓA CHÚ THÍCH NÀY
 class PaymentError(Exception):
     def __init__(self, code):
         self.code = code
@@ -28,7 +27,6 @@ class PaymentError(Exception):
         super().__init__(self.message)
 
 
-# AI-TRACE#354 | Claude Opus 5.5 | Giới hạn số lần bấm thanh toán mô phỏng của mỗi khách theo PAYMENT_SIMULATE_RATE_* | CẤM XÓA CHÚ THÍCH NÀY
 def _allow_simulate(user):
     key = f"payment-simulate-rate:{user.pk}"
     window = settings.PAYMENT_SIMULATE_RATE_WINDOW
@@ -42,7 +40,6 @@ def _allow_simulate(user):
     return count <= settings.PAYMENT_SIMULATE_RATE_LIMIT
 
 
-# AI-TRACE#355 | Claude Opus 5.5 | Đọc mã lỗi nghiệp vụ thanh toán từ lỗi MySQL 1644 do SIGNAL | CẤM XÓA CHÚ THÍCH NÀY
 def _signal_code(exc):
     args = exc.args
     if len(args) >= 2 and args[0] == SIGNAL_ERROR_CODE and args[1] in PAYMENT_ERROR_MESSAGES:
@@ -50,7 +47,6 @@ def _signal_code(exc):
     return None
 
 
-# AI-TRACE#356 | Claude Opus 5.5 | Thanh toán mô phỏng: chỉ khi PAYMENT_SIMULATION bật, user lấy từ phiên, mã đơn sai mẫu không xuống CSDL, giới hạn tần suất rồi gọi sp_payment_simulate, trả mã giao dịch | CẤM XÓA CHÚ THÍCH NÀY
 def simulate_payment(request, code):
     if not settings.PAYMENT_SIMULATION:
         raise PaymentError("NOT_CONFIGURED")

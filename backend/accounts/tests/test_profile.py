@@ -8,7 +8,6 @@ from accounts.models import User
 PASSWORD = secrets.token_urlsafe(12) + "-Aa9"
 
 
-# AI-TRACE#045 | Claude Opus 5.5 | Test trang thông tin của khách: hiện email, chặn nhân viên, không lưu cache | CẤM XÓA CHÚ THÍCH NÀY
 class CustomerProfileTests(TestCase):
     def setUp(self):
         self.url = reverse("accounts:profile")

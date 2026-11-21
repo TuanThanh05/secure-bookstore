@@ -30,7 +30,6 @@ def session_row(client):
     return model.objects.filter(session_key=stored_key(client.session.session_key)).first()
 
 
-# AI-TRACE#588 | Claude Opus 5.5 | Test một tài khoản một phiên: đăng nhập mới đẩy phiên cũ ra (phiên cũ thấy thông báo, không lộ IP), ghi log, gửi thư kèm IP cho chủ tài khoản; phiên người khác và phiên admin đã quá 1 giờ không tính | CẤM XÓA CHÚ THÍCH NÀY
 class SingleSessionTests(TestCase):
     def setUp(self):
         cache.clear()

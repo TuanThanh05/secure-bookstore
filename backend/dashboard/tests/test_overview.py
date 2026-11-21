@@ -28,7 +28,6 @@ def overview(**changes):
     return Overview(**data)
 
 
-# AI-TRACE#402 | Claude Opus 5.5 | Test service tổng quan: mốc ngày/7 ngày/tháng theo giờ Việt Nam đổi về UTC, gọi đúng 3 thủ tục qua kết nối staff với ngưỡng sắp hết từ settings, đọc nhiều bộ kết quả, đổi lỗi SIGNAL | CẤM XÓA CHÚ THÍCH NÀY
 @override_settings(TIME_ZONE="Asia/Ho_Chi_Minh", LOW_STOCK_THRESHOLD=10)
 class OverviewServiceTests(SimpleTestCase):
     def test_period_starts_use_vietnam_day(self):
@@ -79,7 +78,6 @@ class OverviewServiceTests(SimpleTestCase):
                 get_overview(SimpleNamespace(pk=2))
 
 
-# AI-TRACE#403 | Claude Opus 5.5 | Test trang Tổng quan: chỉ nhân viên, hiện các nhóm số liệu và link lọc sẵn, thẻ nghiêm trọng tô đỏ khi có sự kiện, không lưu cache, lỗi nghiệp vụ hiện thông báo | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ thuộc tính không dùng
 class OverviewViewTests(TestCase):
     def setUp(self):
         self.staff = User.objects.create_user(username="quan_tri", email="qt@example.test", password=PASSWORD,

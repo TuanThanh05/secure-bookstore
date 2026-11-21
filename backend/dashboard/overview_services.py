@@ -15,7 +15,6 @@ OVERVIEW_ERROR_MESSAGES = {
 }
 
 
-# AI-TRACE#395 | Claude Opus 5.5 | Lỗi nghiệp vụ khi đọc trang tổng quan, mang mã lỗi và câu tiếng Việt | CẤM XÓA CHÚ THÍCH NÀY
 class OverviewError(Exception):
     def __init__(self, code):
         self.code = code
@@ -23,7 +22,6 @@ class OverviewError(Exception):
         super().__init__(self.message)
 
 
-# AI-TRACE#574 | Claude Opus 5.5 | Trạng thái sao lưu cho Tổng quan: lần thành công, lần lỗi, lần kiểm tra khôi phục gần nhất; cảnh báo khi lỗi mới hơn thành công, chưa từng sao lưu hoặc bản mới nhất cũ hơn 7 ngày | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ thuộc tính không dùng
 @dataclass(frozen=True)
 class BackupStatus:
     last_success: datetime.datetime | None
@@ -73,7 +71,6 @@ class LowStockBook:
     stock: int
 
 
-# AI-TRACE#396 | Claude Opus 5.5 | Số liệu trang tổng quan: đơn cần xử lý theo bước, đơn mới/hủy hôm nay, doanh thu, kho, bảo mật | CẤM XÓA CHÚ THÍCH NÀY
 @dataclass(frozen=True)
 class Overview:
     paid: int
@@ -99,7 +96,6 @@ class Overview:
         return self.paid + self.confirmed + self.packed + self.shipped
 
 
-# AI-TRACE#397 | Claude Opus 5.5 | Tính mốc đầu ngày hôm nay, đầu 7 ngày gần nhất (gồm hôm nay) và đầu tháng theo giờ Việt Nam rồi đổi về UTC không múi giờ để truyền xuống thủ tục | CẤM XÓA CHÚ THÍCH NÀY
 def period_starts(now=None):
     local = timezone.localtime(now or timezone.now(), timezone.get_current_timezone())
     today = local.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -128,7 +124,6 @@ def _call(procedure, params):
         raise
 
 
-# AI-TRACE#398 | Claude Opus 5.5 | Đọc số liệu tổng quan bằng 3 thủ tục (đơn và doanh thu, kho, bảo mật) qua kết nối staff, ngưỡng sắp hết lấy từ LOW_STOCK_THRESHOLD | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thêm thủ tục trạng thái sao lưu
 def get_overview(actor, now=None):
     today, week, month = period_starts(now)
     threshold = int(settings.LOW_STOCK_THRESHOLD)

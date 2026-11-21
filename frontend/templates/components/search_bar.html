@@ -1,9 +1,3 @@
-{% comment %} Ô tìm kiếm sách (GET, không đổi dữ liệu nên không cần CSRF).
-   Tham số:  action  – URL nhận kết quả (bắt buộc)
-             q       – từ khóa hiện tại, để giữ lại trong ô sau khi tìm
-             category – thể loại đang lọc (giữ lại khi tìm), có thể trống
-   maxlength="100" chỉ là tiện ích giao diện; giới hạn THẬT nằm ở view
-   (kẻ tấn công gửi thẳng request, không đi qua ô này). {% endcomment %}
 <form class="search-bar" method="get" action="{{ action }}" role="search">
   {% include "components/icon.html" with name="search" %}
   <label class="visually-hidden" for="search-q">Tìm sách</label>
