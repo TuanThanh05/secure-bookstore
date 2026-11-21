@@ -1,4 +1,4 @@
-# Đăng nhập: chỉ bằng tên đăng nhập, chặn IP dò mật khẩu rải
+# Đăng nhập: chỉ bằng tên đăng nhập, chặn IP dò mật khẩu rải, xác thực lại chỉ bằng mật khẩu
 
 Báo cáo rà soát bảo mật mục **T3.2** (mức trung bình), chốt ngày 2026-11-20.
 
@@ -21,7 +21,7 @@ vẫn **đăng nhập được (302)**. Nhập email đúng + mật khẩu đún
 
 | Phần | Làm gì |
 |---|---|
-| Chỉ tên đăng nhập | `LoginForm` và `CustomerReauthForm` bỏ hẳn việc tra email. Nhãn ô là "Tên đăng nhập", tối đa 50 ký tự (bằng cột `username`). Gõ email thì bị coi là tên không tồn tại và nhận đúng câu chung "Tên đăng nhập hoặc mật khẩu không đúng." Form xác thực lại của admin (`dashboard.ReauthForm`) vốn chỉ nhận tên đăng nhập. |
+| Chỉ tên đăng nhập | `LoginForm` và `CustomerReauthForm` bỏ hẳn việc tra email. Nhãn ô là "Tên đăng nhập", tối đa 50 ký tự (bằng cột `username`). Gõ email thì bị coi là tên không tồn tại và nhận đúng câu chung "Tên đăng nhập hoặc mật khẩu không đúng." Sau đó T2.2 bỏ hẳn ô tên đăng nhập ở mọi form xác thực lại (mục 6). |
 | Quên tên đăng nhập | Dùng "Quên mật khẩu" (nhập email). Thư đặt lại mật khẩu ghi thêm dòng **"Tên đăng nhập của bạn: …"**. Thư chỉ tới hộp thư của chủ tài khoản, và trang quên mật khẩu vẫn trả lời giống nhau cho mọi email. |
 | Chặn IP (S1) | Một IP đăng nhập sai **≥ 20 lần trong 60 phút gần nhất**, gộp mọi tài khoản, thì trang đăng nhập trả **429** *trước khi* kiểm mật khẩu (không gọi `authenticate`, đúng mật khẩu cũng không vào được). Có ghi log `rate_limited` (`warning`, `detail.kind = "login_ip"`). Trang đăng nhập (GET) và "Quên mật khẩu" vẫn mở được. Khi số lần sai trong 60 phút tụt xuống dưới 20 thì hết bị chặn. |
 
@@ -77,3 +77,21 @@ Nhập email + mật khẩu đúng thì phải ra "Tên đăng nhập hoặc m�
 1. `git pull`, rồi `python manage.py db_apply` (tạo thủ tục, cấp quyền). Không có migration mới.
 2. `python manage.py db_check_grants`.
 3. Báo người dùng: từ nay chỉ đăng nhập bằng **tên đăng nhập**. Ai quên thì bấm "Quên mật khẩu", thư sẽ ghi tên đăng nhập.
+
+## 6. Xác thực lại chỉ bằng mật khẩu (T2.2, chốt 2026-11-20)
+
+**Vấn đề (báo cáo rà soát T2.2):** các form xác thực lại có ô tên đăng nhập. Code gọi `authenticate()` với tên người dùng **tự gõ**, rồi mới so với người đang đăng nhập. Người đã đăng nhập dùng form này thử được mật khẩu của tài khoản khác, mỗi lần sai còn làm tăng bộ đếm khóa axes của nạn nhân.
+
+**Cách sửa:** bỏ hẳn ô tên đăng nhập ở 3 form:
+
+| Form | Ai dùng | Còn lại |
+|---|---|---|
+| `accounts.forms.CustomerReauthForm` (`/account/xac-thuc-lai/`) | Khách | Ô mật khẩu |
+| `dashboard.forms.ReauthForm` (`/dashboard/xac-thuc-lai/`) | Admin | Ô mật khẩu |
+| `dashboard.forms.AccountActionForm` (khóa/mở khóa tài khoản khách) | Admin | Lý do + ô mật khẩu |
+
+- Cả ba kế thừa `accounts.forms.CurrentUserPasswordForm`: `authenticate(request, username=request.user.get_username(), password=…)`. Tên đăng nhập **chỉ lấy từ phiên**, không bao giờ từ form; gửi thêm trường `username` trong POST cũng bị bỏ qua.
+- Trang hiện dòng chữ "Xác nhận bằng tài khoản: <tên>" để người dùng biết đang xác thực cho ai. Kèm một ô `autocomplete="username"` ẩn, **không có thuộc tính `name`** nên không gửi lên server; ô này chỉ để trình quản lý mật khẩu nhận đúng tài khoản.
+- Sai mật khẩu: báo "Mật khẩu không đúng.", axes đếm vào **chính tài khoản đó** (5 lần → tạm khóa 15 phút), ghi `login_failed` (cũng được tính vào ngưỡng chặn IP ở mục 2).
+- Log `access_denied` `user_mismatch` không còn: trường hợp đó không xảy ra được nữa.
+

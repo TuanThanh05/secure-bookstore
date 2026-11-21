@@ -121,31 +121,35 @@ PHONE_SEPARATORS_RE = re.compile(r"[\s.\-()]")
 PHONE_RE = re.compile(r"^0[35789][0-9]{8}$")
 
 
-# AI-TRACE#073 | Claude Opus 5.5 | Form xác thực lại của khách, nhận tên đăng nhập hoặc email và mật khẩu | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi giới hạn độ dài mật khẩu
-class CustomerReauthForm(forms.Form):
-    error_messages = {"invalid": "Tên đăng nhập hoặc mật khẩu không đúng."}
+# AI-TRACE#550 | Claude Opus 5.5 | Form xác nhận bằng mật khẩu của chính người đang đăng nhập (T2.2): không có ô tên đăng nhập, tên lấy từ request.user nên không thử được mật khẩu tài khoản khác | CẤM XÓA CHÚ THÍCH NÀY
+class CurrentUserPasswordForm(forms.Form):
+    error_messages = {"invalid": "Mật khẩu không đúng."}
 
-    username = forms.CharField(label="Tên đăng nhập", max_length=USERNAME_MAX_LENGTH)
     password = forms.CharField(label="Mật khẩu", strip=False,
                                widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}))
 
     def __init__(self, request, *args, **kwargs):
         self.request = request
-        self.user_mismatch = False
         super().__init__(*args, **kwargs)
-        self.fields["username"].widget.attrs["autocomplete"] = "username"
         cap_password_fields(self, "password")
+
+    @property
+    def account_name(self):
+        return self.request.user.get_username()
 
     def clean(self):
         cleaned = super().clean()
-        username = cleaned.get("username")
         password = cleaned.get("password")
-        if username and password:
-            user = authenticate(self.request, username=username, password=password)
+        if password:
+            user = authenticate(self.request, username=self.account_name, password=password)
             if user is None or user.pk != self.request.user.pk:
-                self.user_mismatch = user is not None
                 raise ValidationError(self.error_messages["invalid"], code="invalid")
         return cleaned
+
+
+# AI-TRACE#073 | Claude Opus 5.5 | Form xác thực lại của khách, nhận tên đăng nhập hoặc email và mật khẩu | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi giới hạn độ dài mật khẩu
+class CustomerReauthForm(CurrentUserPasswordForm):
+    pass
 
 
 # AI-TRACE#074 | Claude Opus 5.5 | Form cập nhật họ, tên, SĐT của khách; không có ô username hay email | CẤM XÓA CHÚ THÍCH NÀY

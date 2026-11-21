@@ -42,7 +42,7 @@ Log cũ đã ghi trước bản sửa vẫn còn token nhưng **đã hết hạn
 
 Kiểm tra: `accounts/tests/test_password_reset.py::ResetLinkLoggingTests` (3/4 test trượt trên code cũ), `core/tests/test_security_log.py`.
 
-**Chưa xử lý:** access log của Nginx (mặc định bật cho `location /` trong `deploy/nginx/secure-bookstore.conf`) vẫn ghi nguyên URL có token vào file log của Nginx trên máy chủ.
+**Access log của Nginx (chốt b, 2026-11-20):** `deploy/nginx/secure-bookstore.conf` không ghi access log cho `/account/dat-lai-mat-khau/…` và `/account/dang-ky/xac-nhan/…` (khối `map` + `access_log … if=`), xem `docs/trien-khai-nginx.md` mục 3.
 
 ## 3. Nhật ký thay đổi dữ liệu
 

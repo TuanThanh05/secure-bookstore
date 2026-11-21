@@ -287,3 +287,11 @@
   .dash-overview__grid { grid-template-columns: 1fr; }
   .dash-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* AI-TRACE#553 | Claude Opus 5.5 | Ô hiện tên tài khoản dạng chữ trong form xác thực lại và khóa/mở khóa (T2.2), không phải ô nhập | CẤM XÓA CHÚ THÍCH NÀY */
+.reauth__label, .dash-field__label { font-size: 14px; font-weight: 600; }
+.reauth__account, .dash-field__static {
+  display: flex; align-items: center; min-height: 44px; margin: 0; padding: 0.65rem 0.85rem;
+  font-weight: 600; color: var(--color-text); overflow-wrap: anywhere;
+  border: 1px dashed var(--color-border); border-radius: var(--radius);
+}

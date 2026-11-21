@@ -4,10 +4,10 @@
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/account-area.css' %}"><link rel="stylesheet" href="{% static 'css/account.css' %}">{% endblock %}
 {% block extra_js %}<script src="{% static 'js/account.js' %}" defer></script>{% endblock %}
 {% block account_content %}
-  {# AI-TRACE#080 | Claude Opus 5.5 | Trang xác thực lại của khách: tên đăng nhập, mật khẩu, nút xác thực và link quên mật khẩu | CẤM XÓA CHÚ THÍCH NÀY #}
+  {# AI-TRACE#080 | Claude Opus 5.5 | Trang xác thực lại của khách: tên đăng nhập, mật khẩu, nút xác thực và link quên mật khẩu | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ ô tên đăng nhập (T2.2) #}
   <header class="area-header">
     <h1 class="area-header__title">Xác thực lại</h1>
-    <p class="area-header__desc">Để bảo vệ tài khoản, hãy nhập lại tên đăng nhập và mật khẩu trước khi sửa thông tin. Xác thực có hiệu lực trong {{ reauth_minutes }} phút.</p>
+    <p class="area-header__desc">Để bảo vệ tài khoản, hãy nhập lại mật khẩu trước khi sửa thông tin. Xác thực có hiệu lực trong {{ reauth_minutes }} phút.</p>
   </header>
 
   <div class="area-form area-form--center">
@@ -18,6 +18,11 @@
           {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
         </div>
       {% endif %}
+      <div class="auth-form__field">
+        <span class="auth-form__label">Xác nhận bằng tài khoản</span>
+        <p class="auth-form__static">{{ form.account_name }}</p>
+        <input type="text" class="visually-hidden" autocomplete="username" value="{{ form.account_name }}" readonly tabindex="-1" aria-hidden="true">
+      </div>
       {% for field in form %}
         <div class="auth-form__field{% if field.errors %} auth-form__field--error{% endif %}">
           <label for="{{ field.id_for_label }}">{{ field.label }}</label>

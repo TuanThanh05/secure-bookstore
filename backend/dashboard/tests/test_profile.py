@@ -12,7 +12,7 @@ PASSWORD = secrets.token_urlsafe(12) + "-Aa9"
 STAFF_EMAIL = "quan.tri@example.test"
 
 
-# AI-TRACE#046 | Claude Opus 5.5 | Test trang thông tin nhân viên: giấu email, hiện sau xác thực lại, ghi log | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#046 | Claude Opus 5.5 | Test trang thông tin nhân viên: giấu email, hiện sau xác thực lại, ghi log | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ ô tên đăng nhập ở xác thực lại (T2.2)
 class StaffProfileTests(TestCase):
     def setUp(self):
         self.profile_url = reverse("dashboard:profile")
@@ -87,9 +87,11 @@ class StaffProfileTests(TestCase):
         self.assertEqual(response.status_code, 302)
 
     def test_reauth_as_other_staff_does_not_reveal(self):
-        User.objects.create_user(username="nguoi_khac", email="khac@example.test", password=PASSWORD, is_staff=True)
+        other_password = secrets.token_urlsafe(12) + "-Bb8"
+        User.objects.create_user(username="nguoi_khac", email="khac@example.test", password=other_password,
+                                 is_staff=True)
         self.login()
-        self.reauth(username="nguoi_khac")
+        self.reauth(username="nguoi_khac", password=other_password)
         self.assertEqual(self.client.get(self.contact_url).status_code, 302)
 
     def test_reauth_page_shows_minutes_from_settings(self):

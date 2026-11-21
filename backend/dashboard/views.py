@@ -85,8 +85,6 @@ def reauth(request):
             mark_recent_auth(request)
             log_event("login_success", request, user=request.user, username=request.user.get_username(), detail={"step_up": True})
             return redirect(next_url)
-        if form.user_mismatch:
-            log_event("access_denied", request, severity="warning", user=request.user, username=request.user.get_username(), detail={"step_up": "user_mismatch"})
     else:
         form = ReauthForm(request)
     return render(request, "dashboard/reauth.html", {"form": form, "next": next_url, "reauth_minutes": settings.REAUTH_MAX_AGE // 60})

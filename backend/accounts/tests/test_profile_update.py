@@ -61,11 +61,6 @@ class ProfileUpdateTests(TestCase):
         self.assertNotIn("0912345678", str(event.detail))
         self.assertContains(self.client.get(reverse("accounts:profile")), "0912345678")
 
-    def test_reauth_by_email_is_rejected(self):
-        response = self.reauth(username="AN@example.test")
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Tên đăng nhập hoặc mật khẩu không đúng.")
-
     def test_international_prefix_is_normalized(self):
         self.reauth()
         self.update(phone="+84 912.345.678")
@@ -108,10 +103,14 @@ class ProfileUpdateTests(TestCase):
         self.assertEqual(self.client.get(self.update_url).status_code, 302)
 
     def test_other_users_credentials_do_not_unlock(self):
-        User.objects.create_user(username="binh", email="binh@example.test", password=PASSWORD, email_verified=True)
-        self.reauth(username="binh")
+        other_password = secrets.token_urlsafe(12) + "-Bb8"
+        User.objects.create_user(username="binh", email="binh@example.test", password=other_password,
+                                 email_verified=True)
+        response = self.reauth(username="binh", password=other_password)
+        self.assertContains(response, "Mật khẩu không đúng.")
         self.assertEqual(self.client.get(self.update_url).status_code, 302)
-        self.assertTrue(SecurityEvent.objects.filter(event_type="access_denied", detail__step_up="user_mismatch").exists())
+        failed = SecurityEvent.objects.get(event_type="login_failed")
+        self.assertEqual(failed.username_attempted, "an_nguyen")
 
     def test_reauth_expires(self):
         self.reauth()

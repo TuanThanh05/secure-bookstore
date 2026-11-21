@@ -28,7 +28,7 @@ def secret_of(length):
     return (base * 3)[:length]
 
 
-# AI-TRACE#467 | Claude Opus 5.5 | Test giới hạn 64 ký tự: validator, mọi form có ô mật khẩu, quá dài thì không gọi authenticate hay validator (không băm) | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#467 | Claude Opus 5.5 | Test giới hạn 64 ký tự: validator, mọi form có ô mật khẩu, quá dài thì không gọi authenticate hay validator (không băm) | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ ô tên đăng nhập ở xác thực lại (T2.2)
 class MaximumLengthValidatorTests(SimpleTestCase):
     def test_limit_is_64(self):
         self.assertEqual(LIMIT, 64)
@@ -99,13 +99,13 @@ class PasswordFieldCapTests(TestCase):
 
     @mock.patch("accounts.forms.authenticate")
     def test_customer_reauth_too_long(self, auth):
-        form = CustomerReauthForm(self.request, data={"username": "an_nguyen", "password": self.too_long})
+        form = CustomerReauthForm(self.request, data={"password": self.too_long})
         self.assert_capped(form, "password")
         auth.assert_not_called()
 
-    @mock.patch("dashboard.forms.authenticate")
+    @mock.patch("accounts.forms.authenticate")
     def test_staff_reauth_too_long(self, auth):
-        form = ReauthForm(self.request, data={"username": "quan_tri", "password": self.too_long})
+        form = ReauthForm(self.request, data={"password": self.too_long})
         self.assert_capped(form, "password")
         auth.assert_not_called()
 
