@@ -295,3 +295,6 @@
   font-weight: 600; color: var(--color-text); overflow-wrap: anywhere;
   border: 1px dashed var(--color-border); border-radius: var(--radius);
 }
+/* AI-TRACE#576 | Claude Opus 5.5 | Kiểu ô trạng thái sao lưu: giá trị dạng chữ/ngày giờ nhỏ hơn số, dòng gợi ý dưới giá trị | CẤM XÓA CHÚ THÍCH NÀY */
+.dash-stat__value--text { font-size: 22px; line-height: 1.3; }
+.dash-stat__hint { margin: var(--space-xs) 0 0; font-size: 13px; color: var(--color-muted); }

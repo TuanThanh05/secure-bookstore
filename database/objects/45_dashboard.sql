@@ -5,6 +5,8 @@
 --   sp_staff_dashboard_stock     số sách sắp hết, hết hàng, 5 cuốn còn ít nhất
 --   sp_staff_dashboard_security  sự kiện cảnh báo/nghiêm trọng 24 giờ, đăng nhập
 --                                sai hôm nay
+--   sp_staff_dashboard_backup    lần sao lưu thành công, lỗi, kiểm tra khôi phục
+--                                gần nhất (đọc từ nhật ký do lệnh sao lưu ghi)
 --
 -- Không dùng view: cần COUNT/SUM/WHERE, mà MySQL từ chối view DEFINER có lọc
 -- hoặc gộp nhóm khi phiên đang bật role (lỗi 1143/1356). Chỉ r_staff được
@@ -25,6 +27,7 @@
 DROP PROCEDURE IF EXISTS sp_staff_dashboard_orders;
 DROP PROCEDURE IF EXISTS sp_staff_dashboard_stock;
 DROP PROCEDURE IF EXISTS sp_staff_dashboard_security;
+DROP PROCEDURE IF EXISTS sp_staff_dashboard_backup;
 
 DELIMITER $$
 
@@ -137,6 +140,34 @@ BEGIN
            COALESCE(SUM(created_at >= p_today_start AND event_type = 'login_failed'), 0) AS login_failed_today
       FROM core_securityevent
      WHERE created_at >= LEAST(v_since, p_today_start);
+END$$
+
+-- AI-TRACE#573 | Claude Opus 5.5 | Thủ tục trạng thái sao lưu cho trang Tổng quan: bản ghi gần nhất của sao lưu thành công, sao lưu lỗi và kiểm tra khôi phục (thời điểm + chi tiết JSON không chứa bí mật) | CẤM XÓA CHÚ THÍCH NÀY
+CREATE DEFINER = 'bookstore_definer'@'localhost' PROCEDURE sp_staff_dashboard_backup(
+    IN p_actor_id  BIGINT
+)
+SQL SECURITY DEFINER
+READS SQL DATA
+BEGIN
+    DECLARE v_staff INT DEFAULT 0;
+
+    IF p_actor_id IS NULL OR p_actor_id <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'INVALID_INPUT';
+    END IF;
+
+    SELECT COUNT(*) INTO v_staff
+      FROM accounts_user
+     WHERE id = p_actor_id AND is_staff = 1 AND is_active = 1;
+    IF v_staff = 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'NOT_STAFF';
+    END IF;
+
+    SELECT e.event_type, e.created_at, e.detail
+      FROM core_securityevent e
+      JOIN (SELECT event_type, MAX(id) AS id
+              FROM core_securityevent
+             WHERE event_type IN ('backup_created', 'backup_failed', 'restore_verified')
+             GROUP BY event_type) latest ON latest.id = e.id;
 END$$
 
 DELIMITER ;
