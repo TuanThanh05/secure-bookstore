@@ -79,7 +79,7 @@ class OverviewServiceTests(SimpleTestCase):
                 get_overview(SimpleNamespace(pk=2))
 
 
-# AI-TRACE#403 | Claude Opus 5.5 | Test trang Tổng quan: chỉ nhân viên, hiện các nhóm số liệu và link lọc sẵn, thẻ nghiêm trọng tô đỏ khi có sự kiện, không lưu cache, lỗi nghiệp vụ hiện thông báo | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#403 | Claude Opus 5.5 | Test trang Tổng quan: chỉ nhân viên, hiện các nhóm số liệu và link lọc sẵn, thẻ nghiêm trọng tô đỏ khi có sự kiện, không lưu cache, lỗi nghiệp vụ hiện thông báo | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ thuộc tính không dùng
 class OverviewViewTests(TestCase):
     def setUp(self):
         self.staff = User.objects.create_user(username="quan_tri", email="qt@example.test", password=PASSWORD,
@@ -117,7 +117,7 @@ class OverviewViewTests(TestCase):
         self.assertContains(response, "dash-stat--alert")
         now = datetime.datetime.now(datetime.UTC)
         failing = BackupStatus(now - datetime.timedelta(hours=2), 1, now, now, False)
-        self.assertTrue(failing.failing and failing.needs_attention)
+        self.assertTrue(failing.failing)
         self.get_overview.return_value = overview(backup=failing)
         response = self.client.get(self.url)
         self.assertContains(response, "Lần sao lưu gần nhất bị lỗi")

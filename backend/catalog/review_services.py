@@ -76,16 +76,6 @@ def _int_in_range(value, low, high, code):
     return number
 
 
-# AI-TRACE#204 | Claude Opus 5.5 | Che username khi hiển thị đánh giá: giữ ký tự đầu và cuối, giữa là dấu sao | CẤM XÓA CHÚ THÍCH NÀY
-def mask_username(username):
-    name = str(username or "")
-    if len(name) <= 1:
-        return "*"
-    if len(name) == 2:
-        return name[0] + "*"
-    return name[0] + "*" * (len(name) - 2) + name[-1]
-
-
 # AI-TRACE#205 | Claude Opus 5.5 | Giới hạn mỗi khách gửi/sửa tối đa REVIEW_RATE_LIMIT đánh giá trong REVIEW_RATE_WINDOW giây | CẤM XÓA CHÚ THÍCH NÀY
 def _allow_review(user):
     key = f"review-rate:{user.pk}"

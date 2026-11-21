@@ -16,7 +16,6 @@ from catalog.review_services import (
     clean_content,
     get_my_review,
     list_reviews,
-    mask_username,
     save_review,
 )
 
@@ -29,7 +28,7 @@ def request_for(user):
     return SimpleNamespace(user=user, META={"REMOTE_ADDR": "127.0.0.1"}, method="POST", path="/sach/7/danh-gia/")
 
 
-# AI-TRACE#209 | Claude Opus 5.5 | Test chuẩn hóa nội dung đánh giá, che username và form đánh giá | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#209 | Claude Opus 5.5 | Test chuẩn hóa nội dung đánh giá, che username và form đánh giá | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ hàm che username không còn dùng
 class ReviewInputTests(SimpleTestCase):
     def test_content_is_cleaned(self):
         self.assertEqual(clean_content("  Hay\r\n\r\n\r\n\r\nlắm \u202e\x00 "), "Hay\n\nlắm")
@@ -41,13 +40,6 @@ class ReviewInputTests(SimpleTestCase):
         for bad in ("", "   \n\t ", None, "x" * 2001, "\u200b\u200b"):
             with self.subTest(bad=bad), self.assertRaises(ReviewError):
                 clean_content(bad)
-
-    def test_mask_username_keeps_first_and_last(self):
-        self.assertEqual(mask_username("an_nguyen"), "a*******n")
-        self.assertEqual(mask_username("abc"), "a*c")
-        self.assertEqual(mask_username("ab"), "a*")
-        self.assertEqual(mask_username("a"), "*")
-        self.assertEqual(mask_username(""), "*")
 
     def test_form_accepts_only_one_to_five_stars(self):
         self.assertTrue(ReviewForm({"rating": "5", "content": "Hay"}).is_valid())
