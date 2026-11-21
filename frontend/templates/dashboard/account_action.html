@@ -3,7 +3,7 @@
 {% block title %}{% if locking %}Khóa tài khoản{% else %}Mở khóa tài khoản{% endif %}{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
 {% block content %}
-  {# AI-TRACE#311 | Claude Opus 5.5 | Trang xác nhận khóa/mở khóa: thông tin tài khoản (đã che), lý do và nhập lại tài khoản + mật khẩu admin cho riêng lần này | CẤM XÓA CHÚ THÍCH NÀY #}
+  {# AI-TRACE#311 | Claude Opus 5.5 | Trang xác nhận khóa/mở khóa: thông tin tài khoản (đã che), lý do và nhập lại tài khoản + mật khẩu admin cho riêng lần này | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ ô tên đăng nhập (T2.2) #}
   <section class="dash-confirm" aria-labelledby="xac-nhan">
     <h1 class="dash-confirm__title" id="xac-nhan">{% if locking %}Khóa tài khoản {{ account.username }}?{% else %}Mở khóa tài khoản {{ account.username }}?{% endif %}</h1>
     <dl class="dash-info">
@@ -24,7 +24,11 @@
         <ul class="dash-field__errors" role="alert">{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>
       {% endif %}
       {% include "dashboard/partials/field.html" with field=form.reason wide=True %}
-      {% include "dashboard/partials/field.html" with field=form.username %}
+      <div class="dash-field">
+        <span class="dash-field__label">Xác nhận bằng tài khoản</span>
+        <p class="dash-field__static">{{ form.account_name }}</p>
+        <input type="text" class="visually-hidden" autocomplete="username" value="{{ form.account_name }}" readonly tabindex="-1" aria-hidden="true">
+      </div>
       {% include "dashboard/partials/field.html" with field=form.password %}
       <div class="dash-actions">
         <button class="btn{% if locking %} btn--danger{% endif %}" type="submit">{% if locking %}Khóa tài khoản{% else %}Mở khóa tài khoản{% endif %}</button>

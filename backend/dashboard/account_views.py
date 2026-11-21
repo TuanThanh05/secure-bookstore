@@ -98,10 +98,6 @@ def _account_action(request, user_id, action):
                 else:
                     messages.success(request, f"Đã mở khóa tài khoản {account.username}.")
             return redirect("dashboard:accounts")
-        if form.user_mismatch:
-            log_event("access_denied", request, severity="warning", user=request.user,
-                      username=request.user.get_username(),
-                      detail={"step_up": "user_mismatch", "action": f"account_{action}", "target_id": account.id})
         status = 400
     else:
         form = AccountActionForm(request)

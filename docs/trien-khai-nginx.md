@@ -55,6 +55,7 @@ Phải là **ghi đè**. Không dùng `$proxy_add_x_forwarded_for`, vì biến n
 | `listen 80` | Chỉ chuyển sang HTTPS (301) |
 | `listen 443 ssl`, TLS 1.2/1.3, `ssl_session_tickets off` | HTTPS. HSTS do Django gửi (`SECURE_HSTS_SECONDS`) |
 | `server_tokens off` | Không lộ phiên bản Nginx |
+| `map $uri $bookstore_loggable` + `access_log … if=$bookstore_loggable` (cả cổng 80 và 443) | Không ghi access log cho link đặt lại mật khẩu (`/account/dat-lai-mat-khau/…`) và link xác nhận đăng ký (`/account/dang-ky/xac-nhan/…`) vì URL chứa mã một lần. Django vẫn ghi các lượt này vào nhật ký bảo mật, đã che mã |
 | `client_max_body_size 3m`, timeout 15 giây | Ảnh bìa tối đa 2 MB; chống gửi body chậm |
 | `/static/` | File sau `collectstatic`, có `nosniff` |
 | `/media/covers/` | Chỉ file `.webp`, kèm CSP `default-src 'none'`; mọi thứ khác dưới `/media/` → 404 |
@@ -120,7 +121,7 @@ Thử tay sau khi dựng Nginx (bước 4):
 
 ## 6. Giới hạn đã biết
 
-- Access log của Nginx ghi cả đường dẫn, kể cả link đăng ký và đặt lại mật khẩu. Các mã này chỉ dùng một lần và có hạn, nhưng vẫn nên giữ quyền đọc log ở mức root.
+- Access log của Nginx không ghi 2 đường dẫn chứa mã (chốt 2026-11-20). `error_log` vẫn có thể chứa dòng request khi Gunicorn lỗi hoặc không phản hồi; giữ quyền đọc log ở mức root. Thêm URL nào chứa mã bí mật thì phải thêm vào khối `map`.
 - Chỉ 1 tiến trình Gunicorn. Muốn nhiều tiến trình thì phải chuyển cache sang chỗ dùng chung (ví dụ Redis) trước.
 - Máy chủ phải đồng bộ giờ (`timedatectl set-ntp true`), nếu không mã xác thực 2 bước sẽ sai (`docs/xac-thuc-2-buoc.md` mục 5).
 - Nếu sau này có thêm một tầng proxy nữa (Cloudflare proxy, load balancer) thì phải xem lại `TRUSTED_PROXY_IPS` và cách Nginx lấy IP (module `real_ip`).

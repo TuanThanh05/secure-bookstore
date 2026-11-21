@@ -269,7 +269,7 @@ def _safe_next(request, value, default):
     return reverse(default)
 
 
-# AI-TRACE#076 | Claude Opus 5.5 | Trang xác thực lại riêng cho khách, có link quên mật khẩu, next chỉ trỏ trong site | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#076 | Claude Opus 5.5 | Trang xác thực lại riêng cho khách, có link quên mật khẩu, next chỉ trỏ trong site | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ ô tên đăng nhập (T2.2)
 @customer_required
 @never_cache
 @require_http_methods(["GET", "POST"])
@@ -282,9 +282,6 @@ def reauth(request):
             log_event("login_success", request, user=request.user, username=request.user.get_username(),
                       detail={"step_up": True})
             return redirect(next_url)
-        if form.user_mismatch:
-            log_event("access_denied", request, severity="warning", user=request.user,
-                      username=request.user.get_username(), detail={"step_up": "user_mismatch"})
     else:
         form = CustomerReauthForm(request)
     return render(request, "account/reauth.html",

@@ -1,39 +1,18 @@
 from datetime import datetime, time, timedelta
 
 from django import forms
-from django.contrib.auth import authenticate
 from django.utils import timezone
 
-from accounts.forms import ProfileUpdateForm, cap_password_fields
+from accounts.forms import CurrentUserPasswordForm, ProfileUpdateForm
 from catalog.review_services import CONTROL_CHARS
 
 from .log_services import ACTION_LABELS, EVENT_LABELS, SEVERITY_LABELS, TABLE_LABELS
 from .order_services import ORDER_FILTERS
 
 
-class ReauthForm(forms.Form):
-    error_messages = {"invalid": "Tên đăng nhập hoặc mật khẩu không đúng."}
-
-    username = forms.CharField(label="Tên đăng nhập", max_length=150)
-    password = forms.CharField(label="Mật khẩu", strip=False, widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}))
-
-    def __init__(self, request, *args, **kwargs):
-        self.request = request
-        self.user_mismatch = False
-        super().__init__(*args, **kwargs)
-        self.fields["username"].widget.attrs["autocomplete"] = "username"
-        cap_password_fields(self, "password")
-
-    def clean(self):
-        cleaned = super().clean()
-        username = cleaned.get("username")
-        password = cleaned.get("password")
-        if username and password:
-            user = authenticate(self.request, username=username, password=password)
-            if user is None or user.pk != self.request.user.pk:
-                self.user_mismatch = user is not None
-                raise forms.ValidationError(self.error_messages["invalid"], code="invalid")
-        return cleaned
+# AI-TRACE#551 | Claude Opus 5.5 | Form xác thực lại của admin: chỉ ô mật khẩu, kiểm với chính admin đang đăng nhập (T2.2) | CẤM XÓA CHÚ THÍCH NÀY
+class ReauthForm(CurrentUserPasswordForm):
+    pass
 
 
 # AI-TRACE#094 | Claude Opus 5.5 | Form sửa họ, tên, SĐT của nhân viên; ô SĐT luôn trống, để trống là giữ số cũ | CẤM XÓA CHÚ THÍCH NÀY
@@ -70,12 +49,12 @@ class AccountFilterForm(forms.Form):
         return ACCOUNT_STATUS_FILTERS.get(self.cleaned_data.get("trang_thai", "")) if self.is_valid() else None
 
 
-# AI-TRACE#305 | Claude Opus 5.5 | Form khóa/mở khóa: lý do 5–255 ký tự và nhập lại tài khoản + mật khẩu admin, kiểm tra riêng cho đúng lần gửi này (không dùng lại xác thực cũ) | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#305 | Claude Opus 5.5 | Form khóa/mở khóa: lý do 5–255 ký tự và nhập lại tài khoản + mật khẩu admin, kiểm tra riêng cho đúng lần gửi này (không dùng lại xác thực cũ) | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ ô tên đăng nhập (T2.2)
 class AccountActionForm(ReauthForm):
     reason = forms.CharField(label="Lý do", min_length=5, max_length=255,
                              widget=forms.Textarea(attrs={"rows": 3}),
                              help_text="Ghi vào nhật ký hệ thống cùng tài khoản thực hiện.")
-    field_order = ["reason", "username", "password"]
+    field_order = ["reason", "password"]
 
     def clean_reason(self):
         text = " ".join(CONTROL_CHARS.sub("", self.cleaned_data["reason"]).split())

@@ -50,7 +50,7 @@ Ngưỡng axes truyền từ Django (`AXES_FAILURE_LIMIT`, `AXES_COOLOFF_TIME`) 
 
 Chốt: mỗi lần khóa hay mở khóa **đều phải nhập lại mật khẩu**, kể cả khi admin vừa xác thực lại 2 phút trước, và lần xác thực đó **chỉ có hiệu lực đúng một lần**.
 
-Cách làm: form xác nhận (`/dashboard/tai-khoan/<id>/khoa/` hoặc `/mo-khoa/`) gồm **Lý do**, **Tên đăng nhập**, **Mật khẩu** của admin. Mật khẩu được kiểm tra bằng `authenticate()` cho đúng lần gửi đó rồi gọi thủ tục ngay; không lưu dấu "đã xác thực" vào phiên, nên lần sau phải nhập lại. Vì đi qua `authenticate()`, nhập sai bị django-axes đếm như đăng nhập sai (5 lần → tạm khóa 15 phút). Nhập tài khoản/mật khẩu của người khác → từ chối + log `access_denied`. Thành công → log `login_success` với `detail.step_up = true`, `action`, `target_id`.
+Cách làm: form xác nhận (`/dashboard/tai-khoan/<id>/khoa/` hoặc `/mo-khoa/`) gồm **Lý do** và **Mật khẩu** của admin; tên tài khoản admin chỉ hiện dạng chữ ("Xác nhận bằng tài khoản: …"), không có ô nhập (chốt 2026-11-20, T2.2). Mật khẩu được kiểm tra bằng `authenticate()` cho đúng lần gửi đó rồi gọi thủ tục ngay; không lưu dấu "đã xác thực" vào phiên, nên lần sau phải nhập lại. Vì đi qua `authenticate()`, nhập sai bị django-axes đếm như đăng nhập sai (5 lần → tạm khóa 15 phút). Mật khẩu luôn được kiểm với chính admin đang đăng nhập, nên không thử được mật khẩu tài khoản khác qua form này. Thành công → log `login_success` với `detail.step_up = true`, `action`, `target_id`.
 
 **Sau khi khóa:** mọi phiên đang mở của khách bị **xóa ngay** (mọi thiết bị) và khách không đăng nhập được cho tới khi mở khóa. Thông báo cho admin ghi số phiên đã đăng xuất; log `logout` (`detail.reason = "account_locked"`, `target_id`, `sessions_ended`).
 

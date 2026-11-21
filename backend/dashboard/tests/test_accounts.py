@@ -4,6 +4,7 @@ import time
 from types import SimpleNamespace
 from unittest import mock
 
+from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.db import OperationalError
 from django.test import Client, SimpleTestCase, TestCase
@@ -198,9 +199,12 @@ class AccountViewTests(TestCase):
         self.unlock_account.assert_called_once()
 
     def test_other_users_credentials_rejected_and_logged(self):
-        response = self.client.post(self.lock_url, self.action_data(username="khach"))
+        other_password = secrets.token_urlsafe(12) + "-Bb8"
+        User.objects.filter(username="khach").update(password=make_password(other_password))
+        response = self.client.post(self.lock_url, self.action_data(username="khach", password=other_password))
         self.assertEqual(response.status_code, 400)
-        self.assertTrue(SecurityEvent.objects.filter(event_type="access_denied").exists())
+        self.assertContains(response, "Mật khẩu không đúng.", status_code=400)
+        self.assertEqual(SecurityEvent.objects.get(event_type="login_failed").username_attempted, "quan_tri")
         self.lock_account.assert_not_called()
 
     def test_short_reason_rejected(self):

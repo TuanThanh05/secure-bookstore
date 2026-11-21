@@ -31,8 +31,8 @@ Rủi ro thực tế là **phiên đăng nhập bị chiếm**: quản trị vi�
 1. **Không gửi dữ liệu xuống trình duyệt.** Trang mặc định chỉ có `••••••••••`. Email không có trong HTML, cũng không nằm trong thuộc tính ẩn hay JavaScript, nên "Xem nguồn trang" hay DevTools cũng không thấy. Đây là khác biệt với kiểu ẩn bằng CSS/JS, vốn chỉ che mắt.
 2. **Nút con mắt là một link** tới `dashboard:profile_contact` (`/dashboard/thong-tin/lien-he/`), không phải nút JavaScript. View này có `@recent_auth_required`:
    - chưa xác thực lại trong `REAUTH_MAX_AGE` (2 phút) → chuyển tới `dashboard:reauth?next=...`;
-   - nhập đúng tên đăng nhập + mật khẩu **của chính mình** → quay lại, trang hiện email/SĐT.
-3. **Xác thực lại đi qua `authenticate()`**, nên nhập sai cũng bị axes đếm (khóa sau 5 lần) và ghi `login_failed`. Nhập đúng tài khoản của nhân viên khác thì bị từ chối và ghi `access_denied` (`user_mismatch`).
+   - nhập đúng mật khẩu **của chính mình** (form chỉ có ô mật khẩu, tên tài khoản hiện dạng chữ, xem `docs/dang-nhap.md` mục 6) → quay lại, trang hiện email/SĐT.
+3. **Xác thực lại đi qua `authenticate()`**, nên nhập sai cũng bị axes đếm (khóa sau 5 lần) và ghi `login_failed`. Form không có ô tên đăng nhập nên không thử được mật khẩu của tài khoản khác (bản cũ có ô này và ghi `access_denied` `user_mismatch`; đã bỏ ngày 2026-11-20, T2.2).
 4. **Ghi log mỗi lần xem**: sự kiện `sensitive_data_viewed` với `detail = {"fields": ["email", "phone"], "owner": "self"}`. Loại sự kiện mới được thêm vào CHECK `ck_secevent_type` bằng `database/schema/03_securityevent_sensitive_view.sql` + migration `core/0004`.
 5. **Không lưu cache** (`@never_cache` → `Cache-Control: no-store`) cho cả 2 trang. Nếu không, sau khi rời máy, người khác bấm Back vẫn thấy trang đã hiện email lấy từ bộ nhớ đệm của trình duyệt.
 6. **Trang thường luôn giấu**: kể cả vừa xác thực lại xong, `/dashboard/thong-tin/` vẫn giấu. Chỉ trang `/lien-he/` mới hiện, nên dữ liệu không vô tình xuất hiện ở lần tải trang sau.
@@ -57,7 +57,7 @@ Rủi ro thực tế là **phiên đăng nhập bị chiếm**: quản trị vi�
 
 ## 6. Cập nhật thông tin của khách (họ, tên, SĐT)
 
-Luồng: trang Thông tin tài khoản → nút **Cập nhật thông tin** → nếu chưa xác thực lại trong `REAUTH_MAX_AGE` (2 phút) thì chuyển tới **trang xác thực lại riêng của khách** `accounts:reauth` (`/account/xac-thuc-lai/`) → nhập tên đăng nhập + mật khẩu (không nhận email, xem `docs/dang-nhap.md`) → quay về form `accounts:profile_update` (`/account/cap-nhat/`).
+Luồng: trang Thông tin tài khoản → nút **Cập nhật thông tin** → nếu chưa xác thực lại trong `REAUTH_MAX_AGE` (2 phút) thì chuyển tới **trang xác thực lại riêng của khách** `accounts:reauth` (`/account/xac-thuc-lai/`) → nhập mật khẩu (chỉ ô mật khẩu, xem `docs/dang-nhap.md` mục 6) → quay về form `accounts:profile_update` (`/account/cap-nhat/`).
 
 - **Trang xác thực lại tách riêng khỏi trang của admin** (`accounts/decorators.customer_recent_auth_required`, view `accounts.views.reauth`), cùng cơ chế lưu mốc thời gian trong session của `core/decorators.py`. Bên dưới nút "Xác thực" có link **Quên mật khẩu?**. Nhập sai bị axes đếm; nhập đúng tài khoản người khác bị từ chối và ghi `access_denied`. Tham số `next` chỉ được trỏ trong site.
 - **Chỉ sửa được họ, tên, SĐT.** Form là `forms.Form` liệt kê 3 ô (không phải `ModelForm`), service `update_profile` chỉ gán đúng 3 cột và lưu bằng `save(update_fields=...)`. Gửi thêm `username`, `email`, `is_staff` trong request cũng bị bỏ qua (chống mass assignment).

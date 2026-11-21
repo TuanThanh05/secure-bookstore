@@ -18,7 +18,7 @@ PASSWORD = secrets.token_urlsafe(12) + "-Aa9"
 INVALID_LOGIN = "Tên đăng nhập hoặc mật khẩu không đúng."
 
 
-# AI-TRACE#548 | Claude Opus 5.5 | Test T3.2: đăng nhập/xác thực lại chỉ nhận tên đăng nhập, email đúng + mật khẩu đúng vẫn bị từ chối như sai; thư quên mật khẩu kèm tên đăng nhập | CẤM XÓA CHÚ THÍCH NÀY
+# AI-TRACE#548 | Claude Opus 5.5 | Test T3.2: đăng nhập/xác thực lại chỉ nhận tên đăng nhập, email đúng + mật khẩu đúng vẫn bị từ chối như sai; thư quên mật khẩu kèm tên đăng nhập | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ ô tên đăng nhập ở xác thực lại (T2.2)
 class UsernameOnlyLoginTests(TestCase):
     def setUp(self):
         cache.clear()
@@ -61,13 +61,11 @@ class UsernameOnlyLoginTests(TestCase):
         self.assertNotEqual(locked.content, by_email.content)
         self.assertContains(by_email, INVALID_LOGIN)
 
-    def test_reauth_form_does_not_accept_email(self):
+    def test_reauth_form_has_no_username_field(self):
         request = RequestFactory().post("/")
         request.user = self.user
         form = CustomerReauthForm(request, data={"username": "binh@example.test", "password": PASSWORD})
-        self.assertFalse(form.is_valid())
-        self.assertEqual(form.fields["username"].label, "Tên đăng nhập")
-        form = CustomerReauthForm(request, data={"username": "binh_tran", "password": PASSWORD})
+        self.assertNotIn("username", form.fields)
         self.assertTrue(form.is_valid())
 
     def test_password_reset_mail_tells_the_username(self):
