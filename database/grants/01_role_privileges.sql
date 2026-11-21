@@ -363,3 +363,16 @@ GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_security  TO 'r_staff';
 -- AI-TRACE#545 | Claude Opus 5.5 | Cấp quyền gọi thủ tục đếm lần đăng nhập sai theo IP cho r_customer | CẤM XÓA CHÚ THÍCH NÀY
 GRANT EXECUTE ON PROCEDURE sp_login_ip_failures      TO 'bookstore_definer'@'localhost';
 GRANT EXECUTE ON PROCEDURE sp_login_ip_failures      TO 'r_customer';
+-- Tài khoản sao lưu bookstore_backup (db_setup tạo, chỉ @localhost: chỉ đăng
+-- nhập được bằng socket ngay trên máy/container MySQL, không qua mạng).
+-- CHỈ ĐỌC: đủ cho mysqldump --single-transaction --routines --triggers --events.
+-- Không INSERT/UPDATE/DELETE/DROP/ALTER, không FILE, không LOCK TABLES (giao
+-- dịch nhất quán thay cho khóa bảng), không PROCESS (--no-tablespaces).
+-- Lộ mật khẩu tài khoản này không phá được dữ liệu.
+-- ---------------------------------------------------------------------
+GRANT SELECT, SHOW VIEW, TRIGGER, EVENT ON *   TO 'bookstore_backup'@'localhost';
+GRANT SHOW_ROUTINE ON *.*                      TO 'bookstore_backup'@'localhost';
+
+-- Trạng thái sao lưu trên trang Tổng quan (database/objects/45_dashboard.sql)
+GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_backup    TO 'bookstore_definer'@'localhost';
+GRANT EXECUTE ON PROCEDURE sp_staff_dashboard_backup    TO 'r_staff';
