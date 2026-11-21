@@ -1,0 +1,14 @@
+{% autoescape off %}Xin chào {{ username }},
+
+Tài khoản {{ username }} tại Secure Bookstore vừa đăng nhập lúc {{ at|date:"H:i d/m/Y" }} từ địa chỉ IP {{ ip }}.
+Mỗi tài khoản chỉ được dùng một phiên, nên phiên đăng nhập cũ của bạn ở thiết bị hoặc trình duyệt khác đã bị kết thúc.
+
+Nếu đó là bạn (ví dụ vừa đăng nhập trên máy khác hoặc mở lại trình duyệt), bạn có thể bỏ qua thư này.
+{% if is_staff %}
+Nếu KHÔNG phải bạn, có người đã biết mật khẩu và mã xác thực 2 bước của tài khoản quản trị. Hãy đổi mật khẩu ngay trên máy chủ bằng lệnh doi_mat_khau_admin, cài lại xác thực 2 bước bằng lệnh dat_lai_2fa_admin, rồi xem trang Nhật ký hệ thống.
+{% else %}
+Nếu KHÔNG phải bạn, có người đã biết mật khẩu của bạn. Hãy đặt lại mật khẩu ngay và bật xác thực 2 bước:
+{{ reset_link }}
+{% endif %}
+Secure Bookstore
+{% endautoescape %}
