@@ -20,7 +20,7 @@ PAYMENT_SIMULATION=True
 - `False` hoặc không ghi (mặc định) → nút xám **Thanh toán** kèm "Chưa cấu hình cổng thanh toán"; gửi POST thẳng vào URL cũng bị từ chối ở service, không xuống CSDL.
 - Đổi xong phải khởi động lại `runserver` **và chạy lại `python manage.py db_apply --settings=bookstore.settings.migrate`** (từ 2026-11-20), rồi `db_check_grants`.
 
-**Cờ được chặn ở cả 2 lớp (báo cáo rà soát T3.3, sửa 2026-11-20).** Trước đây quyền `EXECUTE` trên `sp_payment_simulate` của `r_customer` được cấp cố định trong `database/grants/01_role_privileges.sql`, nên khi tắt cờ chỉ Django chặn; ai chiếm được kết nối `app_customer` (SQL injection, lộ mật khẩu) vẫn tự gọi thủ tục và đánh dấu đơn của mình là **đã thanh toán** mà không trả tiền. Nay dòng GRANT đó **không còn trong file**: lệnh `db_apply` đọc `PAYMENT_SIMULATION` rồi **cấp** (`True`) hoặc **thu hồi** (`False`, `REVOKE IF EXISTS`) quyền này sau khi chạy các file SQL (`core/management/commands/db_apply.py`, `apply_payment_simulation`), và in ra dòng `PAYMENT_SIMULATION=...: cấp/thu hồi ...`. Cờ tắt → MySQL từ chối với lỗi **1370** kể cả khi gọi thẳng. `db_check_grants` mong đợi kết quả theo đúng cờ (bật → 1644 vì id sai, tắt → 1370). Thu hồi có hiệu lực ngay cả với kết nối đang mở (đã thử).
+**Cờ được chặn ở cả 2 lớp (báo cáo rà soát T3.3, sửa 2026-11-20).** Trước đây quyền `EXECUTE` trên `sp_payment_simulate` của `r_customer` được cấp cố định trong `database/03_phan_quyen.sql`, nên khi tắt cờ chỉ Django chặn; ai chiếm được kết nối `app_customer` (SQL injection, lộ mật khẩu) vẫn tự gọi thủ tục và đánh dấu đơn của mình là **đã thanh toán** mà không trả tiền. Nay dòng GRANT đó **không còn trong file**: lệnh `db_apply` đọc `PAYMENT_SIMULATION` rồi **cấp** (`True`) hoặc **thu hồi** (`False`, `REVOKE IF EXISTS`) quyền này sau khi chạy các file SQL (`core/management/commands/db_apply.py`, `apply_payment_simulation`), và in ra dòng `PAYMENT_SIMULATION=...: cấp/thu hồi ...`. Cờ tắt → MySQL từ chối với lỗi **1370** kể cả khi gọi thẳng. `db_check_grants` mong đợi kết quả theo đúng cờ (bật → 1644 vì id sai, tắt → 1370). Thu hồi có hiệu lực ngay cả với kết nối đang mở (đã thử).
 
 ## 3. Luồng xử lý
 
@@ -72,11 +72,11 @@ Lỗi nghiệp vụ hiện thông báo tiếng Việt rồi quay về trang đơ
 
 ## 5. CSDL
 
-- Lược đồ `database/schema/06_payment_simulated.sql` (migration `core/0007_payment_simulated`):
+- Lược đồ `database/01_bang.sql` (migration `core/0001`):
   - bỏ giá trị mặc định `'mockpay'` của `provider`, CHECK `ck_payment_provider`: chỉ `simulated`, `momo`, `vnpay`;
   - CHECK `ck_payment_success_valid` mới: thành công bắt buộc có `transaction_id` và `signature_valid = 1`, trừ `provider = 'simulated'`;
   - cột sinh tự động `success_order_id` + UNIQUE `uq_payment_success_order`.
-- Đối tượng `database/objects/35_payment_simulate.sql`: `sp_payment_simulate`, `trg_payment_guard_update`, `trg_payment_guard_delete`.
+- Đối tượng phần 35 của `database/02_trigger_thu_tuc.sql`: `sp_payment_simulate`, `trg_payment_guard_update`, `trg_payment_guard_delete`.
 - Quyền: definer `SELECT, INSERT, TRIGGER` trên `payments_payment` (đã có `UPDATE orders_order`); `r_customer` chỉ `EXECUTE sp_payment_simulate`. `db_check_grants` thêm 5 kiểm tra (tổng 71): `app_customer` gọi được thủ tục, không đọc/ghi thẳng `payments_payment`; `app_staff` không gọi được thủ tục, không đọc bảng.
 
 ## 6. Khi có cổng thật (VNPay/MoMo)

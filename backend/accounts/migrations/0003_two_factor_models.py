@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("accounts", "0002_passwordhistory"),
-        ("core", "0011_two_factor"),
+        ("core", "0001_business_schema"),
     ]
 
     operations = [

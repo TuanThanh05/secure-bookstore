@@ -54,7 +54,7 @@ Kiểm tra: `accounts/tests/test_password_reset.py::ResetLinkLoggingTests` (3/4 
 
 **Nguồn** của thay đổi đơn hàng suy ra từ tài khoản MySQL (`USER()`): `app_customer` → Khách (kèm id khách), `event_scheduler` → Hệ thống (Event tự hủy đơn quá hạn – trong Event, `USER()` là `event_scheduler@localhost`, đã thử thật), `app_payment` → Thanh toán, `app_staff` → Quản trị, còn lại (root...) → Khác. Dùng trigger nên thủ tục nào đổi đơn cũng có log, không sót.
 
-## 4. Thủ tục (`database/objects/43_logs.sql`)
+## 4. Thủ tục (phần 43 của `database/02_trigger_thu_tuc.sql`)
 
 | Thủ tục | Ai gọi | Ghi chú |
 | --- | --- | --- |
@@ -64,7 +64,7 @@ Kiểm tra: `accounts/tests/test_password_reset.py::ResetLinkLoggingTests` (3/4 
 
 Kiểm tra đầu vào trong thủ tục: loại/bảng chỉ chữ thường và `_`, mức độ/hành động trong danh sách cố định, khoảng ngày ≤ 400 ngày, mỗi trang ≤ 100 dòng, offset ≤ 100000, từ khóa ≤ 150 ký tự và thoát `\ % _`. Django lọc thêm bằng danh sách cố định (form), ngày theo giờ Việt Nam đổi sang UTC.
 
-**Chỉ mục mới:** `ix_secevent_created (created_at)` trên `core_securityevent` (`database/schema/05_log_indexes.sql`, migration `core/0006_log_indexes`) để xem mới nhất trước và xóa log cũ không phải quét toàn bảng.
+**Chỉ mục mới:** `ix_secevent_created (created_at)` trên `core_securityevent` (`database/01_bang.sql`, migration `core/0001`) để xem mới nhất trước và xóa log cũ không phải quét toàn bảng.
 
 **Quyền definer thêm:** `SELECT, DELETE` trên hai bảng log (DELETE chỉ dùng trong `sp_purge_old_logs`).
 

@@ -66,7 +66,7 @@ Router Django: `SessionRouter`, `TwoFactorRouter`, `LockoutRouter` (bảng axes 
 - Tài khoản ứng dụng **không có quyền trên bảng nghiệp vụ**; Django gọi thủ tục bằng `callproc` với tham số tách riêng.
 - Dữ liệu đã chốt (đơn hàng, giao dịch thanh toán) khóa bằng trigger; trạng thái đơn chỉ đi tới đúng một bước.
 - Việc chạy nền dùng MySQL Event: tự hủy đơn quá hạn (mỗi phút, trả kho), xóa log cũ hơn 1 năm.
-- Đối tượng CSDL nằm trong `database/`: `schema/` (bảng, CHECK – migration đọc), `objects/` (trigger, thủ tục, Event – root chạy bằng `db_apply`), `grants/` (quyền), `config/my.cnf` (hardening).
+- Đối tượng CSDL nằm trong `database/`: `01_bang.sql` (bảng, CHECK – migration đọc), `02_trigger_thu_tuc.sql` (trigger, thủ tục, Event – root chạy bằng `db_apply`), `03_phan_quyen.sql` (quyền), `config/my.cnf` (hardening).
 
 ### 3.3 Dữ liệu nhạy cảm
 
@@ -166,14 +166,14 @@ secure-bookstore/
 ├── backend/
 │   ├── bookstore/settings/   # base, dev, prod, migrate
 │   ├── core/                 # client_ip, security_log, session_store, db_routers, middleware, decorators, backup, captcha,
-│   │                         # lệnh db_setup/db_apply/db_check_grants/db_backup*/db_restore, migrations schema 0001–0014
+│   │                         # lệnh db_setup/db_apply/db_check_grants/db_backup*/db_restore, migration bảng nghiệp vụ 0001
 │   ├── accounts/             # đăng ký, đăng nhập, 2FA, quên/đổi mật khẩu, hồ sơ, lệnh tao_admin/doi_mat_khau_admin/dat_lai_2fa_admin
 │   ├── catalog/              # sách, thể loại, đánh giá, ảnh bìa
 │   ├── orders/               # giỏ hàng, đặt hàng, hủy đơn, đơn của tôi
 │   ├── payments/             # thanh toán mô phỏng
 │   └── dashboard/            # trang quản trị
 ├── frontend/                 # templates/ (base, layouts, components, shop, account, dashboard, errors), static/
-├── database/                 # config/my.cnf, schema/ (01–13), objects/ (10–46), grants/, .env.db.example
+├── database/                 # 01_bang.sql, 02_trigger_thu_tuc.sql, 03_phan_quyen.sql, config/my.cnf, .env.db.example
 ├── deploy/                   # nginx/, gunicorn.conf.py
 ├── docs/                     # tài liệu kỹ thuật từng chức năng, contract.md (hợp đồng FE–BE)
 ├── scripts/ai_trace.py       # sinh AI_TRACE.md từ các dòng AI-TRACE trong code

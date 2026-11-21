@@ -51,7 +51,7 @@ Khi thêm vào giỏ, form chỉ gửi `book_id`, `quantity` và `next` (trang �
 
 ## Danh mục sách cho khách: `sp_public_book_list` và `sp_public_category_list`
 
-Chốt 2026-11-15, thay cho `v_public_books` / `v_public_categories` trong issue #9: MySQL từ chối view `SQL SECURITY DEFINER` có WHERE/JOIN/GROUP BY khi phiên người gọi bật role, mà điều kiện "chỉ sách đang hiện" cần WHERE. File: `database/objects/20_public_catalog.sql`.
+Chốt 2026-11-15, thay cho `v_public_books` / `v_public_categories` trong issue #9: MySQL từ chối view `SQL SECURITY DEFINER` có WHERE/JOIN/GROUP BY khi phiên người gọi bật role, mà điều kiện "chỉ sách đang hiện" cần WHERE. File: phần 20 của `database/02_trigger_thu_tuc.sql`.
 
 - **Ai xem được:** mọi người, kể cả chưa đăng nhập (Django luôn dùng kết nối `app_customer`). `r_customer` chỉ có `EXECUTE` hai thủ tục, **không có quyền nào** trên `catalog_book`, `catalog_category`, `catalog_review` (đọc thẳng → lỗi 1142).
 - **`sp_public_category_list()`** → `id`, `name`, `slug`, theo tên.
@@ -65,12 +65,12 @@ Chốt 2026-11-15, thay cho `v_public_books` / `v_public_categories` trong issue
 
 ## Đánh giá sách: `sp_review_save`, `sp_review_get_mine`, `sp_review_can_write`
 
-Chốt 2026-11-15. File: `database/objects/21_review.sql`, `catalog/review_services.py`, `catalog/forms.py`. Phần này chỉ có thủ tục và service; nút gửi và form trên trang làm cùng trang chi tiết sách.
+Chốt 2026-11-15. File: phần 21 của `database/02_trigger_thu_tuc.sql`, `catalog/review_services.py`, `catalog/forms.py`. Phần này chỉ có thủ tục và service; nút gửi và form trên trang làm cùng trang chi tiết sách.
 
 - **Ai được đánh giá (siết lại 2026-11-20, cách a):** khách đang hoạt động, đã xác nhận email, không phải nhân viên, **và có ít nhất một đơn ở trạng thái `delivered` (admin bấm "Đã giao") chứa đúng cuốn sách đó**. Đơn chờ thanh toán, đã thanh toán, đang giao, đã hủy đều không tính.
   - Kiểm tra ở hai lớp. `sp_review_save` tự chặn bằng `NOT_PURCHASED`, kể cả khi gọi thẳng thủ tục. Trang chi tiết sách hỏi `sp_review_can_write` để biết có hiện form không; khách chưa nhận sách chỉ thấy dòng "Chỉ khách đã mua và nhận cuốn sách này mới đánh giá được."
   - Gửi POST lén vẫn bị thủ tục chặn: trang báo lỗi và ghi log `access_denied` với `detail.kind = review_not_purchased`.
-  - Đánh giá cũ của khách chưa nhận sách **đã bị xóa** (`schema/11_review_purchased_only.sql`, migration `core/0012`, không đảo ngược được; nhóm trưởng chốt mức c).
+  - Đánh giá cũ của khách chưa nhận sách **đã bị xóa** (script sửa dữ liệu một lần, đã bỏ khi gom SQL; không đảo ngược được; nhóm trưởng chốt mức c).
   - Trạng thái đơn chỉ đi tới, nên đã nhận sách thì luôn sửa được đánh giá của mình. Không có nhãn "Đã mua hàng", vì mọi đánh giá giờ đều của người đã nhận sách.
 - **Mỗi khách một đánh giá cho mỗi sách.** Gửi lại là **sửa** đánh giá cũ (`INSERT ... ON DUPLICATE KEY UPDATE`): bấm hai lần cùng lúc vẫn chỉ một dòng. Sửa không đổi `is_visible`: đánh giá admin đã ẩn thì vẫn ẩn.
 - **Hiện ngay** sau khi gửi; admin ẩn sau nếu vi phạm.
@@ -113,8 +113,8 @@ Chốt 2026-11-15. Bố cục: ảnh bìa lớn bên trái; bên phải thể lo
 
 | Thủ tục | Tham số | Trả về |
 | --- | --- | --- |
-| `sp_public_book_get` (`objects/20_...`) | `p_book_id` | 0 hoặc 1 dòng: cùng cột với `sp_public_book_list` + `category_name`. Sách ẩn hoặc không có → 0 dòng như nhau |
-| `sp_review_list` (`objects/21_...`) | `p_book_id` | Tối đa 50 đánh giá `is_visible = 1` của sách đang hiện, mới nhất trước: `display_name` (**username đã che ngay trong CSDL**: ký tự đầu + dấu sao + ký tự cuối), `rating`, `content`, `created_at`, `updated_at`. Không trả `user_id`, email |
+| `sp_public_book_get` (phần 20 của `database/02_trigger_thu_tuc.sql`) | `p_book_id` | 0 hoặc 1 dòng: cùng cột với `sp_public_book_list` + `category_name`. Sách ẩn hoặc không có → 0 dòng như nhau |
+| `sp_review_list` (phần 21 của `database/02_trigger_thu_tuc.sql`) | `p_book_id` | Tối đa 50 đánh giá `is_visible = 1` của sách đang hiện, mới nhất trước: `display_name` (**username đã che ngay trong CSDL**: ký tự đầu + dấu sao + ký tự cuối), `rating`, `content`, `created_at`, `updated_at`. Không trả `user_id`, email |
 
 `r_customer` chỉ có `EXECUTE`. Django: `catalog.services.get_public_book(id)` (id sai kiểu → `None`, không xuống CSDL), `catalog.review_services.list_reviews(id)` trả `PublicReview` (thuộc tính `edited` khi `updated_at > created_at`, hiện chữ "đã sửa").
 
@@ -135,7 +135,7 @@ Chốt 2026-11-15. Cạnh nút **Đặt hàng** (trang chi tiết) có ô số l
 
 | Thủ tục | Tham số | Kết quả |
 | --- | --- | --- |
-| `sp_cart_add` (`objects/31_cart.sql`) | `p_user_id`, `p_book_id`, `p_quantity`, OUT `p_new_quantity` | Tạo giỏ nếu chưa có (UNIQUE `user_id`), cộng dồn số lượng, trả tổng số cuốn sách đó trong giỏ |
+| `sp_cart_add` (phần 31 của `database/02_trigger_thu_tuc.sql`) | `p_user_id`, `p_book_id`, `p_quantity`, OUT `p_new_quantity` | Tạo giỏ nếu chưa có (UNIQUE `user_id`), cộng dồn số lượng, trả tổng số cuốn sách đó trong giỏ |
 
 Quy tắc (kiểm tra trong thủ tục, trong một transaction, khóa dòng giỏ `FOR UPDATE` và dòng sách `FOR SHARE`):
 
@@ -192,7 +192,7 @@ Chốt 2026-11-14, bổ sung 2026-11-16 (nhánh đặt hàng). Đổi chữ ký 
 
 **Luồng:** trang giỏ → nút **Đặt hàng** (`/orders/dat-hang/`) → điền tên người nhận, SĐT, địa chỉ (tên và SĐT điền sẵn từ hồ sơ, vẫn sửa được; địa chỉ nhập mới mỗi lần) → **Xác nhận đặt hàng** → trang đơn `/orders/don/<mã đơn>/` (trạng thái "Chờ thanh toán", hạn thanh toán `ORDER_HOLD_MINUTES` = 5 phút (từ 2026-11-20, trước là 15), nút Thanh toán mờ cho tới nhánh thanh toán). Nút **Đặt hàng** ở trang chi tiết sách gửi cùng form thêm vào giỏ (`then=cart`) rồi chuyển sang trang giỏ.
 
-**Thủ tục MySQL** (`database/objects/30_sp_place_order.sql`), `r_customer` chỉ có `EXECUTE`:
+**Thủ tục MySQL** (phần 30 của `database/02_trigger_thu_tuc.sql`), `r_customer` chỉ có `EXECUTE`:
 
 | Tham số | Kiểu | Ghi chú |
 | --- | --- | --- |
@@ -238,7 +238,7 @@ get_order(request, code) -> Order
 
 ## Hủy đơn và đơn quá hạn: `sp_order_cancel`, `sp_cancel_expired_orders`, `ev_cancel_expired_orders`
 
-Chốt 2026-11-16 (nhánh A, làm trước khung thanh toán). File `database/objects/33_order_cancel.sql`.
+Chốt 2026-11-16 (nhánh A, làm trước khung thanh toán). File phần 33 của `database/02_trigger_thu_tuc.sql`.
 
 Kho bị trừ ngay khi tạo đơn, nên **hủy đơn = cộng lại đúng số cuốn trong chi tiết đơn**, cùng giao dịch với việc đổi trạng thái sang `cancelled` (ghi `cancelled_at`).
 

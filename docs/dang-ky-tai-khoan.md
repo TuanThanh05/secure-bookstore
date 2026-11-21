@@ -65,7 +65,7 @@ Vượt giới hạn thư theo email thì vẫn hiện trang "Kiểm tra hộp t
 - `register_account`, `find_pending_user`, `mark_email_verified`, `resend_verification`.
 - Chặn đăng nhập "email chưa xác nhận" trong `LoginForm`.
 - Đặt lại mật khẩu không còn bật `email_verified` (không còn tài khoản nào chưa xác nhận).
-- 3 loại log `email_verified`, `email_verify_failed`, `login_blocked_unverified`: rút khỏi CHECK `ck_secevent_type` (`database/schema/08_securityevent_signup.sql`, migration `core/0009`). Thêm `register_link_invalid` (`detail.reason`: `expired`, `invalid`, `used`, `session`).
+- 3 loại log `email_verified`, `email_verify_failed`, `login_blocked_unverified`: rút khỏi CHECK `ck_secevent_type` (`database/01_bang.sql`, migration `core/0001`). Thêm `register_link_invalid` (`detail.reason`: `expired`, `invalid`, `used`, `session`).
 
 **Giữ lại cột `email_verified`.** Các thủ tục `sp_place_order`, `sp_cart_*`, `sp_review_save`, `sp_payment_simulate`, `sp_order_*` vẫn kiểm tra `email_verified = 1` ngay trong MySQL. Đây là lớp chặn thứ hai: nếu sau này có code tạo tài khoản khách sai đường (không qua link), MySQL vẫn từ chối mua hàng. Trạng thái "Chưa xác nhận email" ở trang Quản lý tài khoản của admin vì vậy chỉ còn xuất hiện khi có bất thường.
 

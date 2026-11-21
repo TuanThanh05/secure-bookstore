@@ -35,7 +35,7 @@ Ngưỡng nằm trong `settings/base.py`: `LOGIN_IP_FAILURE_LIMIT = 20`, `LOGIN_
 
 ### Phân quyền
 
-Thủ tục `sp_login_ip_failures(ip, phút)` (`database/objects/46_login_ip_guard.sql`, DEFINER, `READS SQL DATA`) chỉ
+Thủ tục `sp_login_ip_failures(ip, phút)` (phần 46 của `database/02_trigger_thu_tuc.sql`, DEFINER, `READS SQL DATA`) chỉ
 trả **một con số**. `r_customer` chỉ có `EXECUTE` thủ tục này, còn `SELECT core_securityevent` vẫn bị cấm (1142), nên
 lỗi SQL injection trên tài khoản ứng dụng cũng không đọc được nhật ký qua đây. `app_staff`, `app_session`, `app_auth`
 không gọi được (1370). Tham số được kiểm: IP 1–45 ký tự, cửa sổ 1–1440 phút.
@@ -55,7 +55,7 @@ không gọi được (1370). Tham số được kiểm: IP 1–45 ký tự, c�
 | `backend/accounts/services.py` | `login_ip_blocked(request)` gọi `sp_login_ip_failures`; thủ tục chưa tạo (1305) thì không chặn, lỗi khác thì báo lên |
 | `backend/accounts/views.py` | `SecureLoginView.post`: chặn 429 + log trước khi kiểm mật khẩu |
 | `frontend/templates/account/email/password_reset.txt` | thêm dòng tên đăng nhập |
-| `database/objects/46_login_ip_guard.sql`, `database/grants/01_role_privileges.sql` | thủ tục + quyền |
+| phần 46 của `database/02_trigger_thu_tuc.sql`, `database/03_phan_quyen.sql` | thủ tục + quyền |
 | `backend/core/management/commands/db_check_grants.py` | thêm 4 kiểm tra (tổng 138) |
 | `backend/accounts/tests/test_login_username_only.py` | test mới |
 

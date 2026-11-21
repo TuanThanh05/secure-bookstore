@@ -32,7 +32,7 @@
 
 -- Lịch sử mật khẩu: mã băm của tối đa 5 mật khẩu gần nhất (tính cả mật khẩu
 -- đang dùng) của mỗi tài khoản. Django dùng để chặn đặt lại mật khẩu cũ.
---   - GHI: chỉ trigger trg_pwhist_* (database/objects/11_...) ghi và xóa bớt,
+--   - GHI: chỉ trigger trg_pwhist_* (phần 11 của 02_trigger_thu_tuc.sql) ghi và xóa bớt,
 --     chạy bằng quyền bookstore_definer. Tài khoản ứng dụng chỉ có SELECT.
 --   - SO SÁNH: chỉ làm được trong Django. Mã băm có muối ngẫu nhiên nên cùng
 --     một mật khẩu cho ra chuỗi khác nhau; phải gọi check_password(mật khẩu
@@ -50,6 +50,40 @@ CREATE TABLE accounts_passwordhistory (
         REFERENCES accounts_user (id) ON DELETE CASCADE
 ) ENGINE=InnoDB
   COMMENT='Lịch sử mã băm mật khẩu (5 gần nhất)';
+
+-- AI-TRACE#468 | Claude Opus 5.5 | Bảng thiết bị TOTP: chuỗi bí mật mã hóa, lúc xác nhận, bước thời gian đã dùng gần nhất (chống dùng lại mã) | CẤM XÓA CHÚ THÍCH NÀY
+CREATE TABLE accounts_totpdevice (
+    id                BIGINT       NOT NULL AUTO_INCREMENT,
+    user_id           BIGINT       NOT NULL,
+    secret_encrypted  VARCHAR(255) NOT NULL,                 -- "v1." + base64(nonce + bản mã + tag)
+    confirmed_at      DATETIME(6)  NULL,                     -- NULL: đang cài, chưa nhập đúng mã lần đầu
+    last_used_step    BIGINT       NULL,                     -- floor(unix / 30) của mã vừa dùng; mã có bước <= số này bị từ chối
+    created_at        DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_totp_user (user_id),
+    CONSTRAINT fk_totp_user FOREIGN KEY (user_id)
+        REFERENCES accounts_user (id) ON DELETE CASCADE,
+    CONSTRAINT ck_totp_secret_format CHECK (secret_encrypted LIKE 'v1.%'),
+    CONSTRAINT ck_totp_step CHECK (last_used_step IS NULL OR last_used_step >= 0)
+) ENGINE=InnoDB
+  COMMENT='Thiết bị xác thực 2 bước (TOTP) của mỗi tài khoản';
+
+-- AI-TRACE#469 | Claude Opus 5.5 | Bảng mã dự phòng: chỉ mã băm, mỗi mã dùng một lần | CẤM XÓA CHÚ THÍCH NÀY
+CREATE TABLE accounts_recoverycode (
+    id          BIGINT       NOT NULL AUTO_INCREMENT,
+    user_id     BIGINT       NOT NULL,
+    code_hash   VARCHAR(128) NOT NULL,                       -- cùng định dạng cột accounts_user.password
+    used_at     DATETIME(6)  NULL,
+    created_at  DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+
+    PRIMARY KEY (id),
+    INDEX ix_recovery_user (user_id, used_at),
+    CONSTRAINT fk_recovery_user FOREIGN KEY (user_id)
+        REFERENCES accounts_user (id) ON DELETE CASCADE
+) ENGINE=InnoDB
+  COMMENT='Mã dự phòng xác thực 2 bước (chỉ mã băm)';
+
 
 -- =====================================================================
 -- APP catalog
@@ -169,6 +203,7 @@ CREATE TABLE orders_cartitem (
 -- Đơn hàng.
 -- Chỉ được TẠO qua sp_place_order và chuyển sang 'paid' qua sp_confirm_payment.
 -- Thông tin giao hàng là bản chụp lúc đặt (không có bảng địa chỉ riêng).
+-- AI-TRACE#590 | Claude Opus 5.5 | Bảng đơn hàng gộp trạng thái cuối: thêm confirmed, packed, mọi trạng thái sau thanh toán bắt buộc có paid_at | CẤM XÓA CHÚ THÍCH NÀY
 CREATE TABLE orders_order (
     id                          BIGINT        NOT NULL AUTO_INCREMENT,
     code                        CHAR(32)      NOT NULL,      -- mã công khai (UUID hex), dùng trên URL thay cho id để khó đoán
@@ -193,11 +228,11 @@ CREATE TABLE orders_order (
     CONSTRAINT fk_order_user FOREIGN KEY (user_id)
         REFERENCES accounts_user (id) ON DELETE RESTRICT,     -- không xóa user còn đơn hàng (giữ lịch sử)
     -- Máy trạng thái: chỉ các giá trị hợp lệ
-    CONSTRAINT ck_order_status CHECK (status IN ('pending', 'paid', 'shipped', 'delivered', 'cancelled')),
+    CONSTRAINT ck_order_status CHECK (status IN ('pending', 'paid', 'confirmed', 'packed', 'shipped', 'delivered', 'cancelled')),
     CONSTRAINT ck_order_total CHECK (total = subtotal + shipping_fee),
     CONSTRAINT ck_order_subtotal_positive CHECK (subtotal > 0),
-    -- Đơn đã thanh toán (hoặc đang giao, đã giao) bắt buộc có paid_at
-    CONSTRAINT ck_order_paid_has_time CHECK (status NOT IN ('paid', 'shipped', 'delivered') OR paid_at IS NOT NULL),
+    -- Đơn từ lúc đã thanh toán trở đi bắt buộc có paid_at
+    CONSTRAINT ck_order_paid_has_time CHECK (status NOT IN ('paid', 'confirmed', 'packed', 'shipped', 'delivered') OR paid_at IS NOT NULL),
     -- Đơn đã hủy bắt buộc có cancelled_at
     CONSTRAINT ck_order_cancelled_has_time CHECK (status <> 'cancelled' OR cancelled_at IS NOT NULL),
     CONSTRAINT ck_order_expires_after_created CHECK (expires_at > created_at),
@@ -233,11 +268,12 @@ CREATE TABLE orders_orderitem (
 -- APP payments
 -- =====================================================================
 
--- Giao dịch thanh toán (cổng giả lập). Lưu cả callback bị từ chối để làm bằng chứng.
+-- Giao dịch thanh toán. Lưu cả callback bị từ chối để làm bằng chứng.
+-- AI-TRACE#591 | Claude Opus 5.5 | Bảng giao dịch thanh toán gộp trạng thái cuối: giới hạn tên cổng, giao dịch mô phỏng không cần chữ ký, mỗi đơn tối đa một giao dịch thành công | CẤM XÓA CHÚ THÍCH NÀY
 CREATE TABLE payments_payment (
     id                BIGINT        NOT NULL AUTO_INCREMENT,
     order_id          BIGINT        NOT NULL,
-    provider          VARCHAR(30)   NOT NULL DEFAULT 'mockpay',
+    provider          VARCHAR(30)   NOT NULL,                -- simulated | momo | vnpay
     transaction_id    VARCHAR(64)   NULL,                    -- mã giao dịch do cổng gửi về (có thể thiếu nếu callback giả)
     amount            INT UNSIGNED  NOT NULL,                -- số tiền cổng báo về
     status            VARCHAR(20)   NOT NULL,                -- success | failed | rejected
@@ -252,15 +288,20 @@ CREATE TABLE payments_payment (
     -- nhưng vẫn lưu được nhiều lần thử bị từ chối dùng lại cùng mã.
     success_transaction_id VARCHAR(64)
         GENERATED ALWAYS AS (IF(status = 'success', transaction_id, NULL)) STORED,
+    success_order_id BIGINT
+        GENERATED ALWAYS AS (IF(status = 'success', order_id, NULL)) STORED,  -- mỗi đơn tối đa một giao dịch thành công
 
     PRIMARY KEY (id),
     CONSTRAINT uq_payment_success_txn UNIQUE (success_transaction_id),
+    CONSTRAINT uq_payment_success_order UNIQUE (success_order_id),
     CONSTRAINT fk_payment_order FOREIGN KEY (order_id)
         REFERENCES orders_order (id) ON DELETE RESTRICT,
     CONSTRAINT ck_payment_status CHECK (status IN ('success', 'failed', 'rejected')),
-    -- Giao dịch thành công bắt buộc có chữ ký hợp lệ và có transaction_id
+    CONSTRAINT ck_payment_provider CHECK (provider IN ('simulated', 'momo', 'vnpay')),
+    -- Giao dịch thành công bắt buộc có transaction_id và chữ ký hợp lệ, trừ loại mô phỏng (không có cổng nên không có chữ ký)
     CONSTRAINT ck_payment_success_valid CHECK (
-        status <> 'success' OR (signature_valid = 1 AND transaction_id IS NOT NULL)
+        status <> 'success'
+        OR (transaction_id IS NOT NULL AND (signature_valid = 1 OR provider = 'simulated'))
     ),
 
     INDEX ix_payment_order (order_id, created_at)
@@ -299,6 +340,7 @@ CREATE TABLE core_auditlog (
 -- Tài khoản ứng dụng chỉ có INSERT và SELECT, không có UPDATE/DELETE.
 -- Không đặt khóa ngoại tới accounts_user: log phải giữ nguyên kể cả khi user bị xóa,
 -- và có thể ghi sự kiện cho username không tồn tại (dò tài khoản).
+-- AI-TRACE#592 | Claude Opus 5.5 | Bảng nhật ký bảo mật gộp trạng thái cuối: danh sách loại sự kiện hiện hành và chỉ mục theo thời gian | CẤM XÓA CHÚ THÍCH NÀY
 CREATE TABLE core_securityevent (
     id                  BIGINT       NOT NULL AUTO_INCREMENT,
     event_type          VARCHAR(40)  NOT NULL,
@@ -314,29 +356,47 @@ CREATE TABLE core_securityevent (
 
     PRIMARY KEY (id),
     CONSTRAINT ck_secevent_type CHECK (event_type IN (
-        'login_success',             -- đăng nhập thành công
-        'login_failed',              -- đăng nhập sai
-        'account_locked',            -- tài khoản bị khóa do sai nhiều lần
+        'login_success',
+        'login_failed',
+        'account_locked',
         'logout',
         'password_changed',
         'password_reset_requested',
-        'otp_failed',                -- nhập sai mã 2FA
-        'access_denied',             -- không đủ quyền (403)
-        'idor_attempt',              -- truy cập tài nguyên của người khác (trả 404)
-        'db_permission_denied',      -- MySQL từ chối câu lệnh (lớp phân quyền thứ 2)
-        'payment_signature_invalid', -- callback sai chữ ký
-        'payment_replay',            -- callback dùng lại mã giao dịch
-        'payment_amount_mismatch',   -- callback sai số tiền
-        'upload_rejected',           -- file upload bị từ chối
-        'rate_limited',              -- vượt giới hạn tần suất
-        'csrf_failed',               -- thiếu hoặc sai CSRF token
-        'invalid_input'              -- dữ liệu đầu vào bất thường (giá âm, số lượng âm...)
+        'otp_failed',
+        'access_denied',
+        'idor_attempt',
+        'db_permission_denied',
+        'payment_signature_invalid',
+        'payment_replay',
+        'payment_amount_mismatch',
+        'upload_rejected',
+        'rate_limited',
+        'csrf_failed',
+        'invalid_input',
+        'register_success',          -- tạo tài khoản xong ở bước 2
+        'register_existing_email',   -- bước 1 nhập email đã có tài khoản (gửi thư báo, không gửi link)
+        'register_link_invalid',     -- link đăng ký sai, hết hạn, đã dùng, hoặc phiên đăng ký hết hạn (detail.reason)
+        'captcha_failed',            -- Cloudflare Turnstile không đạt: thiếu token, bị từ chối, sai hostname/action, Siteverify lỗi (detail.reason, detail.codes)
+        'email_sent',
+        'email_send_failed',
+        'sensitive_data_viewed',
+        'profile_updated',
+        'two_factor_enabled',        -- khách bật / admin cài 2 bước (detail.via: web | cli)
+        'two_factor_disabled',       -- khách tắt / admin cài lại 2 bước bằng lệnh
+        'two_factor_recovery_used',  -- đăng nhập bằng một mã dự phòng (detail.remaining)
+        'order_hold_abuse',          -- bỏ 3 đơn chưa thanh toán trong 24 giờ, tài khoản bị khóa 24 giờ (detail.via: cancel | expired, detail.locked_until)
+        'backup_created',            -- sao lưu thành công (detail: file, dung lượng, số bảng, số ảnh)
+        'backup_failed',             -- sao lưu lỗi (detail: thông báo ngắn)
+        'backup_exported',           -- giải mã một bản sao lưu ra file .sql trần để demo
+        'restore_performed',         -- khôi phục đè lên CSDL (detail: file, CSDL đích)
+        'restore_verified'           -- kiểm tra khôi phục vào CSDL tạm (detail: kết quả)
     )),
     CONSTRAINT ck_secevent_severity CHECK (severity IN ('info', 'warning', 'critical')),
 
     INDEX ix_secevent_type_created (event_type, created_at),
     INDEX ix_secevent_ip_created (ip_address, created_at),   -- tìm IP đáng ngờ (ví dụ đăng nhập sai nhiều)
-    INDEX ix_secevent_user (user_id)
+    INDEX ix_secevent_user (user_id),
+    INDEX ix_secevent_created (created_at)                     -- xem log mới nhất, xóa log cũ hơn 1 năm
 ) ENGINE=InnoDB
   COMMENT='Nhật ký sự kiện bảo mật';
 

@@ -27,7 +27,7 @@ Bộ lọc: trạng thái (danh sách cố định) và username (tìm gần đ�
 | Chưa xác nhận email | `email_verified = 0` |
 | Hoạt động | Còn lại |
 
-## 2. Thủ tục (`database/objects/42_account.sql`)
+## 2. Thủ tục (phần 42 của `database/02_trigger_thu_tuc.sql`)
 
 Chỉ `r_staff` được EXECUTE; `r_customer` gọi → lỗi 1370. Mỗi thủ tục tự kiểm tra `p_actor_id` là nhân viên đang hoạt động (`NOT_STAFF`).
 

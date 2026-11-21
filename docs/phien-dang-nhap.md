@@ -1,6 +1,6 @@
 # Phiên đăng nhập: tách tài khoản, băm khóa, giới hạn phiên admin, một tài khoản một phiên
 
-Tài liệu này giải thích phát hiện số 13 và cách sửa. Đọc kèm `docs/nhat-ky-he-thong.md` (log) và `database/grants/01_role_privileges.sql` (quyền).
+Tài liệu này giải thích phát hiện số 13 và cách sửa. Đọc kèm `docs/nhat-ky-he-thong.md` (log) và `database/03_phan_quyen.sql` (quyền).
 
 ## 1. Phát hiện số 13: chiếm phiên admin qua lớp 2
 
@@ -46,7 +46,7 @@ Thời hạn 30 phút không thao tác (`SESSION_COOKIE_AGE`) vẫn giữ cho m�
   - Thiếu giờ đăng nhập, hoặc giờ đăng nhập nằm ở tương lai, cũng bị coi là hết hạn.
 - `backend/bookstore/settings/base.py`: kết nối `"session"`, `SESSION_DB_ALIAS`, `SESSION_ENGINE`, `STAFF_SESSION_MAX_AGE = 3600`.
 - `db_setup` tạo role `r_session` và tài khoản `app_session` (tối đa 50 kết nối, mật khẩu `DB_SESSION_PASSWORD`).
-- `database/grants/01_role_privileges.sql`: `REVOKE IF EXISTS` với `r_customer`, `GRANT` 4 quyền trên `django_session` cho `r_session`.
+- `database/03_phan_quyen.sql`: `REVOKE IF EXISTS` với `r_customer`, `GRANT` 4 quyền trên `django_session` cho `r_session`.
 
 ## 4. Kiểm tra
 

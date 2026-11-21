@@ -2,11 +2,10 @@
 
 Chạy bằng tài khoản quản trị (root), SAU khi `migrate` đã tạo bảng
 (MySQL không cho cấp quyền hay tạo trigger trên bảng chưa có).
-Chạy lại mỗi khi thêm/sửa file trong database/objects/ hoặc database/grants/.
+Chạy lại mỗi khi sửa database/02_trigger_thu_tuc.sql hoặc database/03_phan_quyen.sql.
 
-Thứ tự: database/objects/*.sql rồi database/grants/*.sql, mỗi thư mục theo tên
-file (vì vậy tên bắt đầu bằng số: 10_, 20_, 30_...). File được dùng DELIMITER.
-Mỗi file object tự DROP ... IF EXISTS trước khi tạo, nên chạy lại không lỗi.
+Thứ tự: 02_trigger_thu_tuc.sql rồi 03_phan_quyen.sql. File được dùng DELIMITER.
+Mỗi đối tượng tự DROP ... IF EXISTS trước khi tạo, nên chạy lại không lỗi.
 
 Vì sao root làm việc này mà không phải migrate: khi MySQL bật binlog, tạo
 trigger/thủ tục cần quyền SUPER (hoặc nới lỏng log_bin_trust_function_creators).
@@ -20,7 +19,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from core.dbadmin import admin_secret, connect_admin, db_settings, load_admin_env, split_sql
 
-FOLDERS = ("objects", "grants")
+SQL_FILES = ("02_trigger_thu_tuc.sql", "03_phan_quyen.sql")
 PAYMENT_GRANT = "GRANT EXECUTE ON PROCEDURE sp_payment_simulate TO 'r_customer'"
 PAYMENT_REVOKE = "REVOKE IF EXISTS EXECUTE ON PROCEDURE sp_payment_simulate FROM 'r_customer'"
 
@@ -32,7 +31,7 @@ def apply_payment_simulation(cursor, enabled):
 
 
 class Command(BaseCommand):
-    help = "Chạy database/objects/*.sql rồi database/grants/*.sql bằng tài khoản quản trị."
+    help = "Chạy database/02_trigger_thu_tuc.sql rồi database/03_phan_quyen.sql bằng tài khoản quản trị."
     requires_system_checks = []
 
     def add_arguments(self, parser):
@@ -44,9 +43,10 @@ class Command(BaseCommand):
         password = admin_secret("MYSQL_ROOT_PASSWORD", f"Mật khẩu MySQL của {options['root_user']}: ")
 
         base = Path(settings.REPO_DIR) / "database"
-        files = [f for folder in FOLDERS for f in sorted((base / folder).glob("*.sql"))]
-        if not files:
-            raise CommandError(f"Không có file .sql nào trong {base}/objects hoặc {base}/grants.")
+        files = [base / name for name in SQL_FILES]
+        missing = [path.name for path in files if not path.is_file()]
+        if missing:
+            raise CommandError(f"Thiếu file trong {base}: {', '.join(missing)}.")
 
         conn = connect_admin(options["root_user"], password, database=db_name)
         try:
