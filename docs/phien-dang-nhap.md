@@ -1,4 +1,4 @@
-# Phiên đăng nhập: tách tài khoản, băm khóa, giới hạn phiên admin
+# Phiên đăng nhập: tách tài khoản, băm khóa, giới hạn phiên admin, một tài khoản một phiên
 
 Tài liệu này giải thích phát hiện số 13 và cách sửa. Đọc kèm `docs/nhat-ky-he-thong.md` (log) và `database/grants/01_role_privileges.sql` (quyền).
 
@@ -74,3 +74,26 @@ mysql -h 127.0.0.1 -u app_customer -p bookstore -e "SELECT session_key FROM djan
 
 - Thêm `DB_SESSION_PASSWORD` (và `DB_SESSION_USER=app_session`) vào `.env`, rồi chạy lại `db_setup`, `migrate`, `db_apply`, `db_check_grants`.
 - Các phiên cũ (lưu theo cookie gốc) không còn khớp nữa, nên mọi người phải đăng nhập lại một lần. Có thể xóa bảng phiên cũ bằng root: `DELETE FROM django_session;`
+
+## 6. Một tài khoản chỉ một phiên (chốt 2026-11-21)
+
+Áp dụng cho **cả admin lẫn khách**. Một tài khoản đăng nhập ở nơi thứ hai thì phiên ở nơi cũ bị kết thúc.
+
+| Câu hỏi | Chốt |
+| --- | --- |
+| Giữ phiên nào? | **Đăng nhập mới thắng**, phiên cũ bị đẩy ra. Không chặn đăng nhập mới: nếu chặn, kẻ đang giữ cookie đánh cắp sẽ khóa được chủ thật ở ngoài, và quên đăng xuất ở máy dùng chung thì không đăng nhập lại được. |
+| Phiên cũ thấy gì? | Lần tải trang tiếp theo: phiên bị hủy, chuyển về trạng thái chưa đăng nhập và hiện thông báo "Tài khoản của bạn vừa đăng nhập ở nơi khác lúc … nên phiên này đã kết thúc. Nếu không phải bạn, hãy đổi mật khẩu ngay." Thông báo **chỉ có giờ, không có IP** (phiên cũ có thể chính là kẻ tấn công, không lộ IP của chủ tài khoản cho hắn). |
+| Thư cảnh báo | Mỗi lần có phiên cũ bị đẩy ra, gửi thư tới email của tài khoản: giờ và **IP** của lần đăng nhập mới. Khách: kèm link đặt lại mật khẩu. Admin: không kèm link, hướng dẫn `doi_mat_khau_admin`, `dat_lai_2fa_admin` trên máy chủ. |
+
+**Cách làm:**
+- Receiver `core.middleware.end_other_sessions` (tín hiệu `user_logged_in`, tức là sau bước xác thực 2 bước nếu có) gọi `core.session_store.replace_other_sessions(user_id, phiên hiện tại, thông báo)`.
+- Mỗi phiên khác còn hạn của người đó được **thay dữ liệu** bằng một phiên rỗng chỉ chứa thông báo (ký lại theo đúng khóa đã băm của dòng, `SessionStore.encode_row`), hạn còn tối đa 1 giờ. Phiên đó không còn `_auth_user_id` nên không còn đăng nhập. Không xóa ngay vì cần giữ thông báo cho người ở phiên cũ.
+- Phiên admin đã quá giới hạn 1 giờ (`staff_login_at`) thì **xóa luôn, không tính**: phiên đó vốn đã hết hiệu lực, không gửi thư báo nhầm.
+- `core.middleware.ReplacedSessionMiddleware` (ngay sau `MessageMiddleware`): thấy phiên có thông báo thì `flush()` (xóa dòng, đổi cookie) rồi hiện thông báo.
+- Có phiên bị đẩy thì ghi log `logout` mức `warning`, `detail = {"reason": "new_login_elsewhere", "ended": số phiên}`, IP là IP của lần đăng nhập mới; thư gửi qua `accounts.emails.send_new_login_email` (giới hạn 1 thư/phút/email như các thư khác, ghi `email_sent`). Không thêm loại log mới.
+- Nhiều tab trong **cùng một trình duyệt** dùng chung một phiên nên không bị ảnh hưởng. Xác thực lại (nhập mật khẩu) không gọi `login()` nên không đẩy phiên nào.
+
+**Lưu ý:** đóng trình duyệt rồi mở lại và đăng nhập trong vòng 30 phút thì phiên cũ (cookie đã mất nhưng dòng trong bảng chưa hết hạn) cũng bị tính là "phiên cũ" → vẫn có thư. Thư viết rõ "nếu đó là bạn … có thể bỏ qua". Đây cũng là hành vi đúng: dòng phiên đó vẫn dùng được nếu cookie bị đánh cắp.
+
+**Kiểm tra:** `accounts/tests/test_single_session.py` (đẩy phiên cũ, thông báo không lộ IP, dòng phiên cũ chỉ còn thông báo, log, thư kèm IP, lần đăng nhập đầu không gửi gì, phiên người khác không bị đụng, thư admin không có link, phiên admin quá 1 giờ bị xóa im lặng, đăng nhập bằng form thật). Thử tay: đăng nhập cùng một tài khoản ở hai trình duyệt (hoặc một cửa sổ ẩn danh), tải lại trang ở trình duyệt đầu tiên → về trang đăng nhập kèm thông báo; trang Nhật ký có dòng "Đăng xuất" lý do `new_login_elsewhere`.
+

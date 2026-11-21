@@ -1,3 +1,4 @@
+import datetime
 import time
 
 from django.conf import settings
@@ -11,8 +12,8 @@ from django.shortcuts import redirect
 from django.utils import timezone
 
 from core.security_log import log_event
+from core.session_store import REPLACED_SESSION_KEY, STAFF_LOGIN_AT_KEY, replace_other_sessions
 
-STAFF_LOGIN_AT_KEY = "staff_login_at"
 STAFF_TIMEOUT_MESSAGE = "Phiên làm việc quản trị đã quá 1 giờ. Vui lòng đăng nhập lại."
 
 DB_PERMISSION_ERRORS = {
@@ -102,3 +103,46 @@ def auto_lock_message(user):
     until = timezone.localtime(user.auto_locked_until).strftime("%H:%M ngày %d/%m/%Y")
     return (f"Tài khoản bị tạm khóa đến {until} vì đã hủy hoặc bỏ 3 đơn chưa thanh toán trong 24 giờ. "
             "Nếu bị khóa nhầm, hãy liên hệ cửa hàng.")
+
+
+# AI-TRACE#585 | Claude Opus 5.5 | Đăng nhập xong (sau bước 2 nếu có) thì đẩy mọi phiên khác của tài khoản ra: ghi log đăng xuất lý do new_login_elsewhere và gửi thư báo chủ tài khoản | CẤM XÓA CHÚ THÍCH NÀY
+@receiver(user_logged_in, dispatch_uid="single_session_per_user")
+def end_other_sessions(sender, request, user, **kwargs):
+    if request is None or not hasattr(request, "session"):
+        return
+    now = timezone.now()
+    replaced = replace_other_sessions(user.pk, request.session.session_key, {"at": now.isoformat()})
+    if not replaced:
+        return
+    log_event("logout", request, severity="warning", user=user, username=user.get_username(),
+              detail={"reason": "new_login_elsewhere", "ended": replaced})
+    from accounts.emails import send_new_login_email
+
+    send_new_login_email(request, user, now)
+
+
+# AI-TRACE#586 | Claude Opus 5.5 | Phiên bị đẩy ra vì tài khoản đăng nhập ở nơi khác: hủy hẳn phiên và báo cho người đang dùng (chỉ giờ đăng nhập mới, không lộ IP) | CẤM XÓA CHÚ THÍCH NÀY
+class ReplacedSessionMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        session = getattr(request, "session", None)
+        if session is not None and REPLACED_SESSION_KEY in session:
+            notice = session.get(REPLACED_SESSION_KEY)
+            session.flush()
+            request.user = AnonymousUser()
+            messages.warning(request, replaced_session_message(notice))
+        return self.get_response(request)
+
+
+def replaced_session_message(notice):
+    when = ""
+    try:
+        at = datetime.datetime.fromisoformat(notice["at"])
+        when = " lúc " + timezone.localtime(at).strftime("%H:%M ngày %d/%m/%Y")
+    except (KeyError, TypeError, ValueError):
+        pass
+    return (f"Tài khoản của bạn vừa đăng nhập ở nơi khác{when} nên phiên này đã kết thúc. "
+            "Nếu không phải bạn, hãy đổi mật khẩu ngay.")
+

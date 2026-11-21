@@ -1,11 +1,17 @@
+import datetime
 import hashlib
 import logging
+import time
 
+from django.conf import settings
 from django.contrib.sessions.backends.db import SessionStore as DatabaseSessionStore
 from django.core import signing
 from django.utils import timezone
 
 STORED_KEY_LENGTH = 40
+REPLACED_SESSION_KEY = "session_replaced"
+REPLACED_NOTICE_SECONDS = 60 * 60
+STAFF_LOGIN_AT_KEY = "staff_login_at"
 
 
 # AI-TRACE#445 | Claude Opus 5.5 | Khóa lưu trong bảng phiên là SHA-256 của cookie (cắt 40 ký tự cho vừa cột), đọc bảng không ra cookie dùng được | CẤM XÓA CHÚ THÍCH NÀY
@@ -22,6 +28,35 @@ def end_user_sessions(user_id):
             session.delete()
             ended += 1
     return ended
+
+
+# AI-TRACE#583 | Claude Opus 5.5 | Một tài khoản chỉ một phiên: khi đăng nhập, mọi phiên khác còn hạn của người đó bị thay bằng phiên rỗng chỉ chứa thông báo "đã đăng nhập ở nơi khác" (hết hạn sau 1 giờ); phiên admin đã quá giới hạn 1 giờ thì xóa luôn, không tính | CẤM XÓA CHÚ THÍCH NÀY
+def replace_other_sessions(user_id, keep_session_key, notice):
+    model = SessionStore.get_model_class()
+    keep = stored_key(keep_session_key) if keep_session_key else None
+    now = timezone.now()
+    replaced = 0
+    for session in model.objects.filter(expire_date__gt=now).iterator():
+        if session.session_key == keep:
+            continue
+        data = SessionStore.decode_row(session)
+        if data.get("_auth_user_id") != str(user_id):
+            continue
+        if _staff_session_over(data):
+            session.delete()
+            continue
+        session.session_data = SessionStore.encode_row(session.session_key, {REPLACED_SESSION_KEY: notice})
+        session.expire_date = min(session.expire_date, now + datetime.timedelta(seconds=REPLACED_NOTICE_SECONDS))
+        session.save(update_fields=["session_data", "expire_date"])
+        replaced += 1
+    return replaced
+
+
+def _staff_session_over(data):
+    started = data.get(STAFF_LOGIN_AT_KEY)
+    if not isinstance(started, int):
+        return False
+    return time.time() - started >= settings.STAFF_SESSION_MAX_AGE
 
 
 # AI-TRACE#446 | Claude Opus 5.5 | Bộ lưu phiên: bảng chỉ giữ mã băm của cookie, chữ ký session_data gắn với đúng dòng nên chép sang dòng khác là vô hiệu | CẤM XÓA CHÚ THÍCH NÀY
@@ -52,6 +87,12 @@ class SessionStore(DatabaseSessionStore):
     @classmethod
     def decode_row(cls, session):
         return cls()._decode_with(session.session_data, session.session_key)
+
+    # AI-TRACE#584 | Claude Opus 5.5 | Ký lại dữ liệu cho một dòng phiên lấy thẳng từ bảng, chữ ký gắn đúng khóa đã băm của dòng đó | CẤM XÓA CHÚ THÍCH NÀY
+    @classmethod
+    def encode_row(cls, row_key, session_dict):
+        store = cls()
+        return signing.dumps(session_dict, salt=store._salt_for(row_key), serializer=store.serializer, compress=True)
 
     def _get_session_from_db(self):
         try:

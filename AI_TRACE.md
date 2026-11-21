@@ -11,9 +11,9 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 005 | Claude Opus 5.5 | TuanThanh | `backend/orders/services.py` | `place_order` | 90 | Đặt đơn: user lấy từ phiên, mã hóa SĐT/địa chỉ, giới hạn tần suất rồi gọi sp_place_order và đổi lỗi SIGNAL thành OrderError (đã viết lại bởi Claude Opus 5.5 khi truyền thời gian giữ kho và số cuốn tối đa) | [ ] |
 | 006 | Claude Opus 5.5 | TuanThanh | `backend/orders/services.py` | `_signal_code` | 122 | Đọc mã lỗi nghiệp vụ từ lỗi MySQL 1644 do SIGNAL | [ ] |
 | 007 | Claude Opus 5.5 | TuanThanh | `backend/orders/tests/test_place_order.py` | `PlaceOrderTests` | 18 | Test place_order bằng cursor giả: user lấy từ phiên, SĐT/địa chỉ được mã hóa theo ngữ cảnh đơn, giới hạn tần suất, đổi lỗi SIGNAL (đã viết lại bởi Claude Opus 5.5 khi truyền thời gian giữ kho và số cuốn tối đa) | [ ] |
-| 016 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `_allow_send` | 16 | Giới hạn mỗi địa chỉ email chỉ nhận một thư mỗi loại trong một khoảng thời gian | [ ] |
-| 017 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `_send` | 22 | Gửi một thư văn bản thuần, lỗi SMTP chỉ ghi log không lộ ra ngoài | [ ] |
-| 019 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_existing_account_email` | 45 | Báo cho chủ email biết có người dùng email này để đăng ký lại | [ ] |
+| 016 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `_allow_send` | 17 | Giới hạn mỗi địa chỉ email chỉ nhận một thư mỗi loại trong một khoảng thời gian | [ ] |
+| 017 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `_send` | 23 | Gửi một thư văn bản thuần, lỗi SMTP chỉ ghi log không lộ ra ngoài | [ ] |
+| 019 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_existing_account_email` | 46 | Báo cho chủ email biết có người dùng email này để đăng ký lại | [ ] |
 | 024 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `check_email` | 102 | Trang báo kiểm tra hộp thư, giống nhau cho mọi trường hợp | [ ] |
 | 027 | Claude Opus 5.5 |  | `frontend/templates/account/check_email.html` | `<h1 class="auth__title">Kiểm tra hộp thư</h1>` | 7 | Trang kiểm tra hộp thư dùng chung cho đăng ký và gửi lại thư (đã viết lại bởi Claude Opus 5.5 khi đổi sang đăng ký bằng email) | [ ] |
 | 030 | Claude Opus 5.5 |  | `frontend/static/css/account.css` | `.auth__notice` | 204 | Khung thông báo trên các trang xác nhận email | [ ] |
@@ -32,8 +32,8 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 044 | Claude Opus 5.5 |  | `backend/core/migrations/0004_securityevent_sensitive_view.py` | `_statements` | 9 | Đọc file SQL thêm loại sự kiện xem dữ liệu nhạy cảm | [ ] |
 | 045 | Claude Opus 5.5 |  | `backend/accounts/tests/test_profile.py` | `CustomerProfileTests` | 11 | Test trang thông tin của khách: hiện email, chặn nhân viên, không lưu cache | [ ] |
 | 046 | Claude Opus 5.5 |  | `backend/dashboard/tests/test_profile.py` | `StaffProfileTests` | 15 | Test trang thông tin nhân viên: giấu email, hiện sau xác thực lại, ghi log (đã viết lại bởi Claude Opus 5.5 khi bỏ ô tên đăng nhập ở xác thực lại (T2.2)) | [ ] |
-| 047 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_password_reset_email` | 56 | Gửi thư chứa link đặt lại mật khẩu có hạn dùng | [ ] |
-| 048 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_password_changed_email` | 63 | Báo cho chủ tài khoản biết mật khẩu vừa được đổi | [ ] |
+| 047 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_password_reset_email` | 57 | Gửi thư chứa link đặt lại mật khẩu có hạn dùng | [ ] |
+| 048 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_password_changed_email` | 64 | Báo cho chủ tài khoản biết mật khẩu vừa được đổi | [ ] |
 | 049 | Claude Opus 5.5 |  | `backend/accounts/forms.py` | `CustomerPasswordResetForm` | 83 | Form quên mật khẩu chỉ gửi cho khách, dùng thư và giới hạn của nhóm | [ ] |
 | 050 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `CustomerPasswordResetView` | 156 | Trang quên mật khẩu: nhập email, ghi log, trả lời giống nhau cho mọi email | [ ] |
 | 051 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `password_reset_done` | 168 | Trang báo đã gửi thư đặt lại mật khẩu kèm thời hạn link | [ ] |
@@ -48,7 +48,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 060 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `password_change` | 231 | Đổi mật khẩu cho khách: giữ phiên hiện tại, đăng xuất thiết bị khác, sai nhiều lần thì đăng xuất | [ ] |
 | 061 | Claude Opus 5.5 |  | `frontend/templates/account/password_change.html` | `<header class="area-header">` | 7 | Form đổi mật khẩu trong khu vực tài khoản khách, có nút hiện mật khẩu | [ ] |
 | 062 | Claude Opus 5.5 |  | `frontend/static/css/account-area.css` | `.area-actions { display: flex; flex-wrap: wrap; gap: var(--s` | 35 | Kiểu nút thao tác và form đổi mật khẩu trong khu vực tài khoản | [ ] |
-| 063 | Claude Opus 5.5 |  | `backend/accounts/tests/test_password_change.py` | `PasswordChangeTests` | 15 | Test đổi mật khẩu: mật khẩu cũ, đăng xuất thiết bị khác, sai nhiều lần, chặn nhân viên | [ ] |
+| 063 | Claude Opus 5.5 |  | `backend/accounts/tests/test_password_change.py` | `PasswordChangeTests` | 16 | Test đổi mật khẩu: mật khẩu cũ, đăng xuất thiết bị khác, sai nhiều lần, chặn nhân viên (đã viết lại bởi Claude Opus 5.5 khi thêm luật một tài khoản một phiên) | [ ] |
 | 064 | Claude Opus 5.5 |  | `backend/core/crypto.py` | `DecryptionError` | 15 | Lỗi khi dữ liệu mã hóa bị sửa, sai khóa hoặc sai định dạng | [ ] |
 | 065 | Claude Opus 5.5 |  | `backend/core/crypto.py` | `_aead` | 20 | Đọc khóa AES-256 từ settings, báo lỗi cấu hình nếu sai độ dài | [ ] |
 | 066 | Claude Opus 5.5 |  | `backend/core/crypto.py` | `encrypt_field` | 31 | Mã hóa AES-GCM một chuỗi, gắn ngữ cảnh để không đem sang dòng khác được | [ ] |
@@ -77,7 +77,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 089 | Claude Opus 5.5 |  | `backend/accounts/validators.py` | `PasswordHistoryValidator` | 7 | Chặn mật khẩu mới trùng một trong N mật khẩu gần nhất, tính cả mật khẩu đang dùng | [ ] |
 | 090 | Claude Opus 5.5 |  | `backend/accounts/tests/test_password_history.py` | `PasswordHistoryTests` | 18 | Test chặn dùng lại 5 mật khẩu gần nhất, tính cả mật khẩu hiện tại, qua validator và trang đổi mật khẩu | [ ] |
 | 091 | Claude Opus 5.5 |  | `backend/accounts/management/commands/doi_mat_khau_admin.py` | `Command` | 20 | Lệnh máy chủ đổi mật khẩu nhân viên: kiểm tra quy tắc mật khẩu, đăng xuất mọi phiên, ghi log, gửi thư báo (đã viết lại bởi Claude Opus 5.5 khi băm khóa phiên) | [ ] |
-| 092 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_staff_password_changed_email` | 74 | Báo cho nhân viên biết mật khẩu vừa được đổi bằng lệnh trên máy chủ, không kèm link | [ ] |
+| 092 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_staff_password_changed_email` | 75 | Báo cho nhân viên biết mật khẩu vừa được đổi bằng lệnh trên máy chủ, không kèm link | [ ] |
 | 093 | Claude Opus 5.5 |  | `backend/accounts/tests/test_admin_password_command.py` | `AdminPasswordCommandTests` | 25 | Test lệnh đổi mật khẩu admin: chỉ nhân viên, quy tắc mật khẩu, đăng xuất phiên, log, thư báo, chặn kết nối web | [ ] |
 | 094 | Claude Opus 5.5 |  | `backend/dashboard/forms.py` | `StaffProfileUpdateForm` | 18 | Form sửa họ, tên, SĐT của nhân viên; ô SĐT luôn trống, để trống là giữ số cũ | [ ] |
 | 095 | Claude Opus 5.5 |  | `backend/dashboard/services.py` | `update_staff_profile` | 17 | Lưu họ, tên, SĐT của nhân viên bằng kết nối staff, chỉ ghi cột thay đổi, log tên cột | [ ] |
@@ -313,7 +313,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 326 | Claude Opus 5.5 |  | `backend/core/views.py` | `csrf_failure` | 34 | Trang lỗi CSRF ghi sự kiện csrf_failed (lý do của Django chỉ vào log, không hiện cho người dùng) | [ ] |
 | 327 | Claude Opus 5.5 |  | `backend/dashboard/catalog_views.py` | `_log_upload_rejected` | 36 | Ghi sự kiện upload_rejected khi ảnh bìa bị từ chối (chỉ mã lỗi, không ghi tên hay nội dung file) | [ ] |
 | 328 | Claude Opus 5.5 |  | `backend/orders/views.py` | `_log_order_probe` | 162 | Ghi idor_attempt khi khách mở/hủy đơn bằng mã đúng định dạng nhưng không phải đơn của mình (hoặc không có); người dùng vẫn chỉ thấy 404 | [ ] |
-| 329 | Claude Opus 5.5 |  | `backend/core/middleware.py` | `DbPermissionDeniedMiddleware` | 27 | Middleware ghi db_permission_denied (mức critical) khi MySQL từ chối câu lệnh vì thiếu quyền – dấu hiệu tấn công hoặc lỗi phân quyền; lỗi vẫn đi tiếp thành trang 500 | [ ] |
+| 329 | Claude Opus 5.5 |  | `backend/core/middleware.py` | `DbPermissionDeniedMiddleware` | 28 | Middleware ghi db_permission_denied (mức critical) khi MySQL từ chối câu lệnh vì thiếu quyền – dấu hiệu tấn công hoặc lỗi phân quyền; lỗi vẫn đi tiếp thành trang 500 | [ ] |
 | 330 | Claude Opus 5.5 |  | `backend/dashboard/log_services.py` | `LogError` | 65 | Lỗi khi đọc nhật ký hệ thống, mang mã lỗi và câu tiếng Việt | [ ] |
 | 331 | Claude Opus 5.5 |  | `backend/dashboard/log_services.py` | `SecurityEventRow` | 95 | Một dòng nhật ký bảo mật cho template: nhãn tiếng Việt, mức độ, người dùng, IP, đường dẫn, chi tiết dạng cặp khóa–giá trị | [ ] |
 | 332 | Claude Opus 5.5 |  | `backend/dashboard/log_services.py` | `AuditRow` | 128 | Một dòng nhật ký thay đổi dữ liệu: bảng, hành động, danh sách thay đổi cũ → mới, nguồn (khách/hệ thống/quản trị), người thực hiện | [ ] |
@@ -398,7 +398,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 411 | Claude Opus 5.5 |  | `backend/accounts/tokens.py` | `read_signup_token` | 20 | Kiểm tra chữ ký, hạn dùng và dạng dữ liệu của mã link đăng ký | [ ] |
 | 412 | Claude Opus 5.5 |  | `backend/accounts/forms.py` | `SignupEmailForm` | 38 | Bước 1 đăng ký: chỉ một ô email, chuẩn hóa về chữ thường | [ ] |
 | 413 | Claude Opus 5.5 |  | `backend/accounts/forms.py` | `SignupCompleteForm` | 47 | Bước 2 đăng ký: tên đăng nhập và mật khẩu, email lấy từ phiên chứ không từ form (đã viết lại bởi Claude Opus 5.5 khi giới hạn độ dài mật khẩu) | [ ] |
-| 414 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_signup_link_email` | 37 | Gửi thư chứa link tiếp tục đăng ký có hạn dùng tới đúng email vừa nhập | [ ] |
+| 414 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_signup_link_email` | 38 | Gửi thư chứa link tiếp tục đăng ký có hạn dùng tới đúng email vừa nhập | [ ] |
 | 415 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `allow_signup_step` | 29 | Giới hạn số lần gửi form đăng ký của mỗi IP, đếm riêng từng bước (đã viết lại bởi Claude Opus 5.5 khi đọc IP thật sau Nginx) | [ ] |
 | 416 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `_allow_signup_mail` | 38 | Giới hạn số thư đăng ký gửi tới một email trong một giờ, tính cả thư báo trùng | [ ] |
 | 417 | Claude Opus 5.5 |  | `backend/accounts/services.py` | `start_signup` | 44 | Bước 1 đăng ký: không ghi CSDL, email mới nhận link, email đã có nhận thư báo | [ ] |
@@ -429,12 +429,12 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 442 | Claude Opus 5.5 |  | `backend/core/tests/test_captcha.py` | `VerifyCaptchaTests` | 32 | Test xác minh Turnstile với Siteverify giả: đạt, thiếu, bị từ chối, dùng lại, sai hostname/action, timeout | [ ] |
 | 443 | Claude Opus 5.5 |  | `backend/core/tests/test_captcha.py` | `TurnstileCheckTests` | 142 | Test cảnh báo khi chạy web với Turnstile tắt hoặc dùng key thử | [ ] |
 | 444 | Claude Opus 5.5 |  | `backend/accounts/tests/test_signup_captcha.py` | `SignupCaptchaTests` | 30 | Test trang đăng ký có Turnstile: CSP riêng trang, thiếu token, Cloudflare lỗi, vẫn giữ giới hạn tần suất | [ ] |
-| 445 | Claude Opus 5.5 |  | `backend/core/session_store.py` | `stored_key` | 11 | Khóa lưu trong bảng phiên là SHA-256 của cookie (cắt 40 ký tự cho vừa cột), đọc bảng không ra cookie dùng được | [ ] |
-| 446 | Claude Opus 5.5 |  | `backend/core/session_store.py` | `SessionStore` | 27 | Bộ lưu phiên: bảng chỉ giữ mã băm của cookie, chữ ký session_data gắn với đúng dòng nên chép sang dòng khác là vô hiệu | [ ] |
-| 447 | Claude Opus 5.5 |  | `backend/core/session_store.py` | `SessionStore.decode_row` | 51 | Đọc một dòng phiên lấy thẳng từ bảng (lệnh quản trị) bằng đúng khóa đã băm của dòng đó | [ ] |
+| 445 | Claude Opus 5.5 |  | `backend/core/session_store.py` | `stored_key` | 17 | Khóa lưu trong bảng phiên là SHA-256 của cookie (cắt 40 ký tự cho vừa cột), đọc bảng không ra cookie dùng được | [ ] |
+| 446 | Claude Opus 5.5 |  | `backend/core/session_store.py` | `SessionStore` | 62 | Bộ lưu phiên: bảng chỉ giữ mã băm của cookie, chữ ký session_data gắn với đúng dòng nên chép sang dòng khác là vô hiệu | [ ] |
+| 447 | Claude Opus 5.5 |  | `backend/core/session_store.py` | `SessionStore.decode_row` | 86 | Đọc một dòng phiên lấy thẳng từ bảng (lệnh quản trị) bằng đúng khóa đã băm của dòng đó | [ ] |
 | 448 | Claude Opus 5.5 |  | `backend/core/db_routers.py` | `SessionRouter` | 17 | Mọi đọc/ghi bảng phiên django_session đi qua kết nối riêng (app_session), app_customer không còn đụng vào phiên | [ ] |
-| 449 | Claude Opus 5.5 |  | `backend/core/middleware.py` | `remember_staff_login` | 49 | Ghi giờ đăng nhập của nhân viên vào phiên (phần đã ký, không sửa được từ bảng) để giới hạn thời gian tuyệt đối | [ ] |
-| 450 | Claude Opus 5.5 |  | `backend/core/middleware.py` | `StaffSessionLimitMiddleware` | 56 | Phiên nhân viên quá 1 giờ kể từ lúc đăng nhập thì đăng xuất dù vẫn thao tác; thiếu giờ đăng nhập cũng coi là hết hạn | [ ] |
+| 449 | Claude Opus 5.5 |  | `backend/core/middleware.py` | `remember_staff_login` | 50 | Ghi giờ đăng nhập của nhân viên vào phiên (phần đã ký, không sửa được từ bảng) để giới hạn thời gian tuyệt đối | [ ] |
+| 450 | Claude Opus 5.5 |  | `backend/core/middleware.py` | `StaffSessionLimitMiddleware` | 57 | Phiên nhân viên quá 1 giờ kể từ lúc đăng nhập thì đăng xuất dù vẫn thao tác; thiếu giờ đăng nhập cũng coi là hết hạn | [ ] |
 | 451 | Claude Opus 5.5 |  | `database/grants/01_role_privileges.sql` | `REVOKE IF EXISTS SELECT, INSERT, UPDATE, DELETE ON django_se` | 65 | Thu hồi mọi quyền của r_customer trên bảng phiên django_session | [ ] |
 | 452 | Claude Opus 5.5 |  | `database/grants/01_role_privileges.sql` | `GRANT SELECT, INSERT, UPDATE, DELETE ON django_session TO 'r` | 85 | Cấp cho r_session đúng 4 quyền trên bảng phiên, không quyền nào khác | [ ] |
 | 453 | Claude Opus 5.5 |  | `backend/core/tests/test_session_store.py` | `HashedSessionStoreTests` | 23 | Test bộ lưu phiên: bảng chỉ có mã băm cookie, chép session_data sang dòng khác bị từ chối, xóa/kiểm tra tồn tại theo mã băm | [ ] |
@@ -482,7 +482,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 495 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `two_factor_setup` | 439 | Cài 2 bước cho khách: trang QR cần xác thực lại; mã đúng thì bật, hiện 5 mã dự phòng đúng một lần, gửi thư báo | [ ] |
 | 496 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `two_factor_qr` | 493 | Ảnh QR của lượt cài đang dở: chỉ chủ tài khoản, không cache, hết lượt cài thì 404 | [ ] |
 | 497 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `two_factor_disable` | 507 | Tắt 2 bước: cần mật khẩu và mã hiện tại (hoặc mã dự phòng), sai nhiều lần thì đăng xuất, gửi thư báo | [ ] |
-| 498 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_two_factor_email` | 89 | Báo cho chủ tài khoản mỗi lần bật/tắt 2 bước hoặc dùng mã dự phòng, kèm link đổi mật khẩu | [ ] |
+| 498 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_two_factor_email` | 90 | Báo cho chủ tài khoản mỗi lần bật/tắt 2 bước hoặc dùng mã dự phòng, kèm link đổi mật khẩu | [ ] |
 | 499 | Claude Opus 5.5 |  | `frontend/templates/account/profile.html` | `<section class="area-2fa" aria-labelledby="tieu-de-2fa">` | 24 | Khối xác thực 2 bước ở trang thông tin: trạng thái, số mã dự phòng còn lại, nút bật/tắt | [ ] |
 | 500 | Claude Opus 5.5 |  | `frontend/templates/account/login_two_factor.html` | `<h1 class="auth__title">Xác thực 2 bước</h1>` | 7 | Trang đăng nhập bước 2: nhập mã 6 số (khách được dùng mã dự phòng), có hạn 5 phút | [ ] |
 | 501 | Claude Opus 5.5 |  | `frontend/templates/account/two_factor_setup.html` | `<header class="area-header">` | 6 | Trang cài 2 bước: ảnh QR từ URL riêng, chuỗi bí mật để gõ tay, ô nhập mã xác nhận | [ ] |
@@ -507,9 +507,9 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 520 | Claude Opus 5.5 |  | `backend/accounts/views.py` | `CustomerPasswordResetConfirmView.dispatch` | 188 | Chỉ ghi invalid_input khi link đặt lại mật khẩu thật sự sai (link đúng bị Django chuyển hướng 302 trước khi có validlink), đường dẫn trong log không chứa mã | [ ] |
 | 521 | Claude Opus 5.5 |  | `backend/accounts/tests/test_password_reset.py` | `ResetLinkLoggingTests` | 152 | Test tái hiện lỗi lộ mã đặt lại mật khẩu trong nhật ký: link đúng không ghi invalid_input, không đường dẫn log nào chứa mã | [ ] |
 | 522 | Claude Opus 5.5 |  | `backend/core/tests/test_security_log.py` | `RedactPathTests` | 11 | Test che mã bí mật trong đường dẫn của nhật ký (file log và core_securityevent), kể cả khi view quên truyền path | [ ] |
-| 523 | Claude Opus 5.5 |  | `backend/core/session_store.py` | `end_user_sessions` | 16 | Xóa mọi phiên còn hạn của một người dùng (đọc từng dòng bằng đúng khóa đã băm), trả số phiên đã xóa | [ ] |
-| 524 | Claude Opus 5.5 |  | `backend/core/middleware.py` | `InactiveAccountSessionMiddleware` | 78 | Phiên còn ghi người dùng nhưng tài khoản đã bị khóa (hoặc không còn) thì hủy hẳn phiên, không để phiên được gia hạn rồi sống lại khi mở khóa (đã viết lại bởi Claude Opus 5.5 khi thêm khóa tự động vì giữ kho) | [ ] |
-| 525 | Claude Opus 5.5 |  | `backend/core/tests/test_inactive_session.py` | `LockedAccountSessionTests` | 18 | Test tái hiện lỗi phiên của tài khoản bị khóa sống lại khi mở khóa, và test hàm xóa mọi phiên của một người dùng | [ ] |
+| 523 | Claude Opus 5.5 |  | `backend/core/session_store.py` | `end_user_sessions` | 22 | Xóa mọi phiên còn hạn của một người dùng (đọc từng dòng bằng đúng khóa đã băm), trả số phiên đã xóa | [ ] |
+| 524 | Claude Opus 5.5 |  | `backend/core/middleware.py` | `InactiveAccountSessionMiddleware` | 79 | Phiên còn ghi người dùng nhưng tài khoản đã bị khóa (hoặc không còn) thì hủy hẳn phiên, không để phiên được gia hạn rồi sống lại khi mở khóa (đã viết lại bởi Claude Opus 5.5 khi thêm khóa tự động vì giữ kho) | [ ] |
+| 525 | Claude Opus 5.5 |  | `backend/core/tests/test_inactive_session.py` | `LockedAccountSessionTests` | 19 | Test tái hiện lỗi phiên của tài khoản bị khóa sống lại khi mở khóa, và test hàm xóa mọi phiên của một người dùng (đã viết lại bởi Claude Opus 5.5 khi thêm luật một tài khoản một phiên) | [ ] |
 | 526 | Claude Opus 5.5 |  | `backend/core/db_routers.py` | `LockoutRouter` | 70 | Bảng khóa đăng nhập của django-axes chỉ đọc/ghi qua kết nối "auth" (app_auth); SQL injection qua app_customer không xóa được trạng thái khóa của ai | [ ] |
 | 527 | Claude Opus 5.5 |  | `database/grants/01_role_privileges.sql` | `REVOKE IF EXISTS SELECT, INSERT, UPDATE, DELETE ON axes_acce` | 74 | Thu hồi mọi quyền của r_customer trên 3 bảng khóa đăng nhập django-axes | [ ] |
 | 528 | Claude Opus 5.5 |  | `database/grants/01_role_privileges.sql` | `GRANT SELECT, INSERT, UPDATE, DELETE ON axes_accessattempt  ` | 104 | Cấp cho r_auth đúng quyền django-axes cần trên 3 bảng khóa đăng nhập | [ ] |
@@ -523,7 +523,7 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 536 | Claude Opus 5.5 |  | `database/schema/12_securityevent_order_hold.sql` | `ALTER TABLE core_securityevent DROP CHECK ck_secevent_type;` | 10 | Thêm loại sự kiện giữ kho bị khóa tài khoản vào danh sách cho phép | [ ] |
 | 537 | Claude Opus 5.5 |  | `backend/core/migrations/0013_securityevent_order_hold.py` | `_statements` | 26 | Đọc file SQL thêm loại sự kiện giữ kho bị khóa tài khoản | [ ] |
 | 538 | Claude Opus 5.5 |  | `backend/accounts/models.py` | `User.is_auto_locked` | 36 | Tài khoản đang bị khóa tự động vì giữ kho (auto_locked_until còn hạn) | [ ] |
-| 539 | Claude Opus 5.5 |  | `backend/core/middleware.py` | `auto_lock_message` | 100 | Câu báo tài khoản bị khóa tự động vì giữ kho, kèm giờ mở (giờ Việt Nam) | [ ] |
+| 539 | Claude Opus 5.5 |  | `backend/core/middleware.py` | `auto_lock_message` | 101 | Câu báo tài khoản bị khóa tự động vì giữ kho, kèm giờ mở (giờ Việt Nam) | [ ] |
 | 540 | Claude Opus 5.5 |  | `backend/accounts/forms.py` | `LoginForm.confirm_login_allowed` | 76 | Đúng mật khẩu nhưng tài khoản đang bị khóa tự động vì giữ kho: không cho đăng nhập, báo giờ mở khóa | [ ] |
 | 541 | Claude Opus 5.5 |  | `backend/orders/views.py` | `_logout_auto_locked` | 276 | Hủy đơn làm tài khoản bị khóa tự động vì giữ kho: ghi log order_hold_abuse, xóa mọi phiên, đăng xuất, báo giờ mở khóa | [ ] |
 | 542 | Claude Opus 5.5 |  | `backend/orders/tests/test_hold_abuse.py` | `HoldAbuseLockTests` | 34 | Test chống giữ kho: hủy đơn làm khóa tài khoản thì đăng xuất mọi phiên và ghi log, đăng nhập/phiên đang mở bị chặn khi đang khóa, đơn quá 20 cuốn bị chặn, trạng thái admin | [ ] |
@@ -567,3 +567,10 @@ File tạm, sinh bằng `python scripts/ai_trace.py`. Không sửa tay các cộ
 | 580 | Claude Opus 5.5 |  | `backend/core/tests/test_backup.py` | `BackupCommandTests` | 170 | Test lệnh quản trị: xuất .sql và khôi phục đều hủy khi gõ xác nhận sai (không giải mã, không đụng CSDL); sao lưu lỗi ghi backup_failed mức nghiêm trọng | [ ] |
 | 581 | Claude Opus 5.5 |  | `backend/core/backup.py` | `restore_logs` | 420 | Khi khôi phục, chép file log bảo mật trong bản sao lưu ra thư mục riêng restored-logs/<tên bản> (0700) để đối chiếu, không bao giờ ghi đè logs/security.log đang chạy | [ ] |
 | 582 | Claude Opus 5.5 |  | `backend/core/tests/test_backup.py` | `SessionAndLogTests` | 200 | Test bản sao lưu bỏ dữ liệu bảng phiên (chỉ lấy cấu trúc, manifest ghi 0 dòng) và kèm logs/security.log*; khôi phục chép log ra thư mục riêng, không ghi đè log đang chạy | [ ] |
+| 583 | Claude Opus 5.5 |  | `backend/core/session_store.py` | `replace_other_sessions` | 33 | Một tài khoản chỉ một phiên: khi đăng nhập, mọi phiên khác còn hạn của người đó bị thay bằng phiên rỗng chỉ chứa thông báo "đã đăng nhập ở nơi khác" (hết hạn sau 1 giờ); phiên admin đã quá giới hạn 1 giờ thì xóa luôn, không tính | [ ] |
+| 584 | Claude Opus 5.5 |  | `backend/core/session_store.py` | `SessionStore.encode_row` | 91 | Ký lại dữ liệu cho một dòng phiên lấy thẳng từ bảng, chữ ký gắn đúng khóa đã băm của dòng đó | [ ] |
+| 585 | Claude Opus 5.5 |  | `backend/core/middleware.py` | `end_other_sessions` | 108 | Đăng nhập xong (sau bước 2 nếu có) thì đẩy mọi phiên khác của tài khoản ra: ghi log đăng xuất lý do new_login_elsewhere và gửi thư báo chủ tài khoản | [ ] |
+| 586 | Claude Opus 5.5 |  | `backend/core/middleware.py` | `ReplacedSessionMiddleware` | 124 | Phiên bị đẩy ra vì tài khoản đăng nhập ở nơi khác: hủy hẳn phiên và báo cho người đang dùng (chỉ giờ đăng nhập mới, không lộ IP) | [ ] |
+| 587 | Claude Opus 5.5 |  | `backend/accounts/emails.py` | `send_new_login_email` | 102 | Báo cho chủ tài khoản mỗi lần một phiên cũ bị kết thúc vì tài khoản vừa đăng nhập ở nơi khác, kèm giờ và IP của lần đăng nhập mới | [ ] |
+| 588 | Claude Opus 5.5 |  | `backend/accounts/tests/test_single_session.py` | `SingleSessionTests` | 33 | Test một tài khoản một phiên: đăng nhập mới đẩy phiên cũ ra (phiên cũ thấy thông báo, không lộ IP), ghi log, gửi thư kèm IP cho chủ tài khoản; phiên người khác và phiên admin đã quá 1 giờ không tính | [ ] |
+| 589 | Claude Opus 5.5 |  | `backend/core/tests/session_helpers.py` | `open_extra_session` | 7 | Test: tạo thẳng một phiên thứ hai cho người dùng (không qua login, nên không bị luật một phiên đẩy ra) để thử các hàm xóa phiên | [ ] |

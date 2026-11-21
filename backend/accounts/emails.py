@@ -8,6 +8,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 
+from core.client_ip import client_ip
 from core.security_log import log_event
 
 from .tokens import make_signup_token
@@ -96,3 +97,24 @@ def send_two_factor_email(request, user, kind, remaining=None):
         "reset_link": request.build_absolute_uri(reverse("accounts:password_reset")) if request else None,
     }
     return _send(request, f"two_factor_{kind}", user, user.email, subject, template, context)
+
+
+# AI-TRACE#587 | Claude Opus 5.5 | Báo cho chủ tài khoản mỗi lần một phiên cũ bị kết thúc vì tài khoản vừa đăng nhập ở nơi khác, kèm giờ và IP của lần đăng nhập mới | CẤM XÓA CHÚ THÍCH NÀY
+def send_new_login_email(request, user, at):
+    context = {
+        "username": user.username,
+        "at": timezone.localtime(at),
+        "ip": client_ip(request) or "không rõ",
+        "is_staff": user.is_staff,
+        "reset_link": None if user.is_staff else _absolute(request, reverse("accounts:password_reset")),
+    }
+    return _send(request, "new_login_elsewhere", user, user.email,
+                 "Tài khoản vừa đăng nhập ở nơi khác – Secure Bookstore", "account/email/new_login_elsewhere.txt", context)
+
+
+def _absolute(request, path):
+    try:
+        return request.build_absolute_uri(path)
+    except KeyError:
+        return path
+
