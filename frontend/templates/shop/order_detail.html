@@ -3,7 +3,6 @@
 {% block title %}Đơn hàng{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/account-area.css' %}">{% endblock %}
 {% block account_content %}
-  {# AI-TRACE#276 | Claude Opus 5.5 | Trang chi tiết đơn: mã đơn, trạng thái, hạn thanh toán, sách và giá lúc đặt, thông tin giao hàng; nút thanh toán (mô phỏng khi bật trong .env), hủy đơn khi còn chờ thanh toán | CẤM XÓA CHÚ THÍCH NÀY #}
   <header class="area-header">
     <h1 class="area-header__title">Đơn hàng</h1>
     <p class="area-header__desc">Mã đơn <span class="order__code">{{ order.code }}</span></p>
@@ -39,7 +38,6 @@
   <div class="area-actions order__actions">
     {% if order.awaiting_payment %}
       {% if payment_simulation %}
-        {# AI-TRACE#358 | Claude Opus 5.5 | Thanh toán mô phỏng hai bước bằng details (không JS): bấm nút mới hiện số tiền và nút xác nhận gửi POST | CẤM XÓA CHÚ THÍCH NÀY #}
         <details class="order__pay">
           <summary class="btn">Thanh toán (mô phỏng)</summary>
           <div class="order__pay-box">
@@ -76,7 +74,6 @@
   </div>
 
   {% if order.can_cancel %}
-    {# AI-TRACE#289 | Claude Opus 5.5 | Hủy đơn hai bước bằng details (không JS): bấm Hủy đơn mới hiện nút xác nhận gửi POST | CẤM XÓA CHÚ THÍCH NÀY #}
     <details class="order__cancel">
       <summary class="btn btn--link">Hủy đơn hàng</summary>
       <div class="order__cancel-box">

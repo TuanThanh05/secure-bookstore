@@ -28,7 +28,6 @@ def request_for(user):
     return SimpleNamespace(user=user, META={"REMOTE_ADDR": "127.0.0.1"}, method="POST", path="/sach/7/danh-gia/")
 
 
-# AI-TRACE#209 | Claude Opus 5.5 | Test chuẩn hóa nội dung đánh giá, che username và form đánh giá | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ hàm che username không còn dùng
 class ReviewInputTests(SimpleTestCase):
     def test_content_is_cleaned(self):
         self.assertEqual(clean_content("  Hay\r\n\r\n\r\n\r\nlắm \u202e\x00 "), "Hay\n\nlắm")
@@ -54,7 +53,6 @@ class ReviewInputTests(SimpleTestCase):
         self.assertEqual(set(form.cleaned_data), {"rating", "content"})
 
 
-# AI-TRACE#210 | Claude Opus 5.5 | Test gửi đánh giá bằng cursor giả: user lấy từ phiên, chặn nhân viên, giới hạn tần suất, đổi lỗi SIGNAL | CẤM XÓA CHÚ THÍCH NÀY
 @override_settings(REVIEW_RATE_LIMIT=5, REVIEW_RATE_WINDOW=3600)
 class SaveReviewTests(SimpleTestCase):
     def setUp(self):

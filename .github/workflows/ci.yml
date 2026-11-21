@@ -1,7 +1,3 @@
-# Chạy tự động trên mỗi Pull Request và mỗi lần main thay đổi.
-# Dựng một MySQL 8.4 tạm, rồi chạy đúng các lệnh mọi người chạy trên máy mình:
-# db_setup → migrate → db_apply → db_check_grants → check → test, và quét lỗi bảo mật trong code.
-# PR nào làm hỏng một bước là thấy dấu X đỏ ngay, trước khi merge vào main.
 name: CI
 
 on:

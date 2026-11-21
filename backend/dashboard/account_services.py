@@ -33,7 +33,6 @@ ACCOUNT_ERROR_MESSAGES = {
 }
 
 
-# AI-TRACE#297 | Claude Opus 5.5 | Lỗi nghiệp vụ khi quản lý tài khoản khách, mang mã lỗi và câu tiếng Việt | CẤM XÓA CHÚ THÍCH NÀY
 class AccountError(Exception):
     def __init__(self, code):
         self.code = code
@@ -41,7 +40,6 @@ class AccountError(Exception):
         super().__init__(self.message)
 
 
-# AI-TRACE#298 | Claude Opus 5.5 | Che bớt email (giữ ký tự đầu, cuối của phần trước @ và tên miền) và SĐT (giữ 3 số đầu, 3 số cuối) | CẤM XÓA CHÚ THÍCH NÀY
 def mask_email(email):
     local, sep, domain = (email or "").partition("@")
     if not sep or not local:
@@ -59,7 +57,6 @@ def mask_phone(phone):
     return f"{phone[:3]}****{phone[-3:]}"
 
 
-# AI-TRACE#299 | Claude Opus 5.5 | Một tài khoản khách cho trang admin: trạng thái, email/SĐT bản đầy đủ và bản che, ngày tạo, lần đăng nhập cuối | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi khóa tự động vì giữ kho cũng tính là đang khóa (admin mở được)
 @dataclass(frozen=True)
 class StaffAccount:
     id: int
@@ -125,7 +122,6 @@ def _positive_id(value):
     return number
 
 
-# AI-TRACE#300 | Claude Opus 5.5 | Gọi thủ tục quản lý tài khoản qua kết nối staff, đổi lỗi SIGNAL thành AccountError, lỗi khác (thiếu quyền...) để nguyên | CẤM XÓA CHÚ THÍCH NÀY
 def _call(procedure, params, fetch=False):
     connection = connections[STAFF_DB]
     if not fetch and connection.in_atomic_block:
@@ -144,7 +140,6 @@ def _call(procedure, params, fetch=False):
         raise
 
 
-# AI-TRACE#301 | Claude Opus 5.5 | Danh sách tài khoản khách qua sp_staff_account_list, lọc trạng thái và username (kiểm tra trước khi xuống CSDL) | CẤM XÓA CHÚ THÍCH NÀY
 def list_accounts(actor, status=None, keyword=None):
     if status not in (None, *ACCOUNT_STATUSES):
         raise AccountError("INVALID_INPUT")
@@ -156,7 +151,6 @@ def list_accounts(actor, status=None, keyword=None):
     return [_row_to_account(row) for row in rows]
 
 
-# AI-TRACE#302 | Claude Opus 5.5 | Một tài khoản khách qua sp_staff_account_get cho trang xác nhận khóa/mở khóa | CẤM XÓA CHÚ THÍCH NÀY
 def get_account(actor, user_id):
     limit, cooloff = _axes_limits()
     rows = _call("sp_staff_account_get", [actor.pk, _positive_id(user_id), limit, cooloff], fetch=True)
@@ -172,7 +166,6 @@ def _clean_reason(reason):
     return text
 
 
-# AI-TRACE#303 | Claude Opus 5.5 | Khóa và mở khóa tài khoản khách qua sp_staff_account_lock/unlock, kèm lý do ghi vào nhật ký | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi đăng xuất mọi phiên của tài khoản bị khóa
 def lock_account(actor, user_id, reason):
     target_id = _positive_id(user_id)
     _call("sp_staff_account_lock", [actor.pk, target_id, _clean_reason(reason)])

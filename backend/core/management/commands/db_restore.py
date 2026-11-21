@@ -11,7 +11,6 @@ from core.backup import (BackupError, ask_confirmation, create_backup, execute_s
 from core.dbadmin import admin_secret, connect_admin, db_settings
 
 
-# AI-TRACE#571 | Claude Opus 5.5 | Lệnh khôi phục đè lên CSDL: nhận file mã hóa hoặc .sql trần, bắt gõ lại tên CSDL, tự sao lưu bản hiện tại trước, chạy SQL bằng root (bảng phiên được tạo lại rỗng nên mọi người phải đăng nhập lại), trả ảnh bìa, chép log bảo mật trong bản sao lưu ra thư mục riêng, cấp lại quyền bằng db_apply, ghi log | CẤM XÓA CHÚ THÍCH NÀY
 class Command(BaseCommand):
     help = "Khôi phục CSDL từ file sao lưu (.tar.gz.enc) hoặc file .sql trần. GHI ĐÈ dữ liệu hiện tại."
     requires_system_checks = []

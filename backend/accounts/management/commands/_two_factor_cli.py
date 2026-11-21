@@ -10,7 +10,6 @@ WRONG_SETTINGS = ("Lệnh này phải chạy với --settings=bookstore.settings
                   "(tài khoản web không được cài 2 bước cho quản trị viên).")
 
 
-# AI-TRACE#504 | Claude Opus 5.5 | Lệnh 2 bước của admin chỉ chạy bằng tài khoản migrate, không bằng tài khoản web | CẤM XÓA CHÚ THÍCH NÀY
 def check_connection():
     web_accounts = {
         os.environ.get("DB_CUSTOMER_USER", "app_customer"),
@@ -22,7 +21,6 @@ def check_connection():
         raise CommandError(WRONG_SETTINGS)
 
 
-# AI-TRACE#505 | Claude Opus 5.5 | In mã QR ra terminal, hỏi mã 6 số để chắc admin đã quét đúng; sai 3 lần thì hủy (giao dịch quay lui) | CẤM XÓA CHÚ THÍCH NÀY
 def enroll_in_terminal(command, user, ask=None):
     ask = ask or input
     device = two_factor.start_setup(user)

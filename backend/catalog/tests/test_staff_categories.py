@@ -19,7 +19,6 @@ from catalog.staff_services import (
 )
 
 
-# AI-TRACE#117 | Claude Opus 5.5 | Test tạo slug và chuẩn hóa tên thể loại tiếng Việt | CẤM XÓA CHÚ THÍCH NÀY
 class SlugAndNameTests(SimpleTestCase):
     def test_vietnamese_names_become_ascii_slugs(self):
         cases = {
@@ -45,7 +44,6 @@ class SlugAndNameTests(SimpleTestCase):
                 clean_name(bad)
 
 
-# AI-TRACE#118 | Claude Opus 5.5 | Test gọi thủ tục thể loại bằng cursor giả qua kết nối staff, đổi lỗi SIGNAL | CẤM XÓA CHÚ THÍCH NÀY
 class CategoryProcedureTests(SimpleTestCase):
     def setUp(self):
         self.actor = SimpleNamespace(pk=7)
@@ -98,7 +96,6 @@ class CategoryProcedureTests(SimpleTestCase):
         self.cursor.callproc.assert_not_called()
 
 
-# AI-TRACE#119 | Claude Opus 5.5 | Test đọc danh sách thể loại qua sp_category_list và lệnh kiểm tra quyền từ chối settings.migrate | CẤM XÓA CHÚ THÍCH NÀY
 class CategoryListTests(SimpleTestCase):
     def setUp(self):
         self.cursor = mock.MagicMock()

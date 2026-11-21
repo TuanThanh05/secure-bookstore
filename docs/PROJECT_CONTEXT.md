@@ -175,10 +175,9 @@ secure-bookstore/
 ├── frontend/                 # templates/ (base, layouts, components, shop, account, dashboard, errors), static/
 ├── database/                 # 01_bang.sql, 02_trigger_thu_tuc.sql, 03_phan_quyen.sql, config/my.cnf, .env.db.example
 ├── deploy/                   # nginx/, gunicorn.conf.py
-├── docs/                     # tài liệu kỹ thuật từng chức năng, contract.md (hợp đồng FE–BE)
-├── scripts/ai_trace.py       # sinh AI_TRACE.md từ các dòng AI-TRACE trong code
+├── docs/                     # tài liệu từng chức năng, contract.md, PROJECT_CONTEXT.md, SECURITY_CHECKLIST.md, AI_TRACE.md
 ├── security-tests/           # dành cho kiểm thử
-├── compose.yaml  requirements.txt  .env.example  AI_TRACE.md  PROJECT_CONTEXT.md  SECURITY_CHECKLIST.md
+├── compose.yaml  requirements.txt  .env.example  README.md
 ```
 
 Cài đặt một máy (chi tiết `database/README.md`): `db_setup` → `migrate --settings=bookstore.settings.migrate` → `db_apply --settings=bookstore.settings.migrate` → `db_check_grants` → `runserver`. Tạo admin: `tao_admin`.
@@ -189,7 +188,7 @@ Cài đặt một máy (chi tiết `database/README.md`): `db_setup` → `migrat
 
 - Không dùng `raw()`/`cursor.execute` nối chuỗi với dữ liệu người dùng; không `|safe`, `mark_safe`, `csrf_exempt`; không đổi dữ liệu bằng GET; không `fields = '__all__'`.
 - Giá, tổng tiền, quyền sở hữu luôn tính và kiểm tra ở server/CSDL.
-- Không chú thích trong code (giải thích trong `docs/`), trừ dòng `AI-TRACE#<ID> | <model> | <làm gì> | CẤM XÓA CHÚ THÍCH NÀY` và file SQL. Không sửa dòng AI-TRACE cũ; viết lại hàm thì thêm `| đã viết lại bởi <tên>`.
+- Trong code chỉ có chú thích một dòng. Giải thích dài và đánh dấu code do AI viết nằm trong `docs/AI_TRACE.md` (mỗi mục: loại + tên | file | AI viết, rồi giải thích); cách ghi ở `docs/ai-trace.md`.
 - Không bao giờ commit `.env`, `database/.env.db`, khóa, mật khẩu, file sao lưu.
 - Không đẩy thẳng lên `main`; mỗi thay đổi một nhánh + PR, chờ CI xanh rồi Squash and merge.
 - Thao tác quản trị hệ thống nguy hiểm chỉ là lệnh `manage.py` trên máy chủ.

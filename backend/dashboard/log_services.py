@@ -62,7 +62,6 @@ LOG_ERROR_MESSAGES = {
 }
 
 
-# AI-TRACE#330 | Claude Opus 5.5 | Lỗi khi đọc nhật ký hệ thống, mang mã lỗi và câu tiếng Việt | CẤM XÓA CHÚ THÍCH NÀY
 class LogError(Exception):
     def __init__(self, code):
         self.code = code
@@ -92,7 +91,6 @@ def _text(value):
     return "—" if value is None else str(value)[:300]
 
 
-# AI-TRACE#331 | Claude Opus 5.5 | Một dòng nhật ký bảo mật cho template: nhãn tiếng Việt, mức độ, người dùng, IP, đường dẫn, chi tiết dạng cặp khóa–giá trị | CẤM XÓA CHÚ THÍCH NÀY
 @dataclass(frozen=True)
 class SecurityEventRow:
     id: int
@@ -125,7 +123,6 @@ class SecurityEventRow:
         return [(key, _text(value)) for key, value in self.detail.items()]
 
 
-# AI-TRACE#332 | Claude Opus 5.5 | Một dòng nhật ký thay đổi dữ liệu: bảng, hành động, danh sách thay đổi cũ → mới, nguồn (khách/hệ thống/quản trị), người thực hiện | CẤM XÓA CHÚ THÍCH NÀY
 @dataclass(frozen=True)
 class AuditRow:
     id: int
@@ -172,7 +169,6 @@ def _page_args(page):
     return page, offset
 
 
-# AI-TRACE#333 | Claude Opus 5.5 | Gọi thủ tục đọc nhật ký qua kết nối staff: bộ kết quả 1 là tổng số dòng, bộ 2 là trang dữ liệu; đổi lỗi SIGNAL thành LogError | CẤM XÓA CHÚ THÍCH NÀY
 def _read(procedure, params):
     try:
         with connections[STAFF_DB].cursor() as cursor:
@@ -194,7 +190,6 @@ def _naive_utc(value):
     return value.astimezone(UTC).replace(tzinfo=None) if value is not None else None
 
 
-# AI-TRACE#334 | Claude Opus 5.5 | Đọc một trang nhật ký bảo mật qua sp_staff_security_events, thời gian lọc đổi về UTC | CẤM XÓA CHÚ THÍCH NÀY
 def list_security_events(actor, *, event_type=None, severity=None, start=None, end=None, keyword=None, page=1):
     page, offset = _page_args(page)
     total, rows = _read("sp_staff_security_events", [
@@ -206,7 +201,6 @@ def list_security_events(actor, *, event_type=None, severity=None, start=None, e
     return events, total, page
 
 
-# AI-TRACE#335 | Claude Opus 5.5 | Đọc một trang nhật ký thay đổi dữ liệu qua sp_staff_audit_log | CẤM XÓA CHÚ THÍCH NÀY
 def list_audit_log(actor, *, table=None, action=None, start=None, end=None, record_id=None, page=1):
     page, offset = _page_args(page)
     total, rows = _read("sp_staff_audit_log", [

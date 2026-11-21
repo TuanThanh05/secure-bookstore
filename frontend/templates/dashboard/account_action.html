@@ -3,7 +3,6 @@
 {% block title %}{% if locking %}Khóa tài khoản{% else %}Mở khóa tài khoản{% endif %}{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
 {% block content %}
-  {# AI-TRACE#311 | Claude Opus 5.5 | Trang xác nhận khóa/mở khóa: thông tin tài khoản (đã che), lý do và nhập lại tài khoản + mật khẩu admin cho riêng lần này | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ ô tên đăng nhập (T2.2) #}
   <section class="dash-confirm" aria-labelledby="xac-nhan">
     <h1 class="dash-confirm__title" id="xac-nhan">{% if locking %}Khóa tài khoản {{ account.username }}?{% else %}Mở khóa tài khoản {{ account.username }}?{% endif %}</h1>
     <dl class="dash-info">

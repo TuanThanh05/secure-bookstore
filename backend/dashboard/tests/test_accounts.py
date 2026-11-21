@@ -30,7 +30,6 @@ def account(id=7, username="an_nguyen", status="active", phone="0901234567"):
                         date_joined=NOW, last_login=None)
 
 
-# AI-TRACE#313 | Claude Opus 5.5 | Test che email/SĐT và nhãn trạng thái tài khoản | CẤM XÓA CHÚ THÍCH NÀY
 class MaskingTests(SimpleTestCase):
     def test_mask_email(self):
         self.assertEqual(mask_email("an.nguyen@example.test"), "a***n@example.test")
@@ -50,7 +49,6 @@ class MaskingTests(SimpleTestCase):
         self.assertEqual(account().masked_phone, "090****567")
 
 
-# AI-TRACE#314 | Claude Opus 5.5 | Test service tài khoản bằng cursor giả: tham số đúng thứ tự, ngưỡng axes từ settings, giải mã SĐT đúng ngữ cảnh, chặn đầu vào sai, đổi lỗi SIGNAL | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi khóa tài khoản đăng xuất mọi phiên
 class AccountServiceTests(SimpleTestCase):
     def setUp(self):
         self.actor = SimpleNamespace(pk=2)
@@ -121,7 +119,6 @@ class AccountServiceTests(SimpleTestCase):
             lock_account(self.actor, 7, "Spam đánh giá")
 
 
-# AI-TRACE#315 | Claude Opus 5.5 | Test trang quản lý tài khoản: chỉ admin, email/SĐT che mặc định, bản đầy đủ cần xác thực lại và ghi log, khóa/mở khóa luôn đòi nhập mật khẩu dù vừa xác thực, CSRF | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi khóa tài khoản đăng xuất mọi phiên
 class AccountViewTests(TestCase):
     def setUp(self):
         cache.clear()

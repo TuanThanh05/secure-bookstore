@@ -1,8 +1,3 @@
-/* =====================================================================
-   account.js – trang đăng nhập / đăng ký. Nạp bằng {% block extra_js %} (defer).
-   Nút "con mắt" hiện/ẩn mật khẩu: chỉ đổi type của <input> (password ↔ text).
-   Quy tắc CSP: không JS inline, gắn sự kiện bằng addEventListener, không innerHTML.
-   ===================================================================== */
 "use strict";
 
 document.querySelectorAll(".password-toggle").forEach(function (button) {

@@ -16,10 +16,6 @@ def vnd(value):
 
 @register.filter
 def stars(rating):
-    """Điểm 0–5 → danh sách 5 tên icon: "star" (đầy), "star-half", "star-empty".
-
-    Làm tròn tới 0,5. Ví dụ 4.3 → 4,5 sao → [star × 4, star-half].
-    """
     try:
         value = float(rating)
     except (TypeError, ValueError):

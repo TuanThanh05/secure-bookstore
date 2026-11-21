@@ -12,7 +12,6 @@ from ._two_factor_cli import WRONG_SETTINGS, check_connection, enroll_in_termina
 CONFIRM_WORD = "dat lai"
 
 
-# AI-TRACE#507 | Claude Opus 5.5 | Lệnh máy chủ cài lại 2 bước cho admin mất điện thoại: gõ xác nhận, gỡ thiết bị cũ, quét QR mới, đăng xuất mọi phiên, ghi log | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi dùng chung end_user_sessions
 class Command(BaseCommand):
     help = ("Cài lại xác thực 2 bước cho quản trị viên (mất/đổi điện thoại). "
             "Chạy trên máy chủ: --settings=bookstore.settings.migrate")

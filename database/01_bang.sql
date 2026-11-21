@@ -1,43 +1,3 @@
--- =====================================================================
--- secure-bookstore – Bảng nghiệp vụ (lược đồ v1)
--- Hệ quản trị: MySQL 8.4 LTS (Docker theo compose.yaml, hoặc cài thường)
---
--- File này KHÔNG chạy bằng tay. Nó được migration
--- backend/core/migrations/0001_business_schema.py đọc và chạy khi gõ
--- `python manage.py migrate`, ngay SAU migration tạo accounts_user.
--- Thứ tự tạo bảng vì vậy luôn đúng: accounts_user (Django) → các bảng dưới đây.
---
--- Quy ước:
---   - Tên bảng, cột: tiếng Anh. Chú thích: tiếng Việt.
---   - Tên bảng theo quy ước của Django: <app>_<model>.
---   - Tiền tệ: VND, lưu số nguyên (INT UNSIGNED), không dùng số thực.
---   - Thời gian: DATETIME(6), lưu theo UTC (server đặt default-time-zone = '+00:00').
---   - Cột *_encrypted: dữ liệu đã mã hóa AES-GCM ở tầng ứng dụng, lưu dạng base64.
---   - Mọi bảng dùng InnoDB (cần cho transaction, khóa dòng, khóa ngoại).
---
--- Bảng accounts_user KHÔNG có ở đây: Django tạo nó từ accounts/models.py
--- (migration accounts/0001_initial), cùng các cột và 2 CHECK như lược đồ v1.
--- Các bảng Django khác cũng do migrate tạo: auth_*, accounts_user_groups,
--- accounts_user_user_permissions, django_session, django_content_type,
--- django_migrations (sau này thêm axes_*, otp_*).
---
--- Muốn sửa lược đồ: thường tạo file mới (02_..., 03_...) và một migration
--- mới đọc file đó. Chỉ sửa thẳng file này khi cả nhóm đã thống nhất và
--- mọi máy dựng lại CSDL từ đầu (xem database/README.md, mục "Làm lại sạch").
--- =====================================================================
-
--- =====================================================================
--- APP accounts
--- =====================================================================
-
--- Lịch sử mật khẩu: mã băm của tối đa 5 mật khẩu gần nhất (tính cả mật khẩu
--- đang dùng) của mỗi tài khoản. Django dùng để chặn đặt lại mật khẩu cũ.
---   - GHI: chỉ trigger trg_pwhist_* (phần 11 của 02_trigger_thu_tuc.sql) ghi và xóa bớt,
---     chạy bằng quyền bookstore_definer. Tài khoản ứng dụng chỉ có SELECT.
---   - SO SÁNH: chỉ làm được trong Django. Mã băm có muối ngẫu nhiên nên cùng
---     một mật khẩu cho ra chuỗi khác nhau; phải gọi check_password(mật khẩu
---     mới, mã băm cũ). CSDL không bao giờ thấy mật khẩu gốc.
--- AI-TRACE#085 | Claude Opus 5.5 | Bảng lưu 5 mã băm mật khẩu gần nhất của mỗi tài khoản | CẤM XÓA CHÚ THÍCH NÀY
 CREATE TABLE accounts_passwordhistory (
     id             BIGINT       NOT NULL AUTO_INCREMENT,
     user_id        BIGINT       NOT NULL,
@@ -51,7 +11,6 @@ CREATE TABLE accounts_passwordhistory (
 ) ENGINE=InnoDB
   COMMENT='Lịch sử mã băm mật khẩu (5 gần nhất)';
 
--- AI-TRACE#468 | Claude Opus 5.5 | Bảng thiết bị TOTP: chuỗi bí mật mã hóa, lúc xác nhận, bước thời gian đã dùng gần nhất (chống dùng lại mã) | CẤM XÓA CHÚ THÍCH NÀY
 CREATE TABLE accounts_totpdevice (
     id                BIGINT       NOT NULL AUTO_INCREMENT,
     user_id           BIGINT       NOT NULL,
@@ -69,7 +28,6 @@ CREATE TABLE accounts_totpdevice (
 ) ENGINE=InnoDB
   COMMENT='Thiết bị xác thực 2 bước (TOTP) của mỗi tài khoản';
 
--- AI-TRACE#469 | Claude Opus 5.5 | Bảng mã dự phòng: chỉ mã băm, mỗi mã dùng một lần | CẤM XÓA CHÚ THÍCH NÀY
 CREATE TABLE accounts_recoverycode (
     id          BIGINT       NOT NULL AUTO_INCREMENT,
     user_id     BIGINT       NOT NULL,
@@ -84,10 +42,6 @@ CREATE TABLE accounts_recoverycode (
 ) ENGINE=InnoDB
   COMMENT='Mã dự phòng xác thực 2 bước (chỉ mã băm)';
 
-
--- =====================================================================
--- APP catalog
--- =====================================================================
 
 -- Thể loại sách
 CREATE TABLE catalog_category (
@@ -161,10 +115,6 @@ CREATE TABLE catalog_review (
   COMMENT='Đánh giá sách của khách đã mua';
 
 
--- =====================================================================
--- APP orders
--- =====================================================================
-
 -- Giỏ hàng: mỗi người dùng một giỏ
 CREATE TABLE orders_cart (
     id          BIGINT      NOT NULL AUTO_INCREMENT,
@@ -180,8 +130,6 @@ CREATE TABLE orders_cart (
   COMMENT='Giỏ hàng';
 
 
--- Dòng trong giỏ hàng.
--- KHÔNG lưu giá: giá luôn lấy từ catalog_book tại thời điểm đặt đơn (chống sửa giá phía client).
 CREATE TABLE orders_cartitem (
     id        BIGINT            NOT NULL AUTO_INCREMENT,
     cart_id   BIGINT            NOT NULL,
@@ -200,10 +148,6 @@ CREATE TABLE orders_cartitem (
   COMMENT='Sách trong giỏ hàng';
 
 
--- Đơn hàng.
--- Chỉ được TẠO qua sp_place_order và chuyển sang 'paid' qua sp_confirm_payment.
--- Thông tin giao hàng là bản chụp lúc đặt (không có bảng địa chỉ riêng).
--- AI-TRACE#590 | Claude Opus 5.5 | Bảng đơn hàng gộp trạng thái cuối: thêm confirmed, packed, mọi trạng thái sau thanh toán bắt buộc có paid_at | CẤM XÓA CHÚ THÍCH NÀY
 CREATE TABLE orders_order (
     id                          BIGINT        NOT NULL AUTO_INCREMENT,
     code                        CHAR(32)      NOT NULL,      -- mã công khai (UUID hex), dùng trên URL thay cho id để khó đoán
@@ -264,12 +208,7 @@ CREATE TABLE orders_orderitem (
   COMMENT='Chi tiết đơn hàng';
 
 
--- =====================================================================
--- APP payments
--- =====================================================================
-
 -- Giao dịch thanh toán. Lưu cả callback bị từ chối để làm bằng chứng.
--- AI-TRACE#591 | Claude Opus 5.5 | Bảng giao dịch thanh toán gộp trạng thái cuối: giới hạn tên cổng, giao dịch mô phỏng không cần chữ ký, mỗi đơn tối đa một giao dịch thành công | CẤM XÓA CHÚ THÍCH NÀY
 CREATE TABLE payments_payment (
     id                BIGINT        NOT NULL AUTO_INCREMENT,
     order_id          BIGINT        NOT NULL,
@@ -283,9 +222,6 @@ CREATE TABLE payments_payment (
     client_ip         VARCHAR(45)   NULL,                    -- IPv4 hoặc IPv6
     created_at        DATETIME(6)   NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
 
-    -- Cột sinh tự động: chỉ có giá trị khi giao dịch thành công.
-    -- Đặt UNIQUE trên cột này để một transaction_id chỉ được ghi nhận thành công MỘT lần (chống replay),
-    -- nhưng vẫn lưu được nhiều lần thử bị từ chối dùng lại cùng mã.
     success_transaction_id VARCHAR(64)
         GENERATED ALWAYS AS (IF(status = 'success', transaction_id, NULL)) STORED,
     success_order_id BIGINT
@@ -309,13 +245,6 @@ CREATE TABLE payments_payment (
   COMMENT='Giao dịch thanh toán';
 
 
--- =====================================================================
--- APP core – nhật ký
--- =====================================================================
-
--- Nhật ký thay đổi dữ liệu. Do TRIGGER ghi (database/triggers/), ứng dụng không ghi trực tiếp.
--- Không tài khoản ứng dụng nào có quyền UPDATE/DELETE trên bảng này.
--- Không đặt khóa ngoại để log vẫn còn nguyên khi bản ghi gốc bị xóa.
 CREATE TABLE core_auditlog (
     id           BIGINT      NOT NULL AUTO_INCREMENT,
     table_name   VARCHAR(64) NOT NULL,                       -- bảng bị thay đổi, ví dụ catalog_book
@@ -336,11 +265,6 @@ CREATE TABLE core_auditlog (
   COMMENT='Nhật ký thay đổi dữ liệu (ghi bởi trigger)';
 
 
--- Nhật ký sự kiện bảo mật. Django ghi (app core), đồng thời ghi ra file security.log.
--- Tài khoản ứng dụng chỉ có INSERT và SELECT, không có UPDATE/DELETE.
--- Không đặt khóa ngoại tới accounts_user: log phải giữ nguyên kể cả khi user bị xóa,
--- và có thể ghi sự kiện cho username không tồn tại (dò tài khoản).
--- AI-TRACE#592 | Claude Opus 5.5 | Bảng nhật ký bảo mật gộp trạng thái cuối: danh sách loại sự kiện hiện hành và chỉ mục theo thời gian | CẤM XÓA CHÚ THÍCH NÀY
 CREATE TABLE core_securityevent (
     id                  BIGINT       NOT NULL AUTO_INCREMENT,
     event_type          VARCHAR(40)  NOT NULL,
@@ -400,6 +324,3 @@ CREATE TABLE core_securityevent (
 ) ENGINE=InnoDB
   COMMENT='Nhật ký sự kiện bảo mật';
 
--- =====================================================================
--- Hết script lược đồ.
--- =====================================================================

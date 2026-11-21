@@ -12,7 +12,6 @@ WRITE_PRIVILEGES = ("ALL PRIVILEGES", "INSERT", "UPDATE", "DELETE", "DROP", "ALT
                     "SUPER", "GRANT OPTION", "LOCK TABLES", "PROCESS")
 
 
-# AI-TRACE#572 | Claude Opus 5.5 | Lệnh kiểm tra khôi phục: giải mã bản mới nhất (hoặc file chỉ định), khôi phục vào CSDL tạm, tắt Event của bản tạm, so số dòng từng bảng và số thủ tục/trigger/Event với manifest, kiểm tra tài khoản sao lưu chỉ đọc, rồi xóa CSDL tạm | CẤM XÓA CHÚ THÍCH NÀY
 class Command(BaseCommand):
     help = "Thử khôi phục một bản sao lưu vào CSDL tạm, đối chiếu số dòng với lúc sao lưu, rồi xóa CSDL tạm."
     requires_system_checks = []

@@ -12,7 +12,6 @@ def on(alias, model=User):
     return obj
 
 
-# AI-TRACE#460 | Claude Opus 5.5 | Test router ghi tài khoản: ghi User đi qua "auth", đọc vẫn "default", bảng khác không đổi kết nối | CẤM XÓA CHÚ THÍCH NÀY
 @override_settings(AUTH_DB_ALIAS="auth")
 class AccountWriteRouterTests(SimpleTestCase):
     def setUp(self):

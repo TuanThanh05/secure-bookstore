@@ -6,7 +6,6 @@ from django.test import SimpleTestCase, override_settings
 from accounts.tokens import SIGNUP_SIGNING_SALT, make_signup_token, read_signup_token
 
 
-# AI-TRACE#430 | Claude Opus 5.5 | Test mã link đăng ký: hợp lệ, hết hạn, bị sửa, ký sai mục đích, sai dạng | CẤM XÓA CHÚ THÍCH NÀY
 class SignupTokenTests(SimpleTestCase):
     def test_valid_token_returns_email(self):
         result = read_signup_token(make_signup_token("an@example.test"))

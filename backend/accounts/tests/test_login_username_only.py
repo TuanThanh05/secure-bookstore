@@ -18,7 +18,6 @@ PASSWORD = secrets.token_urlsafe(12) + "-Aa9"
 INVALID_LOGIN = "Tên đăng nhập hoặc mật khẩu không đúng."
 
 
-# AI-TRACE#548 | Claude Opus 5.5 | Test T3.2: đăng nhập/xác thực lại chỉ nhận tên đăng nhập, email đúng + mật khẩu đúng vẫn bị từ chối như sai; thư quên mật khẩu kèm tên đăng nhập | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ ô tên đăng nhập ở xác thực lại (T2.2)
 class UsernameOnlyLoginTests(TestCase):
     def setUp(self):
         cache.clear()
@@ -74,7 +73,6 @@ class UsernameOnlyLoginTests(TestCase):
         self.assertIn("Tên đăng nhập của bạn: binh_tran", mail.outbox[0].body)
 
 
-# AI-TRACE#549 | Claude Opus 5.5 | Test T3.2: IP đăng nhập sai quá ngưỡng bị 429 trước khi kiểm mật khẩu (không authenticate, không thêm login_failed), có log rate_limited | CẤM XÓA CHÚ THÍCH NÀY
 class LoginIpGuardTests(TestCase):
     def setUp(self):
         cache.clear()

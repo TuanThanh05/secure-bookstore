@@ -46,7 +46,6 @@
 .reauth__back { font-size: 14px; color: var(--color-muted); }
 .reauth__back:hover { color: var(--color-primary); }
 
-/* AI-TRACE#041 | Claude Opus 5.5 | Kiểu bảng thông tin tài khoản và ô bị ẩn có nút con mắt | CẤM XÓA CHÚ THÍCH NÀY */
 .dash-info {
   margin: 0 0 var(--space-lg); padding: var(--space-sm) var(--space-lg);
   background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg);
@@ -69,7 +68,6 @@
   border-radius: var(--radius-md); background: var(--color-surface); font-size: 14px;
 }
 .dash-notice p { margin: 0; }
-/* AI-TRACE#098 | Claude Opus 5.5 | Kiểu form cập nhật thông tin nhân viên và hàng nút thao tác | CẤM XÓA CHÚ THÍCH NÀY */
 .dash-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: var(--space-md); }
 .dash-form {
   display: grid; gap: var(--space-md); max-width: 520px; padding: var(--space-lg);
@@ -80,7 +78,6 @@
   .dash-info__row { grid-template-columns: 1fr; gap: var(--space-xs); }
 }
 
-/* AI-TRACE#181 | Claude Opus 5.5 | Kiểu trang kho sách: bộ lọc, bảng, nhãn trạng thái, khung, form, ảnh bìa, phân trang, xác nhận xóa | CẤM XÓA CHÚ THÍCH NÀY */
 .dash-header--row { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-md); }
 .dash-back { display: inline-flex; align-items: center; gap: var(--space-xs); margin-bottom: var(--space-md); font-size: 14px; color: var(--color-muted); text-decoration: none; }
 .dash-back:hover { color: var(--color-primary); }
@@ -132,7 +129,6 @@
 .dash-cover-edit .dash-cover { width: 120px; height: 180px; flex: none; }
 .dash-cover-edit__fields { display: grid; gap: var(--space-md); flex: 1; }
 
-/* AI-TRACE#225 | Claude Opus 5.5 | Kiểu ô chọn ảnh bìa dạng vùng viền đứt có nút viên thuốc và khung xem ảnh bìa hiện tại | CẤM XÓA CHÚ THÍCH NÀY */
 .dash-field input[type="file"] {
   min-height: 0; padding: var(--space-md);
   border: 1.5px dashed var(--color-border); border-radius: var(--radius-md);
@@ -201,20 +197,17 @@
   .dash-inline-form--wide { grid-template-columns: 1fr; }
 }
 
-/* AI-TRACE#312 | Claude Opus 5.5 | Kiểu trang quản lý tài khoản: ghi chú trạng thái xem dữ liệu nhạy cảm, nút nhỏ trong bảng, form xác nhận một cột | CẤM XÓA CHÚ THÍCH NÀY */
 .dash-note { margin: 0 0 var(--space-md); padding: var(--space-sm) var(--space-md); border-left: 3px solid var(--color-warning); border-radius: var(--radius-sm); background: rgba(138, 97, 0, 0.08); font-size: 14px; color: var(--color-text); }
 .btn--sm { min-height: 34px; padding: 0.35rem 0.9rem; font-size: 12px; }
 .dash-header--row .btn .icon { margin-right: var(--space-xs); }
 .dash-confirm .dash-form { grid-template-columns: 1fr; max-width: 520px; }
 .dash-confirm textarea { resize: vertical; }
 
-/* AI-TRACE#316 | Claude Opus 5.5 | Nút khóa nhỏ trong bảng tài khoản dùng màu nút chính và căn giữa khung xác nhận trong vùng quản trị | CẤM XÓA CHÚ THÍCH NÀY */
 .btn--danger.btn--sm { background: var(--color-primary); border-color: var(--color-primary); }
 .btn--danger.btn--sm:hover { background: var(--color-primary-strong); border-color: var(--color-primary-strong); }
 .dash-confirm { margin-left: auto; margin-right: auto; }
 .dash-info:has(+ .dash-form) { max-width: 520px; }
 
-/* AI-TRACE#317 | Claude Opus 5.5 | Khung xác nhận khóa tài khoản chia hai cột: thông tin bên trái, form bên phải, về một cột trên màn hình nhỏ | CẤM XÓA CHÚ THÍCH NÀY */
 .dash-confirm:has(> .dash-form) {
   max-width: 1040px;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -231,7 +224,6 @@
   .dash-confirm:has(> .dash-form) > .dash-form { grid-column: 1; grid-row: auto; }
 }
 
-/* AI-TRACE#343 | Claude Opus 5.5 | Kiểu trang nhật ký hệ thống: tab, dòng cảnh báo/nghiêm trọng tô nền, chữ đơn cách cho IP và đường dẫn, chi tiết và danh sách thay đổi gọn | CẤM XÓA CHÚ THÍCH NÀY */
 .dash-tabs { display: flex; gap: var(--space-xs); margin-bottom: var(--space-md); border-bottom: 1px solid var(--color-border); }
 .dash-tabs__tab { padding: var(--space-sm) var(--space-md); border-bottom: 2px solid transparent; margin-bottom: -1px; color: var(--color-muted); text-decoration: none; font-weight: 500; }
 .dash-tabs__tab:hover { color: var(--color-text); }
@@ -252,7 +244,6 @@
 .dash-log__old { text-decoration: line-through; color: var(--color-muted); overflow-wrap: anywhere; }
 .dash-log__new { font-weight: 600; overflow-wrap: anywhere; }
 
-/* AI-TRACE#389 | Claude Opus 5.5 | Kiểu trang quản lý đơn: mã đơn chữ đơn cách, nút bước tiếp theo xác nhận bằng details, hai thẻ thông tin đơn/giao hàng | CẤM XÓA CHÚ THÍCH NÀY */
 .dash-order__code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; overflow-wrap: anywhere; }
 .dash-step { display: inline-block; text-align: left; }
 .dash-step summary { list-style: none; cursor: pointer; }
@@ -267,7 +258,6 @@
 .dash-order__card .dash-info__row { grid-template-columns: 130px 1fr; }
 @media (max-width: 900px) { .dash-order { grid-template-columns: 1fr; } }
 
-/* AI-TRACE#401 | Claude Opus 5.5 | Kiểu trang Tổng quan: nhóm số liệu có tiêu đề, thẻ số bấm được, thẻ cảnh báo đỏ, dải 4 bước đơn hàng, lưới kho/bảo mật | CẤM XÓA CHÚ THÍCH NÀY */
 .dash-overview { margin-bottom: var(--space-xl); }
 .dash-overview__title { margin: 0 0 var(--space-sm); font-size: 18px; }
 .dash-overview__note { margin: var(--space-sm) 0 0; font-size: 13px; color: var(--color-muted); }
@@ -288,13 +278,11 @@
   .dash-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-/* AI-TRACE#553 | Claude Opus 5.5 | Ô hiện tên tài khoản dạng chữ trong form xác thực lại và khóa/mở khóa (T2.2), không phải ô nhập | CẤM XÓA CHÚ THÍCH NÀY */
 .reauth__label, .dash-field__label { font-size: 14px; font-weight: 600; }
 .reauth__account, .dash-field__static {
   display: flex; align-items: center; min-height: 44px; margin: 0; padding: 0.65rem 0.85rem;
   font-weight: 600; color: var(--color-text); overflow-wrap: anywhere;
   border: 1px dashed var(--color-border); border-radius: var(--radius);
 }
-/* AI-TRACE#576 | Claude Opus 5.5 | Kiểu ô trạng thái sao lưu: giá trị dạng chữ/ngày giờ nhỏ hơn số, dòng gợi ý dưới giá trị | CẤM XÓA CHÚ THÍCH NÀY */
 .dash-stat__value--text { font-size: 22px; line-height: 1.3; }
 .dash-stat__hint { margin: var(--space-xs) 0 0; font-size: 13px; color: var(--color-muted); }

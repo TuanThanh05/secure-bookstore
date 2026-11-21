@@ -29,7 +29,6 @@ ERROR_FIELDS = {
 }
 
 
-# AI-TRACE#155 | Claude Opus 5.5 | Gắn lỗi nghiệp vụ từ service vào đúng ô của form, không có ô phù hợp thì thành lỗi chung | CẤM XÓA CHÚ THÍCH NÀY
 def attach_error(form, error):
     for field in ERROR_FIELDS.get(error.code, ()):
         if field in form.fields:
@@ -38,7 +37,6 @@ def attach_error(form, error):
     form.add_error(None, error.message)
 
 
-# AI-TRACE#156 | Claude Opus 5.5 | Form thông tin sách dùng chung cho thêm và sửa: kiểm tra độ dài, khoảng giá, ISBN, thể loại, dung lượng ảnh | CẤM XÓA CHÚ THÍCH NÀY
 class BookForm(forms.Form):
     title = forms.CharField(label="Tên sách", max_length=TITLE_MAX_LENGTH)
     author = forms.CharField(label="Tác giả", max_length=TITLE_MAX_LENGTH)
@@ -80,12 +78,10 @@ class BookForm(forms.Form):
         return {key: data[key] for key in ("title", "author", "isbn", "category_id", "description", "price", "cost_price")}
 
 
-# AI-TRACE#157 | Claude Opus 5.5 | Form thêm sách: thêm ô tồn kho ban đầu 0 đến 10.000 | CẤM XÓA CHÚ THÍCH NÀY
 class BookCreateForm(BookForm):
     stock = forms.IntegerField(label="Tồn kho ban đầu", min_value=0, max_value=STOCK_MAX, initial=0)
 
 
-# AI-TRACE#158 | Claude Opus 5.5 | Form sửa sách: thêm ô bỏ ảnh bìa, không cho vừa chọn ảnh mới vừa bỏ ảnh | CẤM XÓA CHÚ THÍCH NÀY
 class BookEditForm(BookForm):
     remove_cover = forms.BooleanField(label="Bỏ ảnh bìa (dùng ảnh mặc định)", required=False)
 
@@ -96,12 +92,10 @@ class BookEditForm(BookForm):
         return cleaned
 
 
-# AI-TRACE#159 | Claude Opus 5.5 | Form số lượng nhập kho hoặc giảm kho, 1 đến 10.000 cuốn | CẤM XÓA CHÚ THÍCH NÀY
 class StockForm(forms.Form):
     quantity = forms.IntegerField(label="Số lượng", min_value=1, max_value=STOCK_MAX)
 
 
-# AI-TRACE#160 | Claude Opus 5.5 | Form tên thể loại dùng cho thêm và sửa tên | CẤM XÓA CHÚ THÍCH NÀY
 class CategoryForm(forms.Form):
     name = forms.CharField(label="Tên thể loại", max_length=NAME_MAX_LENGTH)
 

@@ -3,7 +3,6 @@
 {% block title %}Tổng quan{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
 {% block content %}
-  {# AI-TRACE#400 | Claude Opus 5.5 | Trang Tổng quan: đơn cần xử lý theo bước (bấm sang Quản lý đơn có lọc sẵn), đơn mới/hủy hôm nay, doanh thu, kho sắp hết/hết hàng và 5 cuốn còn ít nhất, bảo mật 24 giờ | CẤM XÓA CHÚ THÍCH NÀY #}
   <header class="dash-header">
     <h1 class="dash-header__title">Tổng quan</h1>
     <p class="dash-header__desc">Tình hình cửa hàng, cập nhật mỗi lần mở trang. Ngày, tháng tính theo giờ Việt Nam.</p>
@@ -95,7 +94,6 @@
       </section>
     </div>
 
-    {# AI-TRACE#575 | Claude Opus 5.5 | Ô trạng thái sao lưu trên Tổng quan: lần sao lưu thành công/lỗi, kiểm tra khôi phục gần nhất, tô đỏ khi cần chú ý; không có nút sao lưu (chỉ chạy bằng lệnh trên máy chủ) | CẤM XÓA CHÚ THÍCH NÀY #}
     {% with b=overview.backup %}
       <section class="dash-overview" aria-labelledby="ov-backup">
         <h2 class="dash-overview__title" id="ov-backup">Sao lưu CSDL</h2>

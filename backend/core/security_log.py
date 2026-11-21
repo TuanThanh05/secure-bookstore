@@ -18,7 +18,6 @@ LEVELS = {"info": logging.INFO, "warning": logging.WARNING, "critical": logging.
 PATH_MAX_LENGTH = 255
 
 
-# AI-TRACE#519 | Claude Opus 5.5 | Che mã bí mật trong đường dẫn trước khi ghi log (link đặt lại mật khẩu, link đăng ký): phần mã thay bằng "-" | CẤM XÓA CHÚ THÍCH NÀY
 def redact_path(path):
     if not path:
         return path

@@ -26,7 +26,6 @@ def _count_within(key, limit, window):
     return count <= limit
 
 
-# AI-TRACE#415 | Claude Opus 5.5 | Giới hạn số lần gửi form đăng ký của mỗi IP, đếm riêng từng bước | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi đọc IP thật sau Nginx
 def allow_signup_step(request, step):
     ip = client_ip(request) or "unknown"
     allowed = _count_within(f"accounts:signup-rate:{step}:{ip}", settings.SIGNUP_RATE_LIMIT, settings.SIGNUP_RATE_WINDOW)
@@ -35,13 +34,11 @@ def allow_signup_step(request, step):
     return allowed
 
 
-# AI-TRACE#416 | Claude Opus 5.5 | Giới hạn số thư đăng ký gửi tới một email trong một giờ, tính cả thư báo trùng | CẤM XÓA CHÚ THÍCH NÀY
 def _allow_signup_mail(email):
     digest = hashlib.sha256(email.lower().encode("utf-8")).hexdigest()
     return _count_within(f"accounts:signup-mail:{digest}", settings.SIGNUP_EMAIL_LIMIT, settings.SIGNUP_EMAIL_WINDOW)
 
 
-# AI-TRACE#417 | Claude Opus 5.5 | Bước 1 đăng ký: không ghi CSDL, email mới nhận link, email đã có nhận thư báo | CẤM XÓA CHÚ THÍCH NÀY
 def start_signup(request, email):
     existing = User.objects.filter(email__iexact=email).first()
     if not _allow_signup_mail(email):
@@ -54,18 +51,15 @@ def start_signup(request, email):
     send_existing_account_email(request, existing)
 
 
-# AI-TRACE#418 | Claude Opus 5.5 | Email đã có tài khoản chưa (link đăng ký chỉ dùng được khi chưa có) | CẤM XÓA CHÚ THÍCH NÀY
 def email_has_account(email):
     return User.objects.filter(email__iexact=email).exists()
 
 
-# AI-TRACE#419 | Claude Opus 5.5 | Cất email đã chứng minh vào phiên mới (đổi session ID) kèm thời điểm bấm link | CẤM XÓA CHÚ THÍCH NÀY
 def remember_signup_email(request, email):
     request.session.cycle_key()
     request.session[SIGNUP_SESSION_KEY] = {"email": email, "at": int(time.time())}
 
 
-# AI-TRACE#420 | Claude Opus 5.5 | Lấy email đăng ký đang chờ trong phiên, quá hạn hoặc sai dạng thì xóa và trả None | CẤM XÓA CHÚ THÍCH NÀY
 def pending_signup_email(request):
     data = request.session.get(SIGNUP_SESSION_KEY)
     if isinstance(data, dict):
@@ -82,7 +76,6 @@ def clear_signup(request):
     request.session.pop(SIGNUP_SESSION_KEY, None)
 
 
-# AI-TRACE#421 | Claude Opus 5.5 | Bước 2 đăng ký: tạo tài khoản đã xác nhận email, chặn trùng bằng UNIQUE khi nộp cùng lúc | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi tách app_auth
 def complete_signup(request, form, email):
     if email_has_account(email):
         clear_signup(request)
@@ -106,7 +99,6 @@ def _password_change_key(user):
     return f"accounts:password-change-failures:{user.pk}"
 
 
-# AI-TRACE#058 | Claude Opus 5.5 | Đếm số lần nhập sai mật khẩu hiện tại khi đổi mật khẩu, trả về tổng số lần | CẤM XÓA CHÚ THÍCH NÀY
 def record_password_change_failure(user):
     key = _password_change_key(user)
     cache.add(key, 0, timeout=settings.PASSWORD_CHANGE_FAILURE_WINDOW)
@@ -117,12 +109,10 @@ def record_password_change_failure(user):
         return 1
 
 
-# AI-TRACE#059 | Claude Opus 5.5 | Xóa bộ đếm nhập sai sau khi đổi mật khẩu thành công | CẤM XÓA CHÚ THÍCH NÀY
 def clear_password_change_failures(user):
     cache.delete(_password_change_key(user))
 
 
-# AI-TRACE#075 | Claude Opus 5.5 | Lưu họ, tên, SĐT đã mã hóa; chỉ ghi cột thay đổi và log tên cột, không log giá trị | CẤM XÓA CHÚ THÍCH NÀY
 def update_profile(request, user, data):
     changed = []
     if data["last_name"] != user.last_name:
@@ -143,7 +133,6 @@ def update_profile(request, user, data):
 SP_DOES_NOT_EXIST = 1305
 
 
-# AI-TRACE#546 | Claude Opus 5.5 | IP đã đăng nhập sai quá ngưỡng (gộp mọi tài khoản) trong cửa sổ gần nhất thì chặn: đếm bằng sp_login_ip_failures trên bảng nhật ký | CẤM XÓA CHÚ THÍCH NÀY
 def login_ip_blocked(request):
     ip = client_ip(request)
     if not ip:

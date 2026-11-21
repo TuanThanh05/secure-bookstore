@@ -11,4 +11,4 @@ Thư mục của người kiểm thử: script tấn công thử và bằng ch�
 Quy tắc:
 - Chỉ tấn công máy của nhóm (localhost / máy demo). Không quét hay tấn công hệ thống của người khác.
 - Không lưu mật khẩu, token, cookie thật vào file trong repo; ảnh chụp có thông tin nhạy cảm thì che đi.
-- Mỗi kịch bản ghi: mục checklist (số ở `PROJECT_CONTEXT.md`), bước làm, kết quả trên nhánh `demo-vulnerable`, kết quả trên `main`.
+- Mỗi kịch bản ghi: mục checklist (số ở `docs/SECURITY_CHECKLIST.md`), bước làm, kết quả trên nhánh `demo-vulnerable`, kết quả trên `main`.

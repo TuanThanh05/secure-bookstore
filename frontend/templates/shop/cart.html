@@ -8,7 +8,6 @@
     <p class="area-header__desc">Sách bạn đã chọn, chưa đặt hàng.</p>
   </header>
   {% if cart.lines %}
-    {# AI-TRACE#254 | Claude Opus 5.5 | Danh sách sách trong giỏ: nút −/+ gửi số lượng cuối cùng, nút Gỡ, sách ngừng bán/hết hàng hiện mờ chỉ gỡ được, tạm tính và nút đặt hàng (khóa khi còn sách không bán được) | CẤM XÓA CHÚ THÍCH NÀY #}
     <div class="cart">
       <ul class="cart__list">
         {% for line in cart.lines %}

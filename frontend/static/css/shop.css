@@ -1,8 +1,3 @@
-/* =====================================================================
-   shop.css – khu vực khách hàng: trang chủ, danh sách sách (FE 1 giữ).
-   Nạp trong template bằng {% block extra_css %}. Chỉ dùng biến của base.css.
-   ===================================================================== */
-
 /* --- Hero (đầu trang chủ) --- */
 .hero { text-align: center; padding: var(--space-xl) 0 var(--space-lg); }
 .hero__title {
@@ -102,11 +97,6 @@
 .prose ul { padding-left: 1.2rem; }
 .prose li { margin-bottom: var(--space-xs); }
 
-/* --- Trang lỗi (errors/400, 403, 403_csrf, 404, 500) ---
-   Hai kiểu HTML đều dùng được:
-     404:      .error-page > .icon, .error-page__code, .error-page__title, __text, __search, __actions
-     còn lại:  .error-page > h1 (mã lỗi), p (mô tả), .btn
-   Ghi đè rule .error-page của base.css (h1 72px đỏ) cho hợp theme giấy ngà + đỏ đô + vàng đồng. */
 .error-page {
   display: flex; flex-direction: column; align-items: center;
   max-width: 640px; margin: 0 auto;
@@ -197,7 +187,6 @@
   .book-grid { grid-template-columns: 1fr; }
 }
 
-/* AI-TRACE#222 | Claude Opus 5.5 | Kiểu trang chi tiết sách: ảnh lớn, thông tin, nút đặt hàng mờ, danh sách và form đánh giá | CẤM XÓA CHÚ THÍCH NÀY */
 .book-card__cover { display: block; }
 .book-card__title a { color: inherit; text-decoration: none; }
 .book-card__title a:hover { color: var(--color-primary); }
@@ -272,7 +261,6 @@
   .book-detail__title { font-size: 30px; }
 }
 
-/* AI-TRACE#235 | Claude Opus 5.5 | Kiểu form thêm vào giỏ ở trang chi tiết: ô số lượng gọn cạnh nút | CẤM XÓA CHÚ THÍCH NÀY */
 .cart-add { display: flex; align-items: center; gap: var(--space-sm); margin: 0; }
 .cart-add__qty {
   width: 4.5rem; min-height: 44px; padding: 0.5rem 0.6rem; font: inherit; text-align: center;
@@ -281,7 +269,6 @@
 .cart-add__qty:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-ring); }
 .book-detail__note { flex-basis: 100%; }
 
-/* AI-TRACE#407 | Claude Opus 5.5 | Kiểu thanh chuyển trang tủ sách: ô số tròn, trang hiện tại tô màu chính, dấu ba chấm, ô nhập số trang; xuống dòng gọn trên điện thoại | CẤM XÓA CHÚ THÍCH NÀY */
 .catalog { scroll-margin-top: var(--space-lg); }
 .pager { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--space-sm) var(--space-lg); margin-top: var(--space-xl); }
 .pager__list { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--space-xs); margin: 0; padding: 0; list-style: none; }

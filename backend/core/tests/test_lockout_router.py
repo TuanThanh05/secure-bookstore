@@ -11,7 +11,6 @@ from core.db_routers import LockoutRouter
 from core.management.commands.db_apply import PAYMENT_GRANT, PAYMENT_REVOKE, apply_payment_simulation
 
 
-# AI-TRACE#530 | Claude Opus 5.5 | Test bảng django-axes đi qua kết nối "auth" và quyền gọi sp_payment_simulate đi theo cờ PAYMENT_SIMULATION | CẤM XÓA CHÚ THÍCH NÀY
 @override_settings(AUTH_DB_ALIAS="auth", SESSION_DB_ALIAS="session")
 class LockoutRouterTests(SimpleTestCase):
     def test_axes_tables_use_auth_connection(self):

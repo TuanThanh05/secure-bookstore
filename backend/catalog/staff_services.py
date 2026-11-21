@@ -19,7 +19,6 @@ CATEGORY_ERROR_MESSAGES = {
 }
 
 
-# AI-TRACE#106 | Claude Opus 5.5 | Một dòng thể loại trả về từ sp_category_list, kèm số sách và cờ xóa được | CẤM XÓA CHÚ THÍCH NÀY
 @dataclass(frozen=True)
 class StaffCategory:
     id: int
@@ -34,7 +33,6 @@ class StaffCategory:
         return self.book_count == 0
 
 
-# AI-TRACE#107 | Claude Opus 5.5 | Lỗi nghiệp vụ khi quản lý thể loại, mang mã lỗi và câu tiếng Việt | CẤM XÓA CHÚ THÍCH NÀY
 class CategoryError(Exception):
     def __init__(self, code):
         self.code = code
@@ -42,7 +40,6 @@ class CategoryError(Exception):
         super().__init__(self.message)
 
 
-# AI-TRACE#108 | Claude Opus 5.5 | Chuẩn hóa tên thể loại: bỏ khoảng trắng thừa, kiểm tra độ dài | CẤM XÓA CHÚ THÍCH NÀY
 def clean_name(name):
     cleaned = " ".join((name or "").split())
     if not cleaned or len(cleaned) > NAME_MAX_LENGTH:
@@ -50,7 +47,6 @@ def clean_name(name):
     return cleaned
 
 
-# AI-TRACE#109 | Claude Opus 5.5 | Tạo slug không dấu từ tên tiếng Việt, xử lý riêng chữ đ | CẤM XÓA CHÚ THÍCH NÀY
 def make_slug(name):
     text = name.replace("đ", "d").replace("Đ", "D")
     text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii").lower()
@@ -60,7 +56,6 @@ def make_slug(name):
     return slug
 
 
-# AI-TRACE#110 | Claude Opus 5.5 | Gọi một thủ tục qua kết nối staff, đổi lỗi SIGNAL thành exception nghiệp vụ tương ứng | CẤM XÓA CHÚ THÍCH NÀY
 def _call(procedure, params, out_index=None, messages=CATEGORY_ERROR_MESSAGES, error_class=CategoryError):
     connection = connections[STAFF_DB]
     if connection.in_atomic_block:
@@ -81,7 +76,6 @@ def _call(procedure, params, out_index=None, messages=CATEGORY_ERROR_MESSAGES, e
         raise
 
 
-# AI-TRACE#115 | Claude Opus 5.5 | Đổi id thể loại nhận từ request thành số nguyên, sai kiểu thì coi như không tìm thấy | CẤM XÓA CHÚ THÍCH NÀY
 def _category_id(value):
     try:
         return int(value)
@@ -89,7 +83,6 @@ def _category_id(value):
         raise CategoryError("CATEGORY_NOT_FOUND") from None
 
 
-# AI-TRACE#111 | Claude Opus 5.5 | Danh sách thể loại cho nhân viên, gọi sp_category_list qua kết nối staff | CẤM XÓA CHÚ THÍCH NÀY
 def list_categories():
     connection = connections[STAFF_DB]
     if connection.in_atomic_block:
@@ -102,18 +95,15 @@ def list_categories():
     return [StaffCategory(row[0], row[1], row[2], int(row[3]), int(row[4]), row[5]) for row in rows]
 
 
-# AI-TRACE#112 | Claude Opus 5.5 | Thêm thể loại bằng sp_category_create, trả id mới | CẤM XÓA CHÚ THÍCH NÀY
 def create_category(actor, name):
     cleaned = clean_name(name)
     return _call("sp_category_create", [actor.pk, cleaned, make_slug(cleaned), None], out_index=3)
 
 
-# AI-TRACE#113 | Claude Opus 5.5 | Sửa tên thể loại bằng sp_category_rename, slug đổi theo tên | CẤM XÓA CHÚ THÍCH NÀY
 def rename_category(actor, category_id, name):
     cleaned = clean_name(name)
     _call("sp_category_rename", [actor.pk, _category_id(category_id), cleaned, make_slug(cleaned)])
 
 
-# AI-TRACE#114 | Claude Opus 5.5 | Xóa thể loại bằng sp_category_delete | CẤM XÓA CHÚ THÍCH NÀY
 def delete_category(actor, category_id):
     _call("sp_category_delete", [actor.pk, _category_id(category_id)])

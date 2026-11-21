@@ -11,7 +11,6 @@ ROW = (7, "Nhà Giả Kim", "Paulo Coelho", "9780306406157", 4, "Hành trình", 
        datetime(2026, 11, 15, 9, 0), 1, Decimal("4.5"), 2)
 
 
-# AI-TRACE#197 | Claude Opus 5.5 | Test service danh mục cho khách: gọi đúng thủ tục bằng kết nối app_customer, tham số truyền riêng, đổi dòng thành BookCard | CẤM XÓA CHÚ THÍCH NÀY
 class PublicCatalogServiceTests(SimpleTestCase):
     def setUp(self):
         self.cursor = mock.MagicMock()
@@ -71,7 +70,6 @@ class PublicCatalogServiceTests(SimpleTestCase):
         self.assertEqual(list_public_books()[0].cover_url, "/media/covers/" + "c" * 32 + ".webp")
 
 
-# AI-TRACE#224 | Claude Opus 5.5 | Test lấy một sách cho trang chi tiết: id sai không xuống CSDL, sách ẩn trả None, có tên thể loại | CẤM XÓA CHÚ THÍCH NÀY
 class PublicBookDetailServiceTests(SimpleTestCase):
     setUp = PublicCatalogServiceTests.setUp
 

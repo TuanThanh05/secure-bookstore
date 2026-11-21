@@ -14,12 +14,10 @@ REPLACED_NOTICE_SECONDS = 60 * 60
 STAFF_LOGIN_AT_KEY = "staff_login_at"
 
 
-# AI-TRACE#445 | Claude Opus 5.5 | Khóa lưu trong bảng phiên là SHA-256 của cookie (cắt 40 ký tự cho vừa cột), đọc bảng không ra cookie dùng được | CẤM XÓA CHÚ THÍCH NÀY
 def stored_key(session_key):
     return hashlib.sha256(session_key.encode("utf-8")).hexdigest()[:STORED_KEY_LENGTH]
 
 
-# AI-TRACE#523 | Claude Opus 5.5 | Xóa mọi phiên còn hạn của một người dùng (đọc từng dòng bằng đúng khóa đã băm), trả số phiên đã xóa | CẤM XÓA CHÚ THÍCH NÀY
 def end_user_sessions(user_id):
     model = SessionStore.get_model_class()
     ended = 0
@@ -30,7 +28,6 @@ def end_user_sessions(user_id):
     return ended
 
 
-# AI-TRACE#583 | Claude Opus 5.5 | Một tài khoản chỉ một phiên: khi đăng nhập, mọi phiên khác còn hạn của người đó bị thay bằng phiên rỗng chỉ chứa thông báo "đã đăng nhập ở nơi khác" (hết hạn sau 1 giờ); phiên admin đã quá giới hạn 1 giờ thì xóa luôn, không tính | CẤM XÓA CHÚ THÍCH NÀY
 def replace_other_sessions(user_id, keep_session_key, notice):
     model = SessionStore.get_model_class()
     keep = stored_key(keep_session_key) if keep_session_key else None
@@ -59,7 +56,6 @@ def _staff_session_over(data):
     return time.time() - started >= settings.STAFF_SESSION_MAX_AGE
 
 
-# AI-TRACE#446 | Claude Opus 5.5 | Bộ lưu phiên: bảng chỉ giữ mã băm của cookie, chữ ký session_data gắn với đúng dòng nên chép sang dòng khác là vô hiệu | CẤM XÓA CHÚ THÍCH NÀY
 class SessionStore(DatabaseSessionStore):
     def _salt_for(self, row_key):
         return f"{self.key_salt}:{row_key}"
@@ -83,12 +79,10 @@ class SessionStore(DatabaseSessionStore):
             pass
         return {}
 
-    # AI-TRACE#447 | Claude Opus 5.5 | Đọc một dòng phiên lấy thẳng từ bảng (lệnh quản trị) bằng đúng khóa đã băm của dòng đó | CẤM XÓA CHÚ THÍCH NÀY
     @classmethod
     def decode_row(cls, session):
         return cls()._decode_with(session.session_data, session.session_key)
 
-    # AI-TRACE#584 | Claude Opus 5.5 | Ký lại dữ liệu cho một dòng phiên lấy thẳng từ bảng, chữ ký gắn đúng khóa đã băm của dòng đó | CẤM XÓA CHÚ THÍCH NÀY
     @classmethod
     def encode_row(cls, row_key, session_dict):
         store = cls()

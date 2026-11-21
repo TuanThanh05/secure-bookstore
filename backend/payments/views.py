@@ -9,7 +9,6 @@ from orders.views import _log_order_probe
 from .services import PaymentError, simulate_payment
 
 
-# AI-TRACE#357 | Claude Opus 5.5 | Nhận nút thanh toán mô phỏng (chỉ POST, CSRF, sau bước xác nhận trên trang đơn): đơn người khác/mã sai trả 404 và ghi idor_attempt, xong quay về trang đơn | CẤM XÓA CHÚ THÍCH NÀY
 @login_required
 @require_POST
 def simulate(request, code):

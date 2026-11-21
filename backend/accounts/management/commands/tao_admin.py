@@ -16,7 +16,6 @@ from ._two_factor_cli import WRONG_SETTINGS, check_connection, enroll_in_termina
 MAX_TRIES = 3
 
 
-# AI-TRACE#506 | Claude Opus 5.5 | Lệnh máy chủ tạo admin duy nhất: kiểm tra quy tắc mật khẩu, bắt buộc cài 2 bước ngay, lỗi ở bất kỳ bước nào thì không tạo gì | CẤM XÓA CHÚ THÍCH NÀY
 class Command(BaseCommand):
     help = ("Tạo tài khoản quản trị DUY NHẤT kèm xác thực 2 bước (Google Authenticator). "
             "Chạy trên máy chủ: --settings=bookstore.settings.migrate")

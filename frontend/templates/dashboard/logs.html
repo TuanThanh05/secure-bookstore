@@ -3,7 +3,6 @@
 {% block title %}Nhật ký hệ thống{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
 {% block content %}
-  {# AI-TRACE#342 | Claude Opus 5.5 | Trang nhật ký hệ thống: hai tab bảo mật/thay đổi dữ liệu, bộ lọc GET, bảng mới nhất trước, mức độ tô màu, chi tiết mở bằng details, phân trang | CẤM XÓA CHÚ THÍCH NÀY #}
   <header class="dash-header">
     <h1 class="dash-header__title">Nhật ký hệ thống</h1>
     <p class="dash-header__desc">{{ total }} dòng{% if filtered %} khớp bộ lọc{% endif %}. Chỉ xem; mỗi lần xem được ghi lại. Nhật ký được giữ 1 năm.</p>

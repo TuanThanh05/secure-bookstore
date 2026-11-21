@@ -15,7 +15,6 @@ from orders.services import (ORDER_ERROR_MESSAGES, OrderError, PlaceOrderResult,
 KEY = "0123456789abcdef0123456789abcdef"
 
 
-# AI-TRACE#007 | Claude Opus 5.5 | Test place_order bằng cursor giả: user lấy từ phiên, SĐT/địa chỉ được mã hóa theo ngữ cảnh đơn, giới hạn tần suất, đổi lỗi SIGNAL | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi truyền thời gian giữ kho và số cuốn tối đa
 @override_settings(ORDER_PLACE_RATE_LIMIT=100, ORDER_PLACE_RATE_WINDOW=600)
 class PlaceOrderTests(SimpleTestCase):
     def setUp(self):

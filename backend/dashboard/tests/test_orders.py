@@ -36,7 +36,6 @@ def detail(status="paid"):
                             lines=(OrderLine(book_id=7, title="Nhà Giả Kim", unit_price=79000, quantity=2),))
 
 
-# AI-TRACE#390 | Claude Opus 5.5 | Test service quản lý đơn bằng cursor giả: bộ lọc/mã đơn/tên bước sai không xuống CSDL, gọi đúng thủ tục từng bước qua kết nối staff, giải mã thông tin giao hàng, đổi lỗi SIGNAL, nút bước tiếp theo theo trạng thái | CẤM XÓA CHÚ THÍCH NÀY
 class OrderAdminServiceTests(SimpleTestCase):
     def setUp(self):
         self.actor = SimpleNamespace(pk=2)
@@ -129,7 +128,6 @@ class OrderAdminServiceTests(SimpleTestCase):
             self.assertEqual(action["label"] if action else None, label)
 
 
-# AI-TRACE#391 | Claude Opus 5.5 | Test view quản lý đơn: chỉ nhân viên, danh sách không có thông tin giao hàng, chi tiết cần xác thực lại và ghi log, nút chuyển bước chỉ POST + CSRF, sai bước báo lỗi, mã không có trả 404, chỉ quay lại trang trong mục đơn hàng | CẤM XÓA CHÚ THÍCH NÀY
 class OrderAdminViewTests(TestCase):
     def setUp(self):
         self.staff = User.objects.create_user(username="quan_tri", email="qt@example.test", password=PASSWORD,

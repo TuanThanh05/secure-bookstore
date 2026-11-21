@@ -22,7 +22,6 @@ def _page_number(request):
         return 1
 
 
-# AI-TRACE#383 | Claude Opus 5.5 | Trang quản lý đơn hàng: lọc theo trạng thái, bảng đơn đơn giản (không có thông tin giao hàng), nút bước tiếp theo, phân trang | CẤM XÓA CHÚ THÍCH NÀY
 @staff_required
 @never_cache
 @require_GET
@@ -46,7 +45,6 @@ def orders(request):
     })
 
 
-# AI-TRACE#384 | Claude Opus 5.5 | Trang chi tiết đơn cho admin: cần xác thực lại, hiện SĐT/địa chỉ giao hàng, mỗi lần xem ghi log sensitive_data_viewed; mã sai hoặc không có trả 404 | CẤM XÓA CHÚ THÍCH NÀY
 @staff_required
 @recent_auth_required
 @never_cache
@@ -73,7 +71,6 @@ def _safe_back(request):
     return reverse("dashboard:orders")
 
 
-# AI-TRACE#385 | Claude Opus 5.5 | Nhận nút chuyển trạng thái đơn (chỉ POST, CSRF, sau bước xác nhận bằng details): mỗi bước một URL, sai bước báo lỗi, mã không có trả 404, xong quay lại trang đang xem | CẤM XÓA CHÚ THÍCH NÀY
 @staff_required
 @never_cache
 @require_POST

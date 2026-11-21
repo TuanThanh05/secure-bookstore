@@ -16,7 +16,6 @@ def sessions_of(user):
     return [s for s in Session.objects.all() if SessionStore.decode_row(s).get("_auth_user_id") == str(user.pk)]
 
 
-# AI-TRACE#525 | Claude Opus 5.5 | Test tái hiện lỗi phiên của tài khoản bị khóa sống lại khi mở khóa, và test hàm xóa mọi phiên của một người dùng | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thêm luật một tài khoản một phiên
 class LockedAccountSessionTests(TestCase):
     def setUp(self):
         self.customer = User.objects.create_user(username="an_nguyen", email="an@example.test",

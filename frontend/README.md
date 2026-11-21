@@ -67,7 +67,7 @@ Site bật **Content Security Policy**: trình duyệt sẽ **chặn** mọi th�
 6. **Mọi `<form method="post">` phải có `{% csrf_token %}`.** AJAX dùng `Bookstore.postForm(url, data)` trong `base.js` (tự gửi CSRF token).
 7. **Không dùng link `<a>` cho thao tác thay đổi dữ liệu** (xóa khỏi giỏ, đăng xuất...). Dùng `<form method="post">`.
 8. **Mỗi file dùng `{% static %}` phải có `{% load static %}`** ở đầu (kế thừa không mang theo lệnh `load`).
-9. **Comment nhiều dòng phải dùng `{% comment %}...{% endcomment %}`.** Cú pháp `{# ... #}` chỉ dùng cho **một dòng**; viết nhiều dòng thì nội dung bị in ra HTML, ai xem mã nguồn trang cũng đọc được.
+9. **Chỉ viết comment một dòng `{# ... #}`.** Không viết comment nhiều dòng (`{# #}` nhiều dòng bị in ra HTML); giải thích dài ghi vào `docs/AI_TRACE.md`.
 10. **Ẩn nút trên giao diện không phải là phân quyền.** Kiểm tra quyền luôn làm ở view phía backend.
 
 ## Giao diện: màu, chữ, component

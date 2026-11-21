@@ -21,7 +21,6 @@ def request(remote, real_ip=None):
     return SimpleNamespace(META=meta)
 
 
-# AI-TRACE#462 | Claude Opus 5.5 | Test đọc IP thật: chỉ tin X-Real-IP khi đến từ proxy tin cậy, header giả hoặc sai định dạng bị bỏ qua | CẤM XÓA CHÚ THÍCH NÀY
 class ClientIpTests(SimpleTestCase):
     def test_no_proxy_uses_remote_addr(self):
         self.assertEqual(client_ip(request("203.0.113.9")), "203.0.113.9")
@@ -49,7 +48,6 @@ class ClientIpTests(SimpleTestCase):
         self.assertIsNone(client_ip(request("không phải IP")))
 
 
-# AI-TRACE#463 | Claude Opus 5.5 | Tái hiện phát hiện số 12: sau Nginx kẻ tấn công khóa đăng nhập của admin; sau khi sửa chỉ IP kẻ tấn công bị khóa, log ghi IP thật | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thêm xác thực 2 bước
 @override_settings(**BEHIND_NGINX)
 class LockoutBehindProxyTests(TestCase):
     def setUp(self):

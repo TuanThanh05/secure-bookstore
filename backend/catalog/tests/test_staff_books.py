@@ -31,7 +31,6 @@ VALID = {
 }
 
 
-# AI-TRACE#143 | Claude Opus 5.5 | Test chuẩn hóa ISBN, kiểm tra chữ số kiểm tra và các giới hạn thông tin sách | CẤM XÓA CHÚ THÍCH NÀY
 class BookFieldTests(SimpleTestCase):
     def test_valid_isbn_10_and_13_are_normalized(self):
         self.assertEqual(clean_isbn("978-0-306-40615-7"), "9780306406157")
@@ -72,7 +71,6 @@ class BookFieldTests(SimpleTestCase):
             self.assertEqual(ctx.exception.code, "CATEGORY_NOT_FOUND")
 
 
-# AI-TRACE#144 | Claude Opus 5.5 | Test gọi sáu thủ tục sách bằng cursor giả qua kết nối staff, đổi lỗi SIGNAL thành BookError | CẤM XÓA CHÚ THÍCH NÀY
 class BookProcedureTests(SimpleTestCase):
     def setUp(self):
         self.actor = SimpleNamespace(pk=7)
@@ -162,7 +160,6 @@ class BookProcedureTests(SimpleTestCase):
             delete_book(self.actor, 9)
 
 
-# AI-TRACE#145 | Claude Opus 5.5 | Test model sách đọc qua kết nối staff, lọc theo thể loại/tác giả/tên và đường dẫn ảnh bìa | CẤM XÓA CHÚ THÍCH NÀY
 class StaffBookReadTests(SimpleTestCase):
     def test_model_reads_view_through_staff_connection(self):
         self.assertEqual(StaffBook.objects.all().db, "staff")

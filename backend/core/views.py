@@ -1,9 +1,3 @@
-"""View dùng chung: trang lỗi tùy chỉnh và trang lỗi CSRF.
-
-Các handler này chỉ có tác dụng khi DEBUG = False (môi trường prod).
-Khi DEBUG = True, Django hiện trang lỗi chi tiết để lập trình viên gỡ lỗi.
-Lỗi CSRF được ghi vào core_securityevent (csrf_failed) và security.log.
-"""
 from django.shortcuts import render
 
 from core.security_log import log_event
@@ -25,13 +19,10 @@ def page_not_found(request, exception=None):
 
 
 def server_error(request):
-    # Không dùng render(request, ...): lỗi 500 có thể do CSDL, context processor
-    # đụng tới user/session có thể gây lỗi tiếp. Render template không cần request.
     template = loader.get_template("errors/500.html")
     return HttpResponseServerError(template.render())
 
 
-# AI-TRACE#326 | Claude Opus 5.5 | Trang lỗi CSRF ghi sự kiện csrf_failed (lý do của Django chỉ vào log, không hiện cho người dùng) | CẤM XÓA CHÚ THÍCH NÀY
 def csrf_failure(request, reason=""):
     user = getattr(request, "user", None)
     log_event("csrf_failed", request, severity="warning", user=user,

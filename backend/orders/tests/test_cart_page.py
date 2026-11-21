@@ -27,7 +27,6 @@ def line(book_id=7, quantity=2, is_active=True, in_stock=True, price=79000):
                     quantity=quantity, is_active=is_active, in_stock=in_stock)
 
 
-# AI-TRACE#256 | Claude Opus 5.5 | Test dữ liệu giỏ: tạm tính chỉ tính sách còn bán, nút tăng/giảm khóa đúng lúc, nhãn ngừng bán/hết hàng | CẤM XÓA CHÚ THÍCH NÀY
 class CartDataTests(SimpleTestCase):
     def test_subtotal_skips_unavailable_lines(self):
         cart = Cart(lines=(line(1, 2), line(2, 3, in_stock=False), line(3, 1, is_active=False), line(4, 1, price=1000)))
@@ -50,7 +49,6 @@ class CartDataTests(SimpleTestCase):
         self.assertTrue(line().cover_url)
 
 
-# AI-TRACE#257 | Claude Opus 5.5 | Test service trang giỏ bằng cursor giả: user lấy từ phiên, id/số lượng kiểm tra trước khi xuống CSDL, giới hạn tần suất, đổi lỗi SIGNAL | CẤM XÓA CHÚ THÍCH NÀY
 @override_settings(CART_UPDATE_RATE_LIMIT=60, CART_UPDATE_RATE_WINDOW=60)
 class CartPageServiceTests(SimpleTestCase):
     def setUp(self):
@@ -128,7 +126,6 @@ class CartPageServiceTests(SimpleTestCase):
             remove_from_cart(request_for(customer()), 7)
 
 
-# AI-TRACE#258 | Claude Opus 5.5 | Test view trang giỏ: hiển thị dòng, nút khóa, không cache; form chỉ POST + CSRF, ẩn danh đi đăng nhập, nhân viên bị từ chối, luôn quay về giỏ | CẤM XÓA CHÚ THÍCH NÀY
 class CartPageViewTests(TestCase):
     def setUp(self):
         self.customer = User.objects.create_user(username="an_nguyen", email="an@example.test", password=PASSWORD, email_verified=True)

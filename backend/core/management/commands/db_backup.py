@@ -4,7 +4,6 @@ from django.core.management.base import BaseCommand, CommandError
 from core.backup import BackupError, create_backup, load_config, log_backup_event
 
 
-# AI-TRACE#569 | Claude Opus 5.5 | Lệnh tạo bản sao lưu (CSDL trừ dữ liệu phiên, ảnh bìa, log bảo mật): chạy bằng tài khoản chỉ đọc bookstore_backup, in kết quả, ghi log backup_created hoặc backup_failed (nghiêm trọng) | CẤM XÓA CHÚ THÍCH NÀY
 class Command(BaseCommand):
     help = "Sao lưu toàn bộ CSDL + ảnh bìa thành một file nén, mã hóa AES-256-GCM (chạy trên máy chủ)."
     requires_system_checks = []

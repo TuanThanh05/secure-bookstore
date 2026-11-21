@@ -152,7 +152,6 @@ CHECKS = (
 )
 
 
-# AI-TRACE#116 | Claude Opus 5.5 | Lệnh kiểm tra phân quyền trên CSDL thật: chạy từng câu bằng app_customer/app_staff, so với kết quả mong đợi | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi thêm app_session
 class Command(BaseCommand):
     help = "Kiểm tra phân quyền MySQL thật của app_customer, app_staff, app_session, app_auth (chạy sau db_apply, không dùng settings.migrate)."
 

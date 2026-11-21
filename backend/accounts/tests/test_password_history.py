@@ -15,7 +15,6 @@ def new_secret(tag):
     return f"{secrets.token_urlsafe(12)}-{tag}-Aa9"
 
 
-# AI-TRACE#090 | Claude Opus 5.5 | Test chặn dùng lại 5 mật khẩu gần nhất, tính cả mật khẩu hiện tại, qua validator và trang đổi mật khẩu | CẤM XÓA CHÚ THÍCH NÀY
 class PasswordHistoryTests(TestCase):
     def setUp(self):
         cache.clear()

@@ -12,7 +12,6 @@ def _valid_ip(value):
         return None
 
 
-# AI-TRACE#461 | Claude Opus 5.5 | IP thật của client: chỉ tin header X-Real-IP khi request đến từ proxy tin cậy (Nginx), còn lại dùng REMOTE_ADDR; header giả từ client bị bỏ qua | CẤM XÓA CHÚ THÍCH NÀY
 def client_ip(request):
     if request is None:
         return None

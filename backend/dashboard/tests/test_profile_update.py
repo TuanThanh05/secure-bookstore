@@ -16,7 +16,6 @@ STAFF_EMAIL = "quan.tri@example.test"
 OLD_PHONE = "0987654321"
 
 
-# AI-TRACE#100 | Claude Opus 5.5 | Test nhân viên cập nhật họ, tên, SĐT: xác thực lại, không lộ SĐT cũ, để trống giữ số, chặn mass assignment | CẤM XÓA CHÚ THÍCH NÀY
 class StaffProfileUpdateTests(TestCase):
     def setUp(self):
         cache.clear()

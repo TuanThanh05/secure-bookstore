@@ -21,8 +21,6 @@ SILENCED_SYSTEM_CHECKS = ["security.W021"]
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-# Máy chủ thật luôn chạy sau Nginx (deploy/nginx/secure-bookstore.conf). Thiếu danh sách
-# proxy tin cậy thì mọi người dùng mang chung IP của Nginx: khóa đăng nhập lẫn nhau.
 if not TRUSTED_PROXY_IPS:
     raise ImproperlyConfigured("Máy chủ thật phải có TRUSTED_PROXY_IPS (IP của Nginx, ví dụ 127.0.0.1).")
 

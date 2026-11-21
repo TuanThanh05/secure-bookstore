@@ -23,7 +23,6 @@ CART_ERROR_MESSAGES = {
 }
 
 
-# AI-TRACE#227 | Claude Opus 5.5 | Lỗi nghiệp vụ khi thêm vào giỏ, mang mã lỗi và câu tiếng Việt | CẤM XÓA CHÚ THÍCH NÀY
 class CartError(Exception):
     def __init__(self, code):
         self.code = code
@@ -31,7 +30,6 @@ class CartError(Exception):
         super().__init__(self.message)
 
 
-# AI-TRACE#228 | Claude Opus 5.5 | Đổi id sách và số lượng nhận từ request thành số nguyên trong khoảng cho phép | CẤM XÓA CHÚ THÍCH NÀY
 def _int_in_range(value, low, high, code):
     if isinstance(value, bool):
         raise CartError(code)
@@ -44,7 +42,6 @@ def _int_in_range(value, low, high, code):
     return number
 
 
-# AI-TRACE#229 | Claude Opus 5.5 | Giới hạn tần suất thao tác giỏ hàng theo từng khách: thêm vào giỏ (CART_ADD_RATE_*) và đổi số lượng/gỡ (CART_UPDATE_RATE_*) | CẤM XÓA CHÚ THÍCH NÀY
 def _allow_cart_action(user, action, limit, window):
     key = f"cart-{action}-rate:{user.pk}"
     if cache.add(key, 1, window):
@@ -57,7 +54,6 @@ def _allow_cart_action(user, action, limit, window):
     return count <= limit
 
 
-# AI-TRACE#241 | Claude Opus 5.5 | Kiểm tra chung trước khi gọi thủ tục giỏ hàng: chỉ khách, không trong transaction.atomic, giới hạn tần suất có ghi log | CẤM XÓA CHÚ THÍCH NÀY
 def _guard_cart_write(request, proc, action, limit, window, book_pk):
     user = request.user
     if connection.in_atomic_block:
@@ -68,7 +64,6 @@ def _guard_cart_write(request, proc, action, limit, window, book_pk):
         raise CartError("RATE_LIMITED")
 
 
-# AI-TRACE#242 | Claude Opus 5.5 | Gọi thủ tục giỏ hàng với tham số truyền riêng, đổi lỗi SIGNAL thành CartError; lỗi khác (thiếu quyền...) để nguyên | CẤM XÓA CHÚ THÍCH NÀY
 def _call_cart_proc(proc, params, out_index=None):
     try:
         with connection.cursor() as cursor:
@@ -94,7 +89,6 @@ def _require_customer(request):
     return user
 
 
-# AI-TRACE#230 | Claude Opus 5.5 | Thêm sách vào giỏ bằng sp_cart_add; user lấy từ phiên đăng nhập, có giới hạn tần suất; trả số cuốn của sách đó trong giỏ sau khi thêm | CẤM XÓA CHÚ THÍCH NÀY
 def add_to_cart(request, book_id, quantity):
     user = _require_customer(request)
     book_pk = _int_in_range(book_id, 1, 2**63 - 1, "BOOK_NOT_FOUND")
@@ -104,7 +98,6 @@ def add_to_cart(request, book_id, quantity):
     return int(new_quantity)
 
 
-# AI-TRACE#243 | Claude Opus 5.5 | Một dòng trong giỏ cho template: giá hiện tại, thành tiền, tình trạng và nút nào được bấm (tăng/giảm/gỡ) | CẤM XÓA CHÚ THÍCH NÀY
 @dataclass(frozen=True)
 class CartLine:
     book_id: int
@@ -147,7 +140,6 @@ class CartLine:
         return self.available and self.quantity > 1
 
 
-# AI-TRACE#244 | Claude Opus 5.5 | Cả giỏ hàng: các dòng, tạm tính và số cuốn chỉ tính sách còn bán và còn hàng | CẤM XÓA CHÚ THÍCH NÀY
 @dataclass(frozen=True)
 class Cart:
     lines: tuple
@@ -165,7 +157,6 @@ class Cart:
         return any(not line.available for line in self.lines)
 
 
-# AI-TRACE#245 | Claude Opus 5.5 | Đọc giỏ của khách đang đăng nhập bằng sp_cart_list | CẤM XÓA CHÚ THÍCH NÀY
 def get_cart(request):
     user = _require_customer(request)
     rows = _call_cart_proc("sp_cart_list", [user.pk])
@@ -176,7 +167,6 @@ def get_cart(request):
     ))
 
 
-# AI-TRACE#246 | Claude Opus 5.5 | Đặt số lượng mới (1–5) cho sách trong giỏ bằng sp_cart_set_quantity, dùng cho nút tăng và giảm | CẤM XÓA CHÚ THÍCH NÀY
 def set_cart_quantity(request, book_id, quantity):
     user = _require_customer(request)
     book_pk = _int_in_range(book_id, 1, 2**63 - 1, "NOT_IN_CART")
@@ -187,7 +177,6 @@ def set_cart_quantity(request, book_id, quantity):
     return amount
 
 
-# AI-TRACE#247 | Claude Opus 5.5 | Gỡ một sách khỏi giỏ bằng sp_cart_remove | CẤM XÓA CHÚ THÍCH NÀY
 def remove_from_cart(request, book_id):
     user = _require_customer(request)
     book_pk = _int_in_range(book_id, 1, 2**63 - 1, "NOT_IN_CART")

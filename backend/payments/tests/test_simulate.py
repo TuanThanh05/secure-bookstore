@@ -27,7 +27,6 @@ def order(status="pending", minutes_left=10):
                  lines=(OrderLine(book_id=7, title="Nhà Giả Kim", unit_price=79000, quantity=2),))
 
 
-# AI-TRACE#360 | Claude Opus 5.5 | Test service thanh toán mô phỏng bằng cursor giả: tắt cờ thì không xuống CSDL, mã đơn sai mẫu bị chặn, chặn nhân viên/ẩn danh, giới hạn tần suất, đổi lỗi SIGNAL, lấy mã giao dịch từ tham số OUT | CẤM XÓA CHÚ THÍCH NÀY
 @override_settings(PAYMENT_SIMULATION=True, PAYMENT_SIMULATE_RATE_LIMIT=100, PAYMENT_SIMULATE_RATE_WINDOW=600)
 class SimulatePaymentServiceTests(SimpleTestCase):
     def setUp(self):
@@ -109,7 +108,6 @@ class SimulatePaymentServiceTests(SimpleTestCase):
             simulate_payment(self.request, CODE)
 
 
-# AI-TRACE#361 | Claude Opus 5.5 | Test view thanh toán mô phỏng: chỉ POST + CSRF, đơn người khác/mã sai trả 404 và ghi idor_attempt, nhân viên/ẩn danh bị chặn, nút chỉ hiện khi bật cờ và đơn còn chờ thanh toán | CẤM XÓA CHÚ THÍCH NÀY
 @override_settings(PAYMENT_SIMULATION=True)
 class SimulateViewTests(TestCase):
     def setUp(self):

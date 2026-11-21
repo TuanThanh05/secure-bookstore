@@ -1,10 +1,3 @@
-/* =====================================================================
-   fonts.css – font tự host (KHÔNG tải từ Google Fonts: CSP chỉ cho font từ chính site).
-   Playfair Display (tiêu đề) và Plus Jakarta Sans (nội dung), bản "variable"
-   (một file chứa mọi độ đậm), chỉ giữ 3 bộ ký tự: latin, latin-ext, vietnamese.
-   Giấy phép SIL Open Font License 1.1: xem static/fonts/OFL-*.txt
-   ===================================================================== */
-
 @font-face {
   font-family: "Playfair Display";
   font-style: normal;

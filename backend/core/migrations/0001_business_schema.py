@@ -24,7 +24,6 @@ BUSINESS_TABLES = [
 ]
 
 
-# AI-TRACE#593 | Claude Opus 5.5 | Đọc file SQL gộp toàn bộ bảng nghiệp vụ, tách thành từng câu lệnh (bỏ chú thích, bỏ câu rỗng) | CẤM XÓA CHÚ THÍCH NÀY
 def _statements():
     cleaned = sqlparse.format(SCHEMA_FILE.read_text(encoding="utf-8"), strip_comments=True)
     return [s.strip() for s in sqlparse.split(cleaned) if s.strip()]

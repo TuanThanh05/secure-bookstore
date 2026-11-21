@@ -22,7 +22,6 @@ def request_for(user):
     return SimpleNamespace(user=user, META={"REMOTE_ADDR": "127.0.0.1"}, method="POST", path="/orders/cart/them/")
 
 
-# AI-TRACE#236 | Claude Opus 5.5 | Test service thêm vào giỏ bằng cursor giả: user lấy từ phiên, số lượng 1–5, chặn nhân viên, giới hạn tần suất, đổi lỗi SIGNAL | CẤM XÓA CHÚ THÍCH NÀY
 @override_settings(CART_ADD_RATE_LIMIT=20, CART_ADD_RATE_WINDOW=60)
 class AddToCartServiceTests(SimpleTestCase):
     def setUp(self):
@@ -96,7 +95,6 @@ class AddToCartServiceTests(SimpleTestCase):
             add_to_cart(request_for(customer()), 7, 1)
 
 
-# AI-TRACE#237 | Claude Opus 5.5 | Test view thêm vào giỏ: chỉ POST, CSRF, ẩn danh đi đăng nhập, nhân viên bị từ chối, chặn open redirect, ở lại trang đang xem | CẤM XÓA CHÚ THÍCH NÀY
 class CartAddViewTests(TestCase):
     def setUp(self):
         cache.clear()

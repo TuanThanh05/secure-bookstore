@@ -1,14 +1,3 @@
-/* =====================================================================
-   base.css – style CHUNG cho toàn site (nhóm trưởng giữ, sửa phải qua review).
-   Phong cách theo docs thiết kế (DESIGN.md của Stitch): nền giấy ngà, đỏ
-   đô làm màu chính, vàng đồng điểm xuyết; tiêu đề Playfair Display, nội dung
-   Plus Jakarta Sans (font tự host, xem fonts.css).
-
-   CSP chặn style inline: KHÔNG dùng thuộc tính style="..." trong HTML.
-   CSS riêng từng khu vực: shop.css, account.css, dashboard.css.
-   Màu, khoảng cách, bo góc: luôn dùng biến bên dưới, không gõ mã màu trực tiếp.
-   ===================================================================== */
-
 :root {
   /* Màu */
   --color-bg: #fbf9f6;              /* nền giấy ngà */
@@ -323,8 +312,6 @@ a.navbar__user:focus-visible { outline: 2px solid var(--color-primary); outline-
   .admin__main { padding: var(--space-lg) var(--page-margin); }
 }
 
-/* Điện thoại: chỉ giữ biểu tượng logo cho đủ chỗ 3 mục menu;
-   chữ thương hiệu bị ẩn bằng mắt nhưng trình đọc màn hình vẫn đọc được */
 @media (max-width: 479px) {
   .navbar__brand span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   /* Điện thoại: viên người dùng chỉ còn biểu tượng; tên vẫn đọc được bằng trình đọc màn hình */

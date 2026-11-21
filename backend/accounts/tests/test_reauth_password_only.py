@@ -23,7 +23,6 @@ def account(**overrides):
     return mock.Mock(**data)
 
 
-# AI-TRACE#554 | Claude Opus 5.5 | Test T2.2: 3 form xác thực lại chỉ còn ô mật khẩu, tên lấy từ phiên (gửi kèm username của người khác bị bỏ qua), trang hiện tên dạng chữ và không có ô username gửi lên server | CẤM XÓA CHÚ THÍCH NÀY
 class PasswordOnlyReauthTests(TestCase):
     def setUp(self):
         cache.clear()

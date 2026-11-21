@@ -135,13 +135,9 @@ LOGIN_IP_FAILURE_LIMIT = 20                         # T3.2: một IP sai >= 20 l
 LOGIN_IP_FAILURE_WINDOW_MINUTES = 60
 AXES_CLIENT_IP_CALLABLE = "core.client_ip.client_ip"   # axes đếm theo IP thật, không theo IP của Nginx
 
-# IP thật của client sau reverse proxy (core/client_ip.py). Chỉ tin header khi
-# REMOTE_ADDR là một proxy trong danh sách này; trống (máy dev) = không tin header nào.
 TRUSTED_PROXY_IPS = env.list("TRUSTED_PROXY_IPS", default=[])
 CLIENT_IP_HEADER = "HTTP_X_REAL_IP"        # Nginx: proxy_set_header X-Real-IP $remote_addr;
 
-# Đường dẫn chứa mã bí mật (core/security_log.py): nhóm "secret" được thay bằng "-"
-# trước khi ghi file log và bảng core_securityevent. Thêm URL mới chứa mã thì thêm mẫu vào đây.
 SECURITY_LOG_SECRET_PATHS = [
     r"^/account/dat-lai-mat-khau/[^/]+/(?!set-password(?:/|$))(?P<secret>[^/]+)",   # link đặt lại mật khẩu
     r"^/account/dang-ky/xac-nhan/(?P<secret>[^/]+)",                               # link đăng ký
@@ -191,8 +187,6 @@ else:
 EMAIL_TIMEOUT = 10
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="") or EMAIL_HOST_USER or "Secure Bookstore <no-reply@localhost>"
 
-# Mọi ô mật khẩu (kể cả đăng nhập, xác thực lại) cũng bị chặn ở mức này trong form
-# (accounts.forms.cap_password_fields) để không gọi Argon2 với chuỗi quá dài.
 PASSWORD_MAX_LENGTH = 64
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -206,9 +200,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 PASSWORD_RESET_TIMEOUT = 5 * 60
 
-# ---------------------------------------------------------------------
-# Phiên làm việc và cookie (mục A)
-# ---------------------------------------------------------------------
 SESSION_ENGINE = "core.session_store"       # bảng chỉ lưu mã băm của cookie, chữ ký gắn với dòng
 SESSION_COOKIE_NAME = "bs_sid"            # không lộ tên mặc định "sessionid" của Django
 SESSION_COOKIE_HTTPONLY = True            # JavaScript không đọc được session ID
@@ -223,9 +214,6 @@ CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_FAILURE_VIEW = "core.views.csrf_failure"
 
-# ---------------------------------------------------------------------
-# Header bảo mật (mục B)
-# ---------------------------------------------------------------------
 X_FRAME_OPTIONS = "DENY"
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
@@ -251,24 +239,15 @@ SIGNUP_CSP = {                            # ngoại lệ duy nhất: chỉ trang
     "frame-src": [TURNSTILE_ORIGIN],
 }
 
-# ---------------------------------------------------------------------
-# Giới hạn kích thước request (chống DoS cơ bản)
-# ---------------------------------------------------------------------
 DATA_UPLOAD_MAX_MEMORY_SIZE = 2_621_440   # 2.5 MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 2_621_440
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 200
 
-# ---------------------------------------------------------------------
-# Ngôn ngữ, múi giờ
-# ---------------------------------------------------------------------
 LANGUAGE_CODE = "vi"
 TIME_ZONE = "Asia/Ho_Chi_Minh"   # hiển thị theo giờ VN
 USE_I18N = True
 USE_TZ = True                    # lưu trong CSDL theo UTC
 
-# ---------------------------------------------------------------------
-# File tĩnh và file upload
-# ---------------------------------------------------------------------
 STATIC_URL = "static/"
 STATICFILES_DIRS = [FRONTEND_DIR / "static"]
 STATIC_ROOT = REPO_DIR / "staticfiles"     # kết quả collectstatic, không commit
@@ -293,8 +272,6 @@ PAYMENT_SIMULATION = env.bool("PAYMENT_SIMULATION", default=False)   # nút "Tha
 PAYMENT_SIMULATE_RATE_LIMIT = 10                    # bấm thanh toán mô phỏng: tối đa 10 lần trong PAYMENT_SIMULATE_RATE_WINDOW
 PAYMENT_SIMULATE_RATE_WINDOW = 600
 
-# Sao lưu CSDL (lệnh db_backup, db_backup_export, db_restore, db_backup_verify – chỉ chạy trên máy chủ).
-# Khóa mã hóa BACKUP_ENCRYPTION_KEY và mật khẩu DB_BACKUP_PASSWORD nằm trong database/.env.db (web không đọc).
 BACKUP_DIR = env("BACKUP_DIR", default=str(REPO_DIR / "backups"))
 BACKUP_OFFSITE_DIR = env("BACKUP_OFFSITE_DIR", default="")         # thư mục thứ hai (ổ khác, USB...), để trống = không chép
 BACKUP_EXPORT_DIR = env("BACKUP_EXPORT_DIR", default=str(REPO_DIR / "backups" / "plain"))

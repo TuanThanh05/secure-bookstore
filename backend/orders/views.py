@@ -23,7 +23,6 @@ from .services import (ORDER_CODE_RE, ORDER_GROUPS, ORDER_LIST_MAX_OFFSET, ORDER
                        OrderError, cancel_order, get_order, list_my_orders, new_idempotency_key, place_order)
 
 
-# AI-TRACE#250 | Claude Opus 5.5 | Trang giỏ hàng của khách: đọc bằng sp_cart_list, không lưu cache; nhân viên không có giỏ | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi hiện số cuốn tối đa mỗi đơn và thời gian giữ kho
 @login_required
 @never_cache
 @require_safe
@@ -41,7 +40,6 @@ def cart(request):
     })
 
 
-# AI-TRACE#251 | Claude Opus 5.5 | Kiểm tra chung cho form trên trang giỏ: ẩn danh đi đăng nhập rồi quay lại giỏ, nhân viên bị từ chối | CẤM XÓA CHÚ THÍCH NÀY
 def _cart_page_guard(request):
     cart_url = reverse("orders:cart")
     if not request.user.is_authenticated:
@@ -52,7 +50,6 @@ def _cart_page_guard(request):
     return None
 
 
-# AI-TRACE#252 | Claude Opus 5.5 | Nhận nút tăng/giảm trên trang giỏ (chỉ POST, CSRF): gửi số lượng cuối cùng, xong quay về giỏ | CẤM XÓA CHÚ THÍCH NÀY
 @require_POST
 def cart_update(request):
     blocked = _cart_page_guard(request)
@@ -71,7 +68,6 @@ def cart_update(request):
     return redirect("orders:cart")
 
 
-# AI-TRACE#253 | Claude Opus 5.5 | Nhận nút gỡ sách trên trang giỏ (chỉ POST, CSRF), không hỏi xác nhận, xong quay về giỏ | CẤM XÓA CHÚ THÍCH NÀY
 @require_POST
 def cart_remove(request):
     blocked = _cart_page_guard(request)
@@ -97,7 +93,6 @@ def _page_number(request):
         return 1
 
 
-# AI-TRACE#367 | Claude Opus 5.5 | Trang Đơn hàng của tôi: hai tab Đang xử lý/Lịch sử đọc bằng sp_order_list_mine, phân trang, không lưu cache; nhân viên không có đơn | CẤM XÓA CHÚ THÍCH NÀY
 @login_required
 @never_cache
 @require_safe
@@ -116,7 +111,6 @@ def order_list(request):
     })
 
 
-# AI-TRACE#232 | Claude Opus 5.5 | Chỉ quay lại địa chỉ nội bộ an toàn sau khi thêm vào giỏ, chặn open redirect | CẤM XÓA CHÚ THÍCH NÀY
 def _safe_back_url(request, book_id, allow_detail=True):
     candidate = request.POST.get("next", "")
     if candidate and url_has_allowed_host_and_scheme(candidate, allowed_hosts={request.get_host()},
@@ -127,7 +121,6 @@ def _safe_back_url(request, book_id, allow_detail=True):
     return reverse("catalog:home")
 
 
-# AI-TRACE#233 | Claude Opus 5.5 | Nhận form thêm vào giỏ (chỉ POST, CSRF): ẩn danh đi đăng nhập, nhân viên bị từ chối, xong thì ở lại trang đang xem kèm thông báo | CẤM XÓA CHÚ THÍCH NÀY
 @require_POST
 def cart_add(request):
     form = CartAddForm(request.POST)
@@ -159,7 +152,6 @@ def cart_add(request):
     return redirect(back_url)
 
 
-# AI-TRACE#328 | Claude Opus 5.5 | Ghi idor_attempt khi khách mở/hủy đơn bằng mã đúng định dạng nhưng không phải đơn của mình (hoặc không có); người dùng vẫn chỉ thấy 404 | CẤM XÓA CHÚ THÍCH NÀY
 def _log_order_probe(request, code, exc):
     if exc.code == "ORDER_NOT_FOUND" and ORDER_CODE_RE.match(code or ""):
         log_event("idor_attempt", request, severity="warning", user=request.user,
@@ -170,7 +162,6 @@ CHECKOUT_KEY_SESSION = "checkout_idempotency_key"
 LAST_ORDER_SESSION = "last_order_code"
 
 
-# AI-TRACE#272 | Claude Opus 5.5 | Mã chống bấm trùng của lần đặt hàng: sinh ở server, chỉ lưu trong phiên, không nhận từ form | CẤM XÓA CHÚ THÍCH NÀY
 def _checkout_key(request):
     key = request.session.get(CHECKOUT_KEY_SESSION)
     if not key:
@@ -184,7 +175,6 @@ def _checkout_initial(user):
             "phone": decrypt_phone(user) or ""}
 
 
-# AI-TRACE#273 | Claude Opus 5.5 | Trang đặt hàng: kiểm tra giỏ (không rỗng, không có sách ngừng bán/hết hàng), form giao hàng điền sẵn từ hồ sơ, gọi sp_place_order, xong chuyển tới trang đơn | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi giới hạn số cuốn mỗi đơn và đổi thời gian giữ kho
 @login_required
 @never_cache
 @require_http_methods(["GET", "HEAD", "POST"])
@@ -236,7 +226,6 @@ def checkout(request):
     }, status=status)
 
 
-# AI-TRACE#274 | Claude Opus 5.5 | Trang chi tiết đơn của chính khách theo mã đơn (kèm cờ bật thanh toán mô phỏng); mã sai hoặc đơn người khác đều trả 404 như nhau | CẤM XÓA CHÚ THÍCH NÀY
 @login_required
 @never_cache
 @require_safe
@@ -252,7 +241,6 @@ def order_detail(request, code):
     return render(request, "shop/order_detail.html", {"order": order, "payment_simulation": settings.PAYMENT_SIMULATION})
 
 
-# AI-TRACE#288 | Claude Opus 5.5 | Nhận nút hủy đơn (chỉ POST, CSRF, sau bước xác nhận trên trang đơn): đơn người khác/mã sai trả 404, xong quay về trang đơn | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi hủy đơn có thể khóa tài khoản vì giữ kho
 @login_required
 @require_POST
 def order_cancel(request, code):
@@ -273,7 +261,6 @@ def order_cancel(request, code):
     return redirect("orders:order_detail", code=code)
 
 
-# AI-TRACE#541 | Claude Opus 5.5 | Hủy đơn làm tài khoản bị khóa tự động vì giữ kho: ghi log order_hold_abuse, xóa mọi phiên, đăng xuất, báo giờ mở khóa | CẤM XÓA CHÚ THÍCH NÀY
 def _logout_auto_locked(request):
     user = request.user
     user.refresh_from_db(fields=["auto_locked_until"])

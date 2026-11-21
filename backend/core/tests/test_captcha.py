@@ -29,7 +29,6 @@ def good(**extra):
     return {"success": True, "hostname": "shop.example.test", "action": "signup", "error-codes": [], **extra}
 
 
-# AI-TRACE#442 | Claude Opus 5.5 | Test xác minh Turnstile với Siteverify giả: đạt, thiếu, bị từ chối, dùng lại, sai hostname/action, timeout | CẤM XÓA CHÚ THÍCH NÀY
 @ENABLED
 class VerifyCaptchaTests(TestCase):
     def setUp(self):
@@ -139,7 +138,6 @@ class VerifyCaptchaTests(TestCase):
         opened.assert_not_called()
 
 
-# AI-TRACE#443 | Claude Opus 5.5 | Test cảnh báo khi chạy web với Turnstile tắt hoặc dùng key thử | CẤM XÓA CHÚ THÍCH NÀY
 class TurnstileCheckTests(SimpleTestCase):
     @override_settings(**captcha.NO_CAPTCHA)
     def test_warns_when_disabled(self):

@@ -42,7 +42,6 @@ ORDER_ADMIN_ERROR_MESSAGES = {
 }
 
 
-# AI-TRACE#376 | Claude Opus 5.5 | Lỗi nghiệp vụ khi admin quản lý đơn hàng, mang mã lỗi và câu tiếng Việt | CẤM XÓA CHÚ THÍCH NÀY
 class OrderAdminError(Exception):
     def __init__(self, code):
         self.code = code
@@ -75,7 +74,6 @@ class _StatusMixin:
         return ORDER_ACTIONS[name] if name else None
 
 
-# AI-TRACE#377 | Claude Opus 5.5 | Một dòng đơn trên trang quản lý đơn: mã, username, trạng thái, tổng tiền, ngày đặt, số cuốn và bước tiếp theo admin được bấm | CẤM XÓA CHÚ THÍCH NÀY
 @dataclass(frozen=True)
 class StaffOrderRow(_StatusMixin):
     code: str
@@ -88,7 +86,6 @@ class StaffOrderRow(_StatusMixin):
     item_count: int
 
 
-# AI-TRACE#378 | Claude Opus 5.5 | Chi tiết một đơn cho admin: người đặt, tiền, thông tin giao hàng đã giải mã, giao dịch thanh toán, danh sách sách | CẤM XÓA CHÚ THÍCH NÀY
 @dataclass(frozen=True)
 class StaffOrderDetail(_StatusMixin):
     code: str
@@ -129,7 +126,6 @@ def _decrypt(value, field, user_id, idempotency_key):
         return None
 
 
-# AI-TRACE#379 | Claude Opus 5.5 | Đọc một trang đơn qua sp_staff_order_list (kết nối staff), bộ lọc sai bị chặn trước khi xuống CSDL, trả tổng số và danh sách | CẤM XÓA CHÚ THÍCH NÀY
 def list_orders(actor, status=None, page=1):
     status = status or None
     if status is not None and status not in ORDER_FILTERS:
@@ -157,7 +153,6 @@ def list_orders(actor, status=None, page=1):
     ]
 
 
-# AI-TRACE#380 | Claude Opus 5.5 | Đọc chi tiết một đơn qua sp_staff_order_get, giải mã SĐT/địa chỉ giao hàng bằng ngữ cảnh gắn chủ đơn; mã đơn sai mẫu không xuống CSDL | CẤM XÓA CHÚ THÍCH NÀY
 def get_order(actor, code):
     code = _check_code(code)
     try:
@@ -188,7 +183,6 @@ def get_order(actor, code):
     )
 
 
-# AI-TRACE#381 | Claude Opus 5.5 | Chuyển đơn đúng một bước bằng thủ tục riêng của từng bước (tiếp nhận/đóng gói/giao hàng/đã giao); tên bước và mã đơn kiểm tra trước khi xuống CSDL | CẤM XÓA CHÚ THÍCH NÀY
 def advance_order(actor, code, action):
     spec = ORDER_ACTIONS.get(action)
     if spec is None:

@@ -12,7 +12,6 @@ PASSWORD = secrets.token_urlsafe(12) + "-Aa9"
 STAFF_EMAIL = "quan.tri@example.test"
 
 
-# AI-TRACE#046 | Claude Opus 5.5 | Test trang thông tin nhân viên: giấu email, hiện sau xác thực lại, ghi log | CẤM XÓA CHÚ THÍCH NÀY | đã viết lại bởi Claude Opus 5.5 khi bỏ ô tên đăng nhập ở xác thực lại (T2.2)
 class StaffProfileTests(TestCase):
     def setUp(self):
         self.profile_url = reverse("dashboard:profile")
